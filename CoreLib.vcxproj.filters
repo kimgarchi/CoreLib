@@ -102,6 +102,9 @@
     <ClInclude Include="CallBack.h">
       <Filter>CallBack</Filter>
     </ClInclude>
+    <ClInclude Include="Wrapper.h">
+      <Filter>Object</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -121,6 +124,9 @@
     </ClCompile>
     <ClCompile Include="CallBackManager.cpp">
       <Filter>CallBack</Filter>
+    </ClCompile>
+    <ClCompile Include="Wrapper.cpp">
+      <Filter>Object</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
