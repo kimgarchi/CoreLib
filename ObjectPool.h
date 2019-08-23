@@ -1,99 +1,156 @@
 #pragma once
 #include "stdafx.h"
+#include "Object.h"
 
 enum class OBJECT_STATUS
 {
-	OBJECT_STATUS_UNKNOWN,
-	OBJECT_STATUS_IDLE,
-	OBJECT_STATUS_INACTIVE_WAIT,
+	OBJECT_STATUS_UNUSED,
 	OBJECT_STATUS_USED,
-
-	OBJECT_STATUS_MAX,
 };
 
 template<typename T>
-class ObjectPool
+class ObjectPool : final
 {
 public:
-	ObjectPool<T>() 
-		: min_idle_object_count_(0), max_object_count_(0), variance_object_count_(0)
-	{}
-	virtual ~ObjectPool<T>() {}
-
+	static bool Initialize(DWORD min_object_count, DWORD max_object_count, DWORD variance_object_count);
+private:
+	ObjectPool<T>();
+	~ObjectPool<T>();
+	
 	ObjectPool<T>(const ObjectPool<T>&) = delete;
 	void operator=(const ObjectPool<T>&) = delete;
 
-	virtual bool Initialize(DWORD min_object_count, DWORD max_object_count, DWORD variance_object_count)
+	bool Initialize();
+
+	OBJECT_STATUS GetObjectStatus(std::shared_ptr<T> object);
+	T* Push();
+	bool Pop(T*);
+
+	bool Return(std::shared_ptr<T> object);
+
+	DWORD GetIdleChunkSize() { return static_cast<DWORD>(idle_objects_.size()); }
+	DWORD GetUseChunkSize() { return static_cast<DWORD>(used_objects_.size()); }
+	DWORD GetTotalChunkSize() { return static_cast<DWORD>(GetIdleChunkSize() + GetUseChunkSize()); }
+	
+	using ChunkSet = std::set<T*>;
+	using ChunkSetByStatus = std::map<OBJECT_STATUS, ChunkSet>;
+	using ChunkMap = std::map<T*, OBJECT_STATUS>;
+	
+	bool IncreasePool();
+	bool DecreasePool();
+	
+	bool ChangeObjectStatus(std::shared_ptr<T> object, OBJECT_STATUS status);
+	
+	ChunkSetByStatus chunk_by_status_;
+	ChunkMap chunks_;
+
+	static DWORD min_idle_object_count_;
+	static DWORD max_object_count_;
+	static DWORD variance_object_count_;
+
+	std::mutex io_mtx_;
+};
+
+template<typename T>
+ObjectPool<T>::ObjectPool()
+	: min_idle_object_count_(0), max_object_count_(0), variance_object_count_(0)
+{
+}
+
+template<typename T>
+ObjectPool<T>::~ObjectPool()
+{
+}
+
+template<typename T>
+bool ObjectPool<T>::Initialize(DWORD min_object_count, DWORD max_object_count, DWORD variance_object_count)
+{
+	if (min_object_count > max_object_count)
+		return false;
+
+	if (max_object_count - min_object_count <= variance_object_count)
+		return false;
+
+	ObjectPool<T>::min_idle_object_count_ = min_object_count;
+	ObjectPool<T>::max_object_count_ = max_object_count;
+	ObjectPool<T>::variance_object_count_ = variance_object_count;
+
+	return true;
+}
+
+template<typename T>
+bool ObjectPool<T>::Initialize()
+{
+	if (IncreasePool() == false)
+		return false;
+	
+	return true;
+}
+
+template<typename T>
+OBJECT_STATUS ObjectPool<T>::GetObjectStatus(std::shared_ptr<T> object)
+{
+	std::unique_lock<std::mutex> lock(mtx_);
+	auto itor = objects_.find(object);
+	if (itor != objects_.end())
 	{
-		if (min_object_count > max_object_count)
-			return false;
-
-		if (IncreaseObjectCount() == false)
-		{
-			return false;
-		}
-
-		return true;
+		assert(false);
+		return OBJECT_STATUS::OBJECT_STATUS_UNKNOWN;
 	}
 
-	OBJECT_STATUS GetObjectStatus(std::shared_ptr<T> object)
-	{
-		std::unique_lock<std::mutex> lock(mtx_);
-		auto itor = objects_.find(object);
-		if (itor != objects_.end())
-		{
-			assert(false);
-			return OBJECT_STATUS::OBJECT_STATUS_UNKNOWN;
-		}
+	return itor->second;
+}
 
-		return itor->second;
-	}
-
-	std::shared_ptr<T> Get()
+template<typename T>
+T* ObjectPool<T>::Push()
+{
+	
 	{
-		std::unique_lock<std::mutex> lock(mtx_);
+		std::unique_lock<std::mutex> lock(io_mtx_);
+
 		if (idle_objects_.empty())
 		{
-			if (IncreaseObjectCount() == false)
+			if (IncreasePool() == false)
 				return nullptr;
 		}
 
-		std::shared_ptr<T> object = *idle_objects_.begin();
+		object = *idle_objects_.begin();
 		if (ChangeObjectStatus(object, OBJECT_STATUS::OBJECT_STATUS_USED) == false)
 			return nullptr;
-
-		return object;
 	}
 
-	bool Return(std::shared_ptr<T> object)
+	return object;
+}
+
+template<typename T>
+inline bool ObjectPool<T>::Pop(T*)
+{
+
+
+	return false;
+}
+
+template<typename T>
+bool ObjectPool<T>::Return(std::shared_ptr<T> object)
+{
 	{
 		std::unique_lock<std::mutex> lock(mtx_);
 		auto itor = used_objects_.find(object);
 		if (itor == used_objects_.end())
 			return false;
-
-		if (ChangeObjectStatus(object, OBJECT_STATUS::OBJECT_STATUS_INACTIVE_WAIT) == false)
-			return false;
-
-		return false;
 	}
+	
+	if (ChangeObjectStatus(object, OBJECT_STATUS::OBJECT_STATUS_INACTIVE_WAIT) == false)
+		return false;
 
-	
-	DWORD GetIdleChunkSize() { return static_cast<DWORD>(idle_objects_.size()); }
-	DWORD GetUseChunkSize() { return static_cast<DWORD>(used_objects_.size()); }
-	DWORD GetTotalChunkSize() { return static_cast<DWORD>(GetIdleChunkSize() + GetUseChunkSize()); }
-	
-protected:	
-	virtual std::shared_ptr<T> CreateObject() = 0;
+	return false;
+}
 
-private:
-	using ChunkStatusMap = std::map<std::shared_ptr<T>, OBJECT_STATUS>;
-	using ChunkTickMap = std::map<std::shared_ptr<T>, ULONGLONG>;
-	using ChunkSet = std::set< std::shared_ptr<T>>;
-	
-	bool IncreaseObjectCount()
+template<typename T>
+bool ObjectPool<T>::IncreasePool()
+{
+	std::unique_lock<std::mutex> lock(io_mtx_);
 	{
-		std::unique_lock<std::mutex> lock(mtx_);
 		if (objects_.size() >= max_object_count_)
 			return false;
 
@@ -107,124 +164,111 @@ private:
 			objects_.insert(ChunkStatusMap::value_type(object, OBJECT_STATUS::OBJECT_STATUS_IDLE));
 			idle_objects_.insert(object);
 		}
-
-		return true;
 	}
 
-	bool DecreaseObjectCount()
+	return true;
+}
+
+template<typename T>
+inline bool ObjectPool<T>::DecreasePool()
+{
+	std::unique_lock<std::mutex> lock(mtx_);
+	if (idle_objects_.size() <= min_idle_object_count_)
+		return false;
+
+	DWORD decrease_count = static_cast<DWORD>(idle_objects_.size() - min_idle_object_count_);
+	if (decrease_count > variance_object_count_)
+		decrease_count = variance_object_count_;
+
+	for (DWORD i = 0; i < decrease_count; ++i)
 	{
-		std::unique_lock<std::mutex> lock(mtx_);
-		if (idle_objects_.size() <= min_idle_object_count_)
-			return false;
+		if (idle_objects_.empty())
+			break;
 
-		DWORD decrease_count = static_cast<DWORD>(idle_objects_.size() - min_idle_object_count_);
-		if (decrease_count > variance_object_count_)
-			decrease_count = variance_object_count_;
+		std::shared_ptr<T> object = *idle_objects_.begin();
+		auto itor = objects_.find(object);
 
-		for (DWORD i = 0; i < decrease_count; ++i)
+		if (itor == objects_.end())
 		{
-			if (idle_objects_.empty())
-				break;
+			assert(false);
+			break;
+		}
 
-			std::shared_ptr<T> object = *idle_objects_.begin();
-			auto itor = objects_.find(object);
+		if (object.use_count() != idle_object_use_count_)
+		{
+			assert(false);
+			break;
+		}
 
-			if (itor == objects_.end())
-			{
-				assert(false);
-				break;
-			}
+		objects_.erase(object);
+		idle_objects_.erase(object);
+	}
 
-			if (object.use_count() != idle_object_use_count_)
-			{
-				assert(false);
-				break;
-			}
+	return true;
+}
 
-			objects_.erase(object);
+template<typename T>
+bool ObjectPool<T>::ChangeObjectStatus(std::shared_ptr<T> object, OBJECT_STATUS status)
+{
+	std::unique_lock<std::mutex> lock(mtx_);
+	auto itor = objects_.find(object);
+	if (itor == objects_.end())
+		return false;
+
+	OBJECT_STATUS& object_status = itor->second;
+	switch (object_status)
+	{
+	case OBJECT_STATUS::OBJECT_STATUS_IDLE:
+	{
+		if (status == OBJECT_STATUS::OBJECT_STATUS_USED)
+		{
+			used_objects_.insert(object);
 			idle_objects_.erase(object);
 		}
-
-		return true;
-	}
-
-	bool ChangeObjectStatus(std::shared_ptr<T> object, OBJECT_STATUS status)
-	{
-		std::unique_lock<std::mutex> lock(mtx_);
-		auto itor = objects_.find(object);
-		if (itor == objects_.end())
-			return false;
-
-		OBJECT_STATUS& object_status = itor->second;
-		switch (object_status)
-		{
-		case OBJECT_STATUS::OBJECT_STATUS_IDLE:
-		{
-			if (status == OBJECT_STATUS::OBJECT_STATUS_USED)
-			{
-				used_objects_.insert(object);
-				idle_objects_.erase(object);
-			}
-			else
-			{
-				assert(false);
-				return false;
-			}
-		}
-		break;
-		case OBJECT_STATUS::OBJECT_STATUS_INACTIVE_WAIT:
-		{
-			if (status == OBJECT_STATUS::OBJECT_STATUS_IDLE)
-			{
-				idle_objects_.insert(object);
-				inactive_wait_objects_.erase(object);
-			}
-			else
-			{
-				assert(false);
-				return false;
-			}
-		}
-		break;
-		case OBJECT_STATUS::OBJECT_STATUS_USED:
-		{
-			if (status == OBJECT_STATUS::OBJECT_STATUS_INACTIVE_WAIT)
-			{
-				inactive_wait_objects_.insert(ChunkTickMap::value_type(object, GetTickCount64()));
-				used_objects_.erase(object);
-			}
-			else
-			{
-				assert(false);
-				return false;
-			}
-		}
-		break;
-		default:
+		else
 		{
 			assert(false);
 			return false;
 		}
-		break;
+	}
+	break;
+	case OBJECT_STATUS::OBJECT_STATUS_INACTIVE_WAIT:
+	{
+		if (status == OBJECT_STATUS::OBJECT_STATUS_IDLE)
+		{
+			idle_objects_.insert(object);
+			inactive_wait_objects_.erase(object);
 		}
-
-		object_status = status;
-
-		return true;
+		else
+		{
+			assert(false);
+			return false;
+		}
+	}
+	break;
+	case OBJECT_STATUS::OBJECT_STATUS_USED:
+	{
+		if (status == OBJECT_STATUS::OBJECT_STATUS_INACTIVE_WAIT)
+		{
+			inactive_wait_objects_.insert(ChunkTickMap::value_type(object, GetTickCount64()));
+			used_objects_.erase(object);
+		}
+		else
+		{
+			assert(false);
+			return false;
+		}
+	}
+	break;
+	default:
+	{
+		assert(false);
+		return false;
+	}
+	break;
 	}
 
+	object_status = status;
 
-	const static BYTE idle_object_use_count_ = 2;
-
-	ChunkSet idle_objects_;
-	ChunkTickMap inactive_wait_objects_;
-	ChunkSet used_objects_;
-
-	ChunkStatusMap objects_;
-
-	DWORD min_idle_object_count_;
-	DWORD max_object_count_;
-	DWORD variance_object_count_;
-
-	std::mutex mtx_;
-};
+	return true;
+}

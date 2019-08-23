@@ -119,14 +119,8 @@
     <ClCompile Include="ThreadBase.cpp">
       <Filter>Thread</Filter>
     </ClCompile>
-    <ClCompile Include="ObjectPool.cpp">
-      <Filter>Object</Filter>
-    </ClCompile>
     <ClCompile Include="CallBackManager.cpp">
       <Filter>CallBack</Filter>
-    </ClCompile>
-    <ClCompile Include="Wrapper.cpp">
-      <Filter>Object</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
