@@ -23,8 +23,8 @@ private:
 	bool Initialize();
 
 	OBJECT_STATUS GetObjectStatus(std::shared_ptr<T> object);
-	T* Push();
-	bool Pop(T*);
+	bool Push(OBJECT_STATUS status, T* object);
+	T* Pop(OBJECT_STATUS status);
 
 	bool Return(std::shared_ptr<T> object);
 
@@ -38,9 +38,7 @@ private:
 	
 	bool IncreasePool();
 	bool DecreasePool();
-	
-	bool ChangeObjectStatus(std::shared_ptr<T> object, OBJECT_STATUS status);
-	
+
 	ChunkSetByStatus chunk_by_status_;
 	ChunkMap chunks_;
 
@@ -60,6 +58,8 @@ ObjectPool<T>::ObjectPool()
 template<typename T>
 ObjectPool<T>::~ObjectPool()
 {
+	while (chunks_.empty() == false)
+		DecreasePool();
 }
 
 template<typename T>
@@ -102,9 +102,14 @@ OBJECT_STATUS ObjectPool<T>::GetObjectStatus(std::shared_ptr<T> object)
 }
 
 template<typename T>
-T* ObjectPool<T>::Push()
+bool ObjectPool<T>::Push(OBJECT_STATUS status, T* object)
+{	
+
+}
+
+template<typename T>
+T* ObjectPool<T>::Pop(OBJECT_STATUS status)
 {
-	
 	{
 		std::unique_lock<std::mutex> lock(io_mtx_);
 
@@ -114,20 +119,12 @@ T* ObjectPool<T>::Push()
 				return nullptr;
 		}
 
-		object = *idle_objects_.begin();
-		if (ChangeObjectStatus(object, OBJECT_STATUS::OBJECT_STATUS_USED) == false)
-			return nullptr;
+
+
+		T* object = idle_objects_.begin();
 	}
 
 	return object;
-}
-
-template<typename T>
-inline bool ObjectPool<T>::Pop(T*)
-{
-
-
-	return false;
 }
 
 template<typename T>
@@ -140,9 +137,6 @@ bool ObjectPool<T>::Return(std::shared_ptr<T> object)
 			return false;
 	}
 	
-	if (ChangeObjectStatus(object, OBJECT_STATUS::OBJECT_STATUS_INACTIVE_WAIT) == false)
-		return false;
-
 	return false;
 }
 
@@ -203,72 +197,6 @@ inline bool ObjectPool<T>::DecreasePool()
 		objects_.erase(object);
 		idle_objects_.erase(object);
 	}
-
-	return true;
-}
-
-template<typename T>
-bool ObjectPool<T>::ChangeObjectStatus(std::shared_ptr<T> object, OBJECT_STATUS status)
-{
-	std::unique_lock<std::mutex> lock(mtx_);
-	auto itor = objects_.find(object);
-	if (itor == objects_.end())
-		return false;
-
-	OBJECT_STATUS& object_status = itor->second;
-	switch (object_status)
-	{
-	case OBJECT_STATUS::OBJECT_STATUS_IDLE:
-	{
-		if (status == OBJECT_STATUS::OBJECT_STATUS_USED)
-		{
-			used_objects_.insert(object);
-			idle_objects_.erase(object);
-		}
-		else
-		{
-			assert(false);
-			return false;
-		}
-	}
-	break;
-	case OBJECT_STATUS::OBJECT_STATUS_INACTIVE_WAIT:
-	{
-		if (status == OBJECT_STATUS::OBJECT_STATUS_IDLE)
-		{
-			idle_objects_.insert(object);
-			inactive_wait_objects_.erase(object);
-		}
-		else
-		{
-			assert(false);
-			return false;
-		}
-	}
-	break;
-	case OBJECT_STATUS::OBJECT_STATUS_USED:
-	{
-		if (status == OBJECT_STATUS::OBJECT_STATUS_INACTIVE_WAIT)
-		{
-			inactive_wait_objects_.insert(ChunkTickMap::value_type(object, GetTickCount64()));
-			used_objects_.erase(object);
-		}
-		else
-		{
-			assert(false);
-			return false;
-		}
-	}
-	break;
-	default:
-	{
-		assert(false);
-		return false;
-	}
-	break;
-	}
-
-	object_status = status;
 
 	return true;
 }
