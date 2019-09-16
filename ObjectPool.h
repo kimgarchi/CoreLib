@@ -4,31 +4,27 @@
 
 namespace gc
 {
-	// head
-
-	enum class OBJECT_STATUS
-	{
-		OBJECT_STATUS_UNUSED,
-		OBJECT_STATUS_USED,
-	};
-
-	template<typename T>
+	template<typename _Ty>
 	class ObjectPool : final
 	{
-	public:
-		static bool Initialize(DWORD min_object_count, DWORD max_object_count, DWORD variance_object_count);
-
 	private:
-		ObjectPool<T>();
-		~ObjectPool<T>();
+		using _pTy = _Ty *;
+		using _rTy = _Ty &;
+		using ChunkQue = std::queue<T*>;
+		using ChunkQueByStatus = std::map<OBJECT_STATUS, ChunkQue>;
+		using ChunkMap = std::map<T*, OBJECT_STATUS>;
 
-		ObjectPool<T>(const ObjectPool<T>&) = delete;
-		void operator=(const ObjectPool<T>&) = delete;
+		static bool Initialize(DWORD min_object_count, DWORD max_object_count, DWORD variance_object_count);		
+
+		ObjectPool<_Ty>();
+		~ObjectPool<_Ty>();
+
+		ObjectPool<_Ty>(const ObjectPool<_Ty>&) = delete;
+		void operator=(const ObjectPool<_Ty>&) = delete;
 
 		bool Initialize();
 
-		OBJECT_STATUS GetObjectStatus(std::shared_ptr<T> object);
-		bool Push(OBJECT_STATUS status, T* object);
+		bool Push(_* object);
 		T* Pop(OBJECT_STATUS status);
 
 		bool Return(std::shared_ptr<T> object);
@@ -36,10 +32,6 @@ namespace gc
 		DWORD GetIdleChunkSize() { return static_cast<DWORD>(idle_objects_.size()); }
 		DWORD GetUseChunkSize() { return static_cast<DWORD>(used_objects_.size()); }
 		DWORD GetTotalChunkSize() { return static_cast<DWORD>(GetIdleChunkSize() + GetUseChunkSize()); }
-
-		using ChunkQue = std::queue<T*>;
-		using ChunkQueByStatus = std::map<OBJECT_STATUS, ChunkQue>;
-		using ChunkMap = std::map<T*, OBJECT_STATUS>;
 
 		bool IncreasePool();
 		bool DecreasePool();
