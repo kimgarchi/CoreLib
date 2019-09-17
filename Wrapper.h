@@ -22,6 +22,38 @@ template<typename _Ty>
 using _rWrapperBase = wrapper_base<_Ty> &;
 
 template<typename _Ty>
+class unique_wrapper final
+{
+public:
+	unique_wrapper(_Ty* data);
+	~unique_wrapper();
+
+	_Ty* operator()() { return data(); }
+	_Ty& operator*() { return *data(); }
+	_Ty& operator->() { return *data(); }
+
+private:
+	_Ty* data() { return data_; }
+
+	_Ty* pdata_;
+};
+
+template<typename _Ty>
+unique_wrapper<_Ty>::unique_wrapper(_Ty* data)
+	: data_(data)
+{}
+
+template<typename T>
+unique_wrapper<T>::~unique_wrapper()
+{
+	if (data_ != nullptr)
+	{
+		delete data_;
+		data_ = nullptr;
+	}
+}
+
+template<typename _Ty>
 class wrapper_base abstract
 {
 private:
