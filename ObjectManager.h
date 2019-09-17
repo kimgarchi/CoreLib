@@ -13,7 +13,7 @@ public:
 
 	virtual bool initialize() {}
 	
-protected:	
+protected:
 	
 private:
 	
