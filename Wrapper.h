@@ -1,114 +1,86 @@
 #pragma once
 #include "stdafx.h"
-
-using _Cnt = WORD;
-using _pCnt = _Cnt *;
-
-template<typename _Ty>
-class unique_wrapper;
+#include "ObjectStation.h"
+#include "ObjectManager.h"
 
 template<typename _Ty>
-class wrapper_base;
+class wrap abstract;
 
 template<typename _Ty>
-class shared_wrapper;
+class wrapper;
 
 template<typename _Ty>
-class weak_wrapper;
+class wrapper_hub;
 
 template<typename _Ty>
-using _pWrapperBase = wrapper_base<_Ty>*;
+class wrapper_node;
+
+//
 template<typename _Ty>
-using _rWrapperBase = wrapper_base<_Ty> &;
-
-template<typename _Ty>
-class unique_wrapper final
-{
-public:
-	unique_wrapper(_Ty* data);
-	~unique_wrapper();
-
-	_Ty* operator()() { return data(); }
-	_Ty& operator*() { return *data(); }
-	_Ty& operator->() { return *data(); }
-
-private:
-	_Ty* data() { return data_; }
-
-	_Ty* pdata_;
-};
-
-template<typename _Ty>
-unique_wrapper<_Ty>::unique_wrapper(_Ty* data)
-	: data_(data)
-{}
-
-template<typename T>
-unique_wrapper<T>::~unique_wrapper()
-{
-	if (data_ != nullptr)
-	{
-		delete data_;
-		data_ = nullptr;
-	}
-}
-
-template<typename _Ty>
-class wrapper_base abstract
+class wrap abstract
 {
 private:
-	_Ty* wrapping_data_;
-	_pCnt use_count_;
-
-public:
-	wrapper_base(_Ty* data)
-		: wrapping_data_(data)
-	{
-		use_count_ = new _Cnt(0);
-	}
-
-	wrapper_base(_Ty* data, _pCnt use_count)
-		: wrapping_data_(data), use_count_(use_count)
-	{
-	}
-
-	virtual ~wrapper_base() {}
-
-	_Ty* operator()() { return wrapping_data(); }
-	_Ty& operator*() { return *wrapping_data(); }
-	_Ty& operator->() { return *wrapping_data(); }
-
-	virtual WORD use_count() { return *ref_use_count(); }
+	std::atomic<WORD> use_count_;
+	ObjectPool<_Ty>* bind_pool_;
 
 protected:
-	virtual _Ty* wrapping_data() { return wrapping_data_; }
-	_pCnt ref_use_count() { return use_count_; }
+	wrap();
+	virtual ~wrap();
 
-	void add_use_count() { *ref_use_count() += 1; }
-	void sub_use_count() { *ref_use_count() -= 1; }
+	inline std::atomic<WORD>& _use_count() { return use_count_; }
+	inline void _increase_use_count() { _use_count().fetch_add(1); }
+	inline void _decrease_use_count() { _use_count().fetch_sub(1); }
+
+	virtual _Ty* _data() abstract;
+
+public:
+	_Ty* operator()() { return _data(); }
+	_Ty& operator*() { return *_data(); }
+	_Ty& operator->() { return *_data(); }
+
+	WORD use_count() { return _use_count(); }
+};
+
+
+//
+template<typename _Ty>
+class wrapper final : public wrap<_Ty>
+{
+private:
+	wrapper(_Ty* data);
+	wrapper();
+
+	virtual _Ty* _data() override { return data_; }
+
+	_Ty* data_;
+public:
+	virtual ~wrapper();
+};
+
+//
+template<typename _Ty>
+class wrapper_hub : public wrap<_Ty>
+{
+private:
+	wrapper_hub(wrapper<_Ty>& wrapper);
+	virtual _Ty* _data() override { return wrapper_(); }
+
+	wrapper<_Ty>& wrapper_;
+
+public:
+	virtual ~wrapper_hub();
+	wrapper_node<_Ty> make_node();
 };
 
 template<typename _Ty>
-class shared_wrapper final : public wrapper_base<_Ty>
+class wrapper_node : public wrap<_Ty>
 {
+private:
+	wrapper_node(wrapper_hub<_Ty>& hub);
+	wrapper_hub<_Ty>& hub_;
+
+	virtual _Ty* _data() override { return hub_._data(); }
+
 public:
-	shared_wrapper(_Ty* data)
-		: wrapper_base<_Ty>(data)
-	{
-		this->add_use_count();
-	}
-
-	shared_wrapper(shared_wrapper<_Ty>& origin_wrapper)
-		: wrapper_base<_Ty>(origin_wrapper.wrapping_data(), origin_wrapper.ref_use_count())
-	{
-		this->add_use_count();
-	}
-
-	virtual ~shared_wrapper()
-	{
-		this->sub_use_count();
-	}
-
-	void operator=(unique_wrapper<_Ty>&) = delete;
-	void operator=(shared_wrapper<_Ty>&) = delete;
+	virtual ~wrapper_node();
 };

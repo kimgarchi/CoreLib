@@ -43,6 +43,9 @@
     <Filter Include="CallBack">
       <UniqueIdentifier>{c2ae354b-4eb9-45a6-a9af-71706f281938}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Object\Wrapper">
+      <UniqueIdentifier>{0992d025-27a2-4c36-963c-1b8b982c04d2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -102,8 +105,14 @@
     <ClInclude Include="CallBack.h">
       <Filter>CallBack</Filter>
     </ClInclude>
-    <ClInclude Include="Wrapper.h">
+    <ClInclude Include="ObjectStation.h">
       <Filter>Object</Filter>
+    </ClInclude>
+    <ClInclude Include="wrapper.h">
+      <Filter>Object\Wrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="singleton.h">
+      <Filter>DesignPattern</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -121,6 +130,15 @@
     </ClCompile>
     <ClCompile Include="CallBackManager.cpp">
       <Filter>CallBack</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectStation.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="wrapper.cpp">
+      <Filter>Object\Wrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectPool.cpp">
+      <Filter>Object</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
