@@ -1,6 +1,81 @@
 #include "stdafx.h"
 #include "wrapper.h"
 
+template<typename _Ty>
+wrap<_Ty>::wrap<_Ty>()
+	: use_count_(0)
+{
+}
+
+template<typename _Ty>
+wrap<_Ty>::~wrap<_Ty>()
+{
+	assert(use_count_ != 0);
+}
+
+template<typename _Ty>
+wrapper<_Ty>::wrapper(_Ty* data, bool binding)
+	: data_(data), bind_pool_(nullptr)
+{
+	assert(data_ != nullptr);
+
+	if (binding)
+	{
+		// ..binding...
+	}
+}
+
+template<typename _Ty>
+wrapper<_Ty>::~wrapper()
+{
+	_clear();
+}
+
+template<typename _Ty>
+void wrapper<_Ty>::_clear()
+{
+	assert(use_count() == 0);
+
+	if (bind_pool_ == nullptr)
+	{
+		delete data_;
+		data_ = nullptr
+	}
+	else
+	{
+		// back...
+	}
+}
+
+template<typename _Ty>
+wrapper_hub<_Ty>::~wrapper_hub()
+{
+	wrapper_._decrease_use_count();
+	if (wrapper_.use_count() == 0)
+	{
+		if (bind_pool_ == nullptr)
+		{
+
+		}
+		else
+		{
+
+		}
+	}
+}
+
+template<typename _Ty>
+wrapper_hub<_Ty>::wrapper_hub(wrapper<_Ty>& wrapper)
+	: wrapper_(wrapper)
+{
+}
+
+template<typename _Ty>
+wrapper_node<_Ty>::~wrapper_node()
+{
+
+}
+
 /*
 template<typename _Ty>
 class unique_wrapper final

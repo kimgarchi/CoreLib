@@ -46,6 +46,15 @@
     <Filter Include="Object\Wrapper">
       <UniqueIdentifier>{0992d025-27a2-4c36-963c-1b8b982c04d2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Object\Pool">
+      <UniqueIdentifier>{79764562-3479-45c7-bb3d-7648bf674267}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\Manager">
+      <UniqueIdentifier>{e1939997-8cb6-48d1-b617-6c2c6e920a7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object\Station">
+      <UniqueIdentifier>{463d4501-d86d-4cff-8e9b-85b4e17a4182}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -69,9 +78,6 @@
     <ClInclude Include="Define.h">
       <Filter>Define</Filter>
     </ClInclude>
-    <ClInclude Include="ObjectPool.h">
-      <Filter>Object</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -80,9 +86,6 @@
     </ClInclude>
     <ClInclude Include="SocketBase.h">
       <Filter>Socket</Filter>
-    </ClInclude>
-    <ClInclude Include="ObjectManager.h">
-      <Filter>Object</Filter>
     </ClInclude>
     <ClInclude Include="ThreadBase.h">
       <Filter>Thread</Filter>
@@ -93,9 +96,6 @@
     <ClInclude Include="ThreadManager.h">
       <Filter>Thread</Filter>
     </ClInclude>
-    <ClInclude Include="Object.h">
-      <Filter>Object</Filter>
-    </ClInclude>
     <ClInclude Include="ObjectCycleCallBack.h">
       <Filter>CallBack</Filter>
     </ClInclude>
@@ -105,14 +105,20 @@
     <ClInclude Include="CallBack.h">
       <Filter>CallBack</Filter>
     </ClInclude>
-    <ClInclude Include="ObjectStation.h">
-      <Filter>Object</Filter>
-    </ClInclude>
     <ClInclude Include="wrapper.h">
       <Filter>Object\Wrapper</Filter>
     </ClInclude>
     <ClInclude Include="singleton.h">
       <Filter>DesignPattern</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectPool.h">
+      <Filter>Object\Pool</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectManager.h">
+      <Filter>Object\Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectStation.h">
+      <Filter>Object\Station</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -131,14 +137,14 @@
     <ClCompile Include="CallBackManager.cpp">
       <Filter>CallBack</Filter>
     </ClCompile>
-    <ClCompile Include="ObjectStation.cpp">
-      <Filter>Object</Filter>
-    </ClCompile>
     <ClCompile Include="wrapper.cpp">
       <Filter>Object\Wrapper</Filter>
     </ClCompile>
     <ClCompile Include="ObjectPool.cpp">
-      <Filter>Object</Filter>
+      <Filter>Object\Pool</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectStation.cpp">
+      <Filter>Object\Station</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

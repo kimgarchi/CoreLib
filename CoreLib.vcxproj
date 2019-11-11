@@ -152,7 +152,6 @@
     <ClInclude Include="DataStream.h" />
     <ClInclude Include="Define.h" />
     <ClInclude Include="Msg.h" />
-    <ClInclude Include="Object.h" />
     <ClInclude Include="ObjectCycleCallBack.h" />
     <ClInclude Include="ObjectStation.h" />
     <ClInclude Include="singleton.h" />

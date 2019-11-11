@@ -6,6 +6,9 @@
 template<typename _Ty>
 class ObjectPool
 {
+public:
+
+
 private:
 	using ChunkQue = std::queue<_Ty*>;
 	using ChunkSet = std::set<_Ty*>;
