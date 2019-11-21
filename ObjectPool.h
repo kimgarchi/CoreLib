@@ -1,6 +1,5 @@
 #pragma once
 #include "stdafx.h"
-#include "Object.h"
 
 
 template<typename _Ty>
@@ -13,7 +12,7 @@ private:
 	using ChunkQue = std::queue<_Ty*>;
 	using ChunkSet = std::set<_Ty*>;
 
-	static bool Initialize(DWORD min_object_count, DWORD max_object_count, DWORD variance_object_count);		
+	static bool Initialize(DWORD min_object_count, DWORD max_object_count, DWORD variance_object_count);
 
 	ObjectPool<_Ty>();
 	~ObjectPool<_Ty>();

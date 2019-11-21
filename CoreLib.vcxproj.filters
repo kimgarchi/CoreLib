@@ -137,9 +137,6 @@
     <ClCompile Include="CallBackManager.cpp">
       <Filter>CallBack</Filter>
     </ClCompile>
-    <ClCompile Include="wrapper.cpp">
-      <Filter>Object\Wrapper</Filter>
-    </ClCompile>
     <ClCompile Include="ObjectPool.cpp">
       <Filter>Object\Pool</Filter>
     </ClCompile>
