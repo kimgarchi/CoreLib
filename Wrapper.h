@@ -5,139 +5,88 @@
 
 namespace
 {
-	template<typename _Ty>
-	class wrap abstract;
+	template<typename _Ty, typename _Size>
+	class wrapper abstract;
 
-	template<typename _Ty>
-	class wrapper;
-
-	template<typename _Ty>
+	template<typename _Ty, typename _Size>
 	class wrapper_hub;
 
-	template<typename _Ty>
+	template<typename _Ty, typename _Size>
 	class wrapper_node;
-	
-	template<typename _Ty>
-	class wrap abstract
+}
+
+namespace
+{
+	template<typename _Ty, typename _Size = BYTE>
+	class wrapper abstract
 	{
 	public:
-		wrap();
-		virtual ~wrap();
-
 		_Ty* operator()() { return _data(); }
 		_Ty& operator*() { return *_data(); }
 		_Ty& operator->() { return *_data(); }
 
-		inline WORD use_count() { return _use_count(); }
+		virtual std::atomic<_Size>& use_count() abstract;
 
 	protected:
-		using atomic_count = std::atomic<WORD>;
-
-		inline void _increase_use_count() { _use_count().fetch_add(1); }
-		inline void _decrease_use_count() { _use_count().fetch_sub(1); }
+		void _increase_use_count() { use_count().fetch_add(1); }
+		void _decrease_use_count() { use_count().fetch_sub(1); }
 
 		virtual _Ty* _data() abstract;
+	};	
 
-	private:
-		inline atomic_count& _use_count() { return use_count_; }
-
-		atomic_count use_count_;
-	};
-
-	template<typename _Ty>
-	class wrapper : public wrap<_Ty>
+	template<typename _Ty, typename _Size = BYTE>
+	class wrapper_hub final : public wrapper<_Ty, _Size>
 	{
 	public:
-		explicit wrapper(_Ty* data);
-		virtual ~wrapper();
+		using Hub = wrapper_hub<_Ty, _Size>;
 
-		wrapper_hub<_Ty> make_hub();
-
-	private:
-		using BindHub = std::set<wrapper_hub<_Ty>>;
-
-		virtual _Ty* _data() override { return data_; }
-		
-		_Ty* data_;
-		BindHub bind_hub_;
-	};
-	
-	template<typename _Ty>
-	class wrapper_hub : public wrap<_Ty>
-	{
-	public:		
+		wrapper_hub(_Ty* data = nullptr);
+		wrapper_hub(Hub& hub = nullptr);
 		virtual ~wrapper_hub();
-		inline wrapper_node<_Ty> make_node() { return wrapper_node<_Ty>(this); }
+
+		wrapper_node<_Ty, _Size> make_node() { return wrapper_node<_Ty, _Size>(this); }
+
+		virtual std::atomic<_Size>& use_count() override { return hub().use_count_; }
 
 	private:
-		friend class wrapper<_Ty>;
+		virtual _Ty* _data() override { return hub().data_; }
+		Hub& hub() { return hub_ == nullptr ? *this : hub_->hub(); }
 
-		wrapper_hub(wrapper<_Ty>& wrapper);
-		virtual _Ty* _data() override { return wrapper_(); }
-
-		wrapper<_Ty>& wrapper_;
+		Hub* hub_;
+		_Ty* data_;
+		std::atomic<_Size> use_count_;
 	};
-	/*
-	template<typename _Ty>
-	class wrapper_node : public wrap<_Ty>
-	{
-	public:
-		virtual ~wrapper_node();
-
-	private:
-		friend class wrapper_hub<_Ty>;
-
-		wrapper_node(wrapper_hub<_Ty>& hub);
-		wrapper_hub<_Ty>& hub_;
-
-		virtual _Ty* _data() override { return hub_._data(); }
-	};
-	*/
-	template<typename _Ty>
-	wrap<_Ty>::wrap()
-		: use_count_(0)
-	{
-	}
-
-	template<typename _Ty>
-	wrap<_Ty>::~wrap()
-	{
-		assert(use_count_ == 0);
-	}
-
-	template<typename _Ty>
-	wrapper<_Ty>::wrapper(_Ty* data)
-		: wrap<_Ty>(), data_(data)
-	{
-		wrap<_Ty>::_increase_use_count();
-	}
-
-	template<typename _Ty>
-	wrapper<_Ty>::~wrapper()
-	{
-	}
-		
-	template<typename _Ty>
-	wrapper_hub<_Ty> wrapper<_Ty>::make_hub()
-	{
-		return wrapper_hub<_Ty>(this);
-	}
 	
-	template<typename _Ty>
-	wrapper_hub<_Ty>::wrapper_hub(wrapper<_Ty>& wrapper)
-		: wrapper_(wrapper)
+	template<typename _Ty, typename _Size>
+	wrapper_hub<_Ty, _Size>::wrapper_hub(_Ty* data)
+		: hub_(nullptr), data_(data), use_count_(0)
 	{
-		wrapper_._increase_hub_count();
+		if (data_ == nullptr)
+		{
+			ASSERT(false, L"...");
+			// pooling object...
+		}
+		
+		ASSERT(data_ != nullptr, L"wrapper_hub new failed...");		
+		wrapper<_Ty, _Size>::_increase_use_count();
 	}
 
-	template<typename _Ty>
-	wrapper_hub<_Ty>::~wrapper_hub()
+	template<typename _Ty, typename _Size>
+	wrapper_hub<_Ty, _Size>::wrapper_hub(Hub& hub)
+		: hub_(&hub), data_(nullptr), use_count_(0)
 	{
-		wrapper_._decrease_hub_count();
-		if (wrapper_.use_count() == 0)
-		{
+		wrapper<_Ty, _Size>::_increase_use_count();
+	}
 
-		}
+	template<typename _Ty, typename _Size>
+	wrapper_hub<_Ty, _Size>::~wrapper_hub()
+	{
+		wrapper<_Ty, _Size>::_decrease_use_count();
+		if (hub_ == nullptr)
+		{
+			if (use_count_ == 0)
+				SAFE_DELETE(data_);
+		}			
 	}
 }
 
