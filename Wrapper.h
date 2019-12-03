@@ -17,6 +17,17 @@ namespace
 
 namespace
 {
+	template <class _Type, class... _Types>
+	constexpr wrapper_hub<_Type> make_wrapper_hub(_Types&&... _Args)
+	{
+		// if station...
+		// ...
+
+		// ... else
+
+		return wrapper_hub<_Type>(new _Type(std::forward<_Types>(_Args)...));
+	}
+
 	template<typename _Ty, typename _Size = BYTE>
 	class wrapper abstract
 	{
