@@ -3,21 +3,23 @@
 #include "ObjectPool.h"
 #include "wrapper.h"
 
-namespace
+namespace co
 {
 	class ObjectStation final
 	{
 	public:
-		
+		ObjectStation();
+
+		template<typename _Ty>
+		bool RegistType();
+
 	private:
 		using TID = size_t;
 		using ObjectPools = std::map<TID, PVOID>;
 
-		static DWORD min_object_count_;
-		static DWORD max_object_count_;
-		static DWORD variance_object_count_;
+		static bool duplicated_create;
 
 		ObjectPools object_pools_;
+		
 	};
-
 }

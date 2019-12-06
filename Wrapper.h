@@ -29,14 +29,14 @@ inline constexpr wrapper_hub<_Ty, _Size> make_wrapper_hub(_Tys&&... _Args)
 template<typename _Ty, typename _Size>
 class wrapper abstract
 {
-public:
+public:	
 	_Ty* operator()() { return _data(); }
 	_Ty& operator*() { return *_data(); }
 	_Ty& operator->() { return *_data(); }
 
 	virtual std::atomic<_Size>& use_count() abstract;
 
-protected:
+protected:	
 	void _increase_use_count() { use_count().fetch_add(1); }
 	void _decrease_use_count() { use_count().fetch_sub(1); }
 
@@ -47,14 +47,15 @@ template<typename _Ty, typename _Size>
 class wrapper_hub final : public wrapper<_Ty, _Size>
 {
 public:
-	using Hub = wrapper_hub<_Ty, _Size>;
-
-	wrapper_hub(const Hub& hub);
+	wrapper_hub(const wrapper_hub<_Ty, _Size>& hub);
 	
 	virtual ~wrapper_hub();
 
-	wrapper_node<_Ty, _Size> make_node() { return wrapper_node<_Ty, _Size>(this); }
+	wrapper_node<_Ty, _Size> make_node() { return wrapper_node<_Ty, _Size>(*this); }
 	virtual std::atomic<_Size>& use_count() override { return hub().use_count_; }
+	std::atomic<_Size>& node_count() { return node_count_; }
+
+	wrapper_node<_Ty, _Size> operator=(wrapper_hub<_Ty, _Size>& hub) { std::cout << "operator node..." << std::endl; hub.make_node(); }
 
 private:
 	template <typename _Ty, typename _Size = BYTE, typename... _Tys,
@@ -63,18 +64,16 @@ private:
 
 	friend class wrapper_node<_Ty, _Size>;
 	
-	void _increase_node_count() { _node_count().fetch_add(1); }
-	void _decrease_node_count() { _node_count().fetch_sub(1); }
-
-	std::atomic<_Size>& _node_count() { return node_count_; }
+	void _increase_node_count() { node_count().fetch_add(1); }
+	void _decrease_node_count() { node_count().fetch_sub(1); }
 
 	wrapper_hub(_Ty* data = nullptr);
 	virtual _Ty* _data() override { return hub().data_; }
 
 	bool is_main_hub() { return hub_ == nullptr ? true : false; }
-	Hub& hub() { return is_main_hub() == true ? *this : hub_->hub(); }
+	wrapper_hub<_Ty, _Size>& hub() { return is_main_hub() == true ? *this : hub_->hub(); }
 
-	Hub* hub_;
+	wrapper_hub<_Ty, _Size>* hub_;
 	_Ty* data_;
 	std::atomic<_Size> use_count_;
 	std::atomic<_Size> node_count_;
@@ -95,7 +94,7 @@ wrapper_hub<_Ty, _Size>::wrapper_hub(_Ty* data)
 }
 
 template<typename _Ty, typename _Size>
-wrapper_hub<_Ty, _Size>::wrapper_hub(const Hub& hub)
+wrapper_hub<_Ty, _Size>::wrapper_hub(const wrapper_hub<_Ty, _Size>& hub)
 	: hub_(&hub), data_(nullptr), use_count_(0), node_count_(0)
 {
 	wrapper<_Ty, _Size>::_increase_use_count();
@@ -109,12 +108,12 @@ wrapper_hub<_Ty, _Size>::~wrapper_hub()
 	{
 		if (use_count_ == 0)
 		{
-			if (_node_count() != 0)
+			if (node_count() != 0)
 				ASSERT(false, L"remain node... invalid wrapper delete");
 
 			SAFE_DELETE(data_);
 		}			
-	}			
+	}
 }
 
 // don't put in a container
@@ -122,27 +121,39 @@ template<typename _Ty, typename _Size>
 class wrapper_node : public wrapper<_Ty, _Size>
 {
 public:
+	wrapper_node(const wrapper_node<_Ty, _Size>& node);
 	virtual ~wrapper_node();
-	inline virtual _Ty* _data() override { return bind_hub_._data(); }
-
+	
 private:
 	friend class wrapper_hub<_Ty, _Size>;
 
-	wrapper_node(const wrapper_hub<_Ty, _Size>& hub);
+	wrapper_node(wrapper_hub<_Ty, _Size>& hub);
+		
+	virtual std::atomic<_Size>& use_count() override { return _bind_hub().node_count(); }
+	virtual _Ty* _data() override { return _bind_hub()._data(); }
+	inline wrapper_hub<_Ty, _Size>& _bind_hub() { return bind_hub_; }
+	
 	wrapper_hub<_Ty, _Size>& bind_hub_;
 };
 
 template<typename _Ty, typename _Size>
-wrapper_node<_Ty, _Size>::~wrapper_node()
+wrapper_node<_Ty, _Size>::wrapper_node(const wrapper_node<_Ty, _Size>& node)
+	: bind_hub_(node.bind_hub_)
 {
-	bind_hub_._decrease_node_count();
+	_bind_hub()._increase_node_count();
 }
 
 template<typename _Ty, typename _Size>
-wrapper_node<_Ty, _Size>::wrapper_node(const wrapper_hub<_Ty, _Size>& hub)
+wrapper_node<_Ty, _Size>::~wrapper_node()
+{
+	_bind_hub()._decrease_node_count();
+}
+
+template<typename _Ty, typename _Size>
+wrapper_node<_Ty, _Size>::wrapper_node(wrapper_hub<_Ty, _Size>& hub)
 	: bind_hub_(hub)
 {
-	bind_hub_._increase_node_count();
+	_bind_hub()._increase_node_count();
 }
 
 #pragma warning (pop)
