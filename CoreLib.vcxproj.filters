@@ -120,6 +120,9 @@
     <ClInclude Include="ObjectStation.h">
       <Filter>Object\Station</Filter>
     </ClInclude>
+    <ClInclude Include="Object.h">
+      <Filter>Object\Wrapper</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

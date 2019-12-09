@@ -21,7 +21,7 @@ using is_numberic = std::enable_if<std::is_integral<_Ty>::value, _Ty>;
 
 template <typename _Ty, typename _Size = BYTE, typename... _Tys,
 	typename is_numberic<_Size>::type * = nullptr>
-inline constexpr wrapper_hub<_Ty, _Size> make_wrapper_hub(_Tys&&... _Args)
+constexpr wrapper_hub<_Ty, _Size> make_wrapper_hub(_Tys&&... _Args)
 {
 	return wrapper_hub<_Ty, _Size>(new _Ty(std::forward<_Tys>(_Args)...));
 }
@@ -87,7 +87,7 @@ private:
 	
 template<typename _Ty, typename _Size>
 wrapper_hub<_Ty, _Size>::wrapper_hub(const wrapper_hub<_Ty, _Size>& hub)
-	: hub_(&hub), data_(nullptr), use_count_(0), node_count_(0)
+	: hub_(const_cast<wrapper_hub<_Ty, _Size>*>(&hub)), data_(nullptr), use_count_(0), node_count_(0)
 {
 	wrapper<_Ty, _Size>::_increase_use_count();
 }
@@ -134,11 +134,14 @@ template<typename _Ty, typename _Size>
 class wrapper_node : public wrapper<_Ty, _Size>
 {
 public:
-	wrapper_node(wrapper_node<_Ty, _Size>& node);
+	
+	wrapper_node(wrapper_node<_Ty, _Size>& node) = delete;
+	wrapper_node<_Ty, _Size>& operator=(const wrapper_node<_Ty, _Size>&) = delete;
+
 	wrapper_node(const wrapper_node<_Ty, _Size>& node);
 
 	virtual ~wrapper_node();
-	
+
 private:
 	friend class wrapper_hub<_Ty, _Size>;
 
@@ -152,13 +155,6 @@ private:
 	
 	wrapper_hub<_Ty, _Size> bind_hub_;
 };
-
-template<typename _Ty, typename _Size>
-wrapper_node<_Ty, _Size>::wrapper_node(wrapper_node<_Ty, _Size>& node)
-	: bind_hub_(node.bind_hub_)
-{
-	_bind_hub()._increase_node_count();
-}
 
 template<typename _Ty, typename _Size>
 wrapper_node<_Ty, _Size>::wrapper_node(const wrapper_node<_Ty, _Size>& node)
