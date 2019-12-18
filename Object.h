@@ -1,19 +1,8 @@
 #pragma once
 #include "stdafx.h"
-#include "ObjectStation.h"
 
-namespace
+class object abstract
 {
-	class object abstract
-	{
-	public:
-		virtual ~object();
-
-		template<typename... _Tys>
-		void initilize(_Tys&&... _Args) abstract;
-	};
-
-	object::~object()
-	{
-	}
-}
+public:
+	virtual void initilize() abstract;
+};
