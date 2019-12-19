@@ -2,26 +2,24 @@
 #include "stdafx.h"
 #include "object.h"
 
-template<typename _Ty>
-using is_object = std::enable_if<std::is_base_of<object, _Ty>::value, _Ty>;
+class ObjectPoolBase abstract
+{
+protected:
+	friend class ObjectStation;
+	virtual void Clear() abstract;
+};
 
 template<typename _Ty, typename is_object<_Ty>::type * = nullptr>
-class ObjectPool final
+class ObjectPool final : public ObjectPoolBase
 {
 public:
 	using Chunks = std::queue<_Ty*>;
 	using ActiveObjects = std::set<_Ty*>;
 
-	ObjectPool(DWORD min_count = 0, DWORD max_count = 0, DWORD extend_count = 0)
-		: min_object_count_(min_count), max_object_count_(max_count), extend_object_count_(extend_count)
+	ObjectPool(DWORD init_count = 0, DWORD max_count = 0, DWORD extend_count = 0)
+		: init_object_count_(init_count), max_object_count_(max_count), extend_object_count_(extend_count)
 	{
-		IncreasePool(min_object_count_);
-	}
-
-	~ObjectPool()
-	{
-		min_object_count_ = 0;
-		Clear();
+		IncreasePool(init_object_count_);
 	}
 
 	ObjectPool(const ObjectPool<_Ty>&) = delete;
@@ -29,6 +27,8 @@ public:
 
 	bool Push(_Ty*& object)
 	{
+		object->initilize();
+
 		std::unique_lock<std::mutex> lock(mtx_);
 		{
 			if (active_objects_.find(object) == active_objects_.end())
@@ -62,23 +62,20 @@ public:
 				return nullptr;
 			}
 
-			object->initilize();
 			chunks_.pop();
-
-			
 		}
 
 		return object;
 	}
 
-private:
-	
-	DWORD GetIdleChunkSize() { return static_cast<DWORD>(chunks_.size()); }
-	DWORD GetActiveChunkSize() { return abs(static_cast<DWORD>(chunks_.size() - active_objects_.size())); }
-	DWORD GetTotalChunkSize() { return static_cast<DWORD>(chunks_.size() + active_objects_.size()); }
+	void set_extend_object_count(DWORD extend_count) { extend_object_count_ = extend_count; }	
+	bool set_max_object_count(DWORD max_count) { max_object_count_ = max_count; }
 
-	void Clear()
+private:	
+	virtual void Clear() override
 	{
+		std::cout << "clear - " << typeid(*this).name() << std::endl;
+
 		std::for_each(active_objects_.begin(), active_objects_.end(),
 			[&](_Ty* object)
 		{
@@ -92,6 +89,10 @@ private:
 		}
 	}
 
+	DWORD GetIdleChunkSize() { return static_cast<DWORD>(chunks_.size()); }
+	DWORD GetActiveChunkSize() { return abs(static_cast<DWORD>(chunks_.size() - active_objects_.size())); }
+	DWORD GetTotalChunkSize() { return static_cast<DWORD>(chunks_.size() + active_objects_.size()); }
+
 	bool IncreasePool(DWORD extend_size = 0)
 	{
 		if (extend_size == 0)
@@ -99,7 +100,7 @@ private:
 
 		std::unique_lock<std::mutex> lock(mtx_);
 		{
-			if (GetIdleChunkSize() >= max_object_count_)
+			if (GetTotalChunkSize() >= max_object_count_)
 				return false;
 
 			if (GetIdleChunkSize() + extend_size > max_object_count_)
@@ -122,10 +123,7 @@ private:
 
 		std::unique_lock<std::mutex> lock(mtx_);
 		{
-			if (GetIdleChunkSize() <= min_object_count_)
-				return false;
-
-			if (GetIdleChunkSize() - reduce_size < min_object_count_)
+			if (GetIdleChunkSize() - reduce_size < init_object_count_)
 				reduce_size = GetIdleChunkSize() - reduce_size;
 
 			for (DWORD i = 0; i < reduce_size; ++i)
@@ -142,7 +140,7 @@ private:
 		return true;
 	}
 
-	DWORD min_object_count_;
+	DWORD init_object_count_;
 	DWORD max_object_count_;
 	DWORD extend_object_count_;
 

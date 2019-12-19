@@ -1,11 +1,13 @@
 #pragma once
 #include "stdafx.h"
+#include "Object.h"
 #include "ObjectStation.h"
-#include "ObjectManager.h"
 
 #pragma warning (push)
 #pragma warning (disable : 4348)
 #pragma warning (disable : 4521)
+
+static ObjectStation _object_station;
 
 template<typename _Ty, typename _Size = BYTE>
 class wrapper abstract;
@@ -21,9 +23,24 @@ using is_numberic = std::enable_if<std::is_integral<_Ty>::value, _Ty>;
 
 template <typename _Ty, typename _Size = BYTE, typename... _Tys,
 	typename is_numberic<_Size>::type * = nullptr>
-constexpr wrapper_hub<_Ty, _Size> make_wrapper_hub(_Tys&&... _Args)
+	constexpr wrapper_hub<_Ty, _Size> make_wrapper_hub(_Tys&&... _Args)
 {
 	return wrapper_hub<_Ty, _Size>(new _Ty(std::forward<_Tys>(_Args)...));
+}
+
+template <typename _Ty, typename _Size = BYTE,
+	typename is_object<_Ty>::type * = nullptr,
+	typename is_numberic<_Size>::type * = nullptr>
+constexpr wrapper_hub<_Ty, _Size> make_wrapper_hub()
+{
+	if (_object_station.IsBinding<_Ty>() == false)
+	{
+		_object_station.BindObjectPool<_Ty>(1, 10, 1);
+	}
+
+	_Ty* data = _object_station.Pop<_Ty>();
+
+	return wrapper_hub<_Ty, _Size>(data);
 }
 
 template<typename _Ty, typename _Size>
@@ -62,9 +79,15 @@ public:
 	wrapper_node<_Ty, _Size> operator=(wrapper_hub<_Ty, _Size>& hub) { return hub.make_node(); }
 
 private:
+	template <typename _Ty, typename _Size = BYTE,
+		typename is_object<_Ty>::type * = nullptr,
+		typename is_numberic<_Size>::type * = nullptr>
+	friend constexpr wrapper_hub<_Ty, _Size> make_wrapper_hub();
+	
 	template <typename _Ty, typename _Size = BYTE, typename... _Tys,
 		typename is_numberic<_Size>::type * = nullptr>
-		friend constexpr wrapper_hub<_Ty, _Size> make_wrapper_hub(_Tys&&... _Args);
+	friend constexpr wrapper_hub<_Ty, _Size> make_wrapper_hub(_Tys&&... _Args);
+	
 
 	friend class wrapper_node<_Ty, _Size>;
 
