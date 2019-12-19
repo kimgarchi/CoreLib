@@ -2,6 +2,10 @@
 #include "stdafx.h"
 #include "ObjectPool.h"
 
+const static DWORD _default_init_count = 1;
+const static DWORD _default_max_count = 10;
+const static DWORD _default_extend_count = 1;
+
 class ObjectStation final
 {
 public:
@@ -28,7 +32,7 @@ public:
 	}
 
 	template<typename _Ty>
-	bool BindObjectPool(DWORD init_count = 0, DWORD max_count = 0, DWORD extend_count = 0)
+	bool BindObjectPool(DWORD init_count = _default_init_count, DWORD max_count = _default_max_count, DWORD extend_count = _default_extend_count)
 	{
 		ObjectPool<_Ty>* object_pool = new ObjectPool<_Ty>(init_count, max_count, extend_count);
 		return object_pool_by_tid_.insert(ObjectPoolByTid::value_type(typeid(_Ty).hash_code(), object_pool)).second;
@@ -45,7 +49,7 @@ public:
 		return object_pool->Pop();
 	}
 
-	template<typename _Ty>
+	template<typename _Ty, typename is_object<_Ty>::type * = nullptr>
 	bool Push(_Ty*& object)
 	{
 		auto itor = object_pool_by_tid_.find(typeid(_Ty).hash_code());

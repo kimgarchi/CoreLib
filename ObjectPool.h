@@ -16,7 +16,7 @@ public:
 	using Chunks = std::queue<_Ty*>;
 	using ActiveObjects = std::set<_Ty*>;
 
-	ObjectPool(DWORD init_count = 0, DWORD max_count = 0, DWORD extend_count = 0)
+	ObjectPool(DWORD init_count, DWORD max_count, DWORD extend_count)
 		: init_object_count_(init_count), max_object_count_(max_count), extend_object_count_(extend_count)
 	{
 		IncreasePool(init_object_count_);
@@ -74,8 +74,6 @@ public:
 private:	
 	virtual void Clear() override
 	{
-		std::cout << "clear - " << typeid(*this).name() << std::endl;
-
 		std::for_each(active_objects_.begin(), active_objects_.end(),
 			[&](_Ty* object)
 		{
@@ -85,7 +83,7 @@ private:
 		active_objects_.clear();
 		if (DecreasePool(GetTotalChunkSize()) == false)
 		{
-			//...
+			//... ?
 		}
 	}
 
@@ -98,19 +96,16 @@ private:
 		if (extend_size == 0)
 			extend_size = extend_object_count_;
 
-		std::unique_lock<std::mutex> lock(mtx_);
+		if (GetTotalChunkSize() >= max_object_count_)
+			return false;
+
+		if (GetIdleChunkSize() + extend_size > max_object_count_)
+			extend_size = max_object_count_ - GetIdleChunkSize();
+
+		for (DWORD i = 0; i < extend_size; ++i)
 		{
-			if (GetTotalChunkSize() >= max_object_count_)
-				return false;
-
-			if (GetIdleChunkSize() + extend_size > max_object_count_)
-				extend_size = max_object_count_ - GetIdleChunkSize();
-
-			for (DWORD i = 0; i < extend_size; ++i)
-			{
-				_Ty* object = new _Ty;
-				chunks_.push(object);
-			}
+			_Ty* object = new _Ty;
+			chunks_.push(object);
 		}
 
 		return true;
@@ -121,20 +116,17 @@ private:
 		if (reduce_size == 0)
 			reduce_size = extend_object_count_;
 
-		std::unique_lock<std::mutex> lock(mtx_);
+		if (GetIdleChunkSize() - reduce_size < init_object_count_)
+			reduce_size = GetIdleChunkSize() - reduce_size;
+
+		for (DWORD i = 0; i < reduce_size; ++i)
 		{
-			if (GetIdleChunkSize() - reduce_size < init_object_count_)
-				reduce_size = GetIdleChunkSize() - reduce_size;
+			if (chunks_.empty())
+				break;
 
-			for (DWORD i = 0; i < reduce_size; ++i)
-			{
-				if (chunks_.empty())
-					break;
-
-				_Ty* object = std::move(chunks_.front());
-				delete object;
-				chunks_.pop();
-			}
+			_Ty* object = std::move(chunks_.front());
+			delete object;
+			chunks_.pop();
 		}
 
 		return true;

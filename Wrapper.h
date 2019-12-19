@@ -34,13 +34,9 @@ template <typename _Ty, typename _Size = BYTE,
 constexpr wrapper_hub<_Ty, _Size> make_wrapper_hub()
 {
 	if (_object_station.IsBinding<_Ty>() == false)
-	{
-		_object_station.BindObjectPool<_Ty>(1, 10, 1);
-	}
-
-	_Ty* data = _object_station.Pop<_Ty>();
-
-	return wrapper_hub<_Ty, _Size>(data);
+		_object_station.BindObjectPool<_Ty>();
+	
+	return wrapper_hub<_Ty, _Size>(_object_station.Pop<_Ty>());
 }
 
 template<typename _Ty, typename _Size>
@@ -88,7 +84,6 @@ private:
 		typename is_numberic<_Size>::type * = nullptr>
 	friend constexpr wrapper_hub<_Ty, _Size> make_wrapper_hub(_Tys&&... _Args);
 	
-
 	friend class wrapper_node<_Ty, _Size>;
 
 	std::atomic<_Size>& _node_count() { return hub().node_count_; }
@@ -126,12 +121,6 @@ template<typename _Ty, typename _Size>
 wrapper_hub<_Ty, _Size>::wrapper_hub(_Ty* data)
 	: hub_(nullptr), data_(data), use_count_(0), node_count_(0)
 {
-	if (data_ == nullptr)
-	{
-		ASSERT(false, L"wraping data is nullptr");
-		// pooling object...
-	}
-		
 	ASSERT(data_ != nullptr, L"wrapper_hub new failed...");		
 	wrapper<_Ty, _Size>::_increase_use_count();
 }
@@ -142,13 +131,11 @@ wrapper_hub<_Ty, _Size>::~wrapper_hub()
 	wrapper<_Ty, _Size>::_decrease_use_count();
 	if (hub_ == nullptr)
 	{
-		if (use_count_ == 0)
-		{
-			if (node_count() != 0)
-				ASSERT(false, L"remain node... invalid wrapper delete");
+		if (use_count_ != 0)
+			return;
 
-			SAFE_DELETE(data_);
-		}			
+		// case is object Push...
+		// case is not object delete...
 	}
 }
 
@@ -156,8 +143,7 @@ wrapper_hub<_Ty, _Size>::~wrapper_hub()
 template<typename _Ty, typename _Size>
 class wrapper_node : public wrapper<_Ty, _Size>
 {
-public:
-	
+public:	
 	wrapper_node(wrapper_node<_Ty, _Size>& node) = delete;
 	wrapper_node<_Ty, _Size>& operator=(const wrapper_node<_Ty, _Size>&) = delete;
 
