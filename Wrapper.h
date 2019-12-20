@@ -22,6 +22,7 @@ template<typename _Ty>
 using is_numberic = std::enable_if<std::is_integral<_Ty>::value, _Ty>;
 
 template <typename _Ty, typename _Size = BYTE, typename... _Tys,
+	typename is_not_object<_Ty>::type * = nullptr,
 	typename is_numberic<_Size>::type * = nullptr>
 	constexpr wrapper_hub<_Ty, _Size> make_wrapper_hub(_Tys&&... _Args)
 {
@@ -37,6 +38,20 @@ constexpr wrapper_hub<_Ty, _Size> make_wrapper_hub()
 		_object_station.BindObjectPool<_Ty>();
 	
 	return wrapper_hub<_Ty, _Size>(_object_station.Pop<_Ty>());
+}
+
+template<typename _Ty,
+	typename is_object<_Ty>::type * = nullptr>
+void Refund(_Ty*& data)
+{
+	_object_station.Push<_Ty>(data);
+}
+
+template<typename _Ty,
+	typename is_not_object<_Ty>::type * = nullptr>
+void Refund(_Ty*& data)
+{
+	SAFE_DELETE(data);
 }
 
 template<typename _Ty, typename _Size>
@@ -63,7 +78,7 @@ template<typename _Ty, typename _Size>
 class wrapper_hub final : public wrapper<_Ty, _Size>
 {
 public:
-	wrapper_hub(const wrapper_hub<_Ty, _Size>& hub);
+	wrapper_hub(const wrapper_hub<_Ty, _Size>& hub);		
 	wrapper_hub(wrapper_hub<_Ty, _Size>& hub);
 	virtual ~wrapper_hub();
 
@@ -81,6 +96,7 @@ private:
 	friend constexpr wrapper_hub<_Ty, _Size> make_wrapper_hub();
 	
 	template <typename _Ty, typename _Size = BYTE, typename... _Tys,
+		typename is_not_object<_Ty>::type * = nullptr,
 		typename is_numberic<_Size>::type * = nullptr>
 	friend constexpr wrapper_hub<_Ty, _Size> make_wrapper_hub(_Tys&&... _Args);
 	
@@ -102,7 +118,7 @@ private:
 	std::atomic<_Size> use_count_;
 	std::atomic<_Size> node_count_;
 };
-	
+
 template<typename _Ty, typename _Size>
 wrapper_hub<_Ty, _Size>::wrapper_hub(const wrapper_hub<_Ty, _Size>& hub)
 	: hub_(const_cast<wrapper_hub<_Ty, _Size>*>(&hub)), data_(nullptr), use_count_(0), node_count_(0)
@@ -121,7 +137,7 @@ template<typename _Ty, typename _Size>
 wrapper_hub<_Ty, _Size>::wrapper_hub(_Ty* data)
 	: hub_(nullptr), data_(data), use_count_(0), node_count_(0)
 {
-	ASSERT(data_ != nullptr, L"wrapper_hub new failed...");		
+	ASSERT(data_ != nullptr, L"wrapper_hub new failed...");
 	wrapper<_Ty, _Size>::_increase_use_count();
 }
 
@@ -134,8 +150,7 @@ wrapper_hub<_Ty, _Size>::~wrapper_hub()
 		if (use_count_ != 0)
 			return;
 
-		// case is object Push...
-		// case is not object delete...
+		Refund<_Ty>(data_);
 	}
 }
 

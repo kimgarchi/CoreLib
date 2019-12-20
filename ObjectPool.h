@@ -50,7 +50,7 @@ public:
 		_Ty* object = nullptr;
 		std::unique_lock<std::mutex> lock(mtx_);
 		{
-			if (chunks_.empty())
+			if (chunks_.size() < 2)
 			{
 				if (IncreasePool() == false)
 					return object;
@@ -69,7 +69,7 @@ public:
 	}
 
 	void set_extend_object_count(DWORD extend_count) { extend_object_count_ = extend_count; }	
-	bool set_max_object_count(DWORD max_count) { max_object_count_ = max_count; }
+	void set_max_object_count(DWORD max_count) { max_object_count_ = max_count; }
 
 private:	
 	virtual void Clear() override
@@ -96,9 +96,13 @@ private:
 		if (extend_size == 0)
 			extend_size = extend_object_count_;
 
+#ifdef _DEBUG
 		if (GetTotalChunkSize() >= max_object_count_)
 			return false;
-
+#else
+		if (GetTotalChunkSize() >= max_object_count_)
+			set_max_object_count(max_object_count_ + extend_object_count_);
+#endif
 		if (GetIdleChunkSize() + extend_size > max_object_count_)
 			extend_size = max_object_count_ - GetIdleChunkSize();
 

@@ -9,3 +9,6 @@ public:
 
 template<typename _Ty>
 using is_object = std::enable_if<std::is_base_of<object, _Ty>::value, _Ty>;
+
+template<typename _Ty>
+using is_not_object = std::enable_if<!std::is_base_of<object, _Ty>::value, _Ty>;
