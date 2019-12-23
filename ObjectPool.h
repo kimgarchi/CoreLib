@@ -15,9 +15,11 @@ class ObjectPool final : public ObjectPoolBase
 public:
 	using Chunks = std::queue<_Ty*>;
 	using ActiveObjects = std::set<_Ty*>;
+	using AllocID = DWORD;
 
 	ObjectPool(DWORD init_count, DWORD max_count, DWORD extend_count)
 		: init_object_count_(init_count), max_object_count_(max_count), extend_object_count_(extend_count)
+		, mem_pool_(MemPool(max_object_count_))
 	{
 		IncreasePool(init_object_count_);
 	}
@@ -50,18 +52,13 @@ public:
 		_Ty* object = nullptr;
 		std::unique_lock<std::mutex> lock(mtx_);
 		{
-			if (chunks_.size() < 2)
-			{
-				if (IncreasePool() == false)
-					return object;
-			}
+			if (chunks_.empty() && IncreasePool() == false)
+				return nullptr;
 
 			object = chunks_.front();
 			if (active_objects_.insert(object).second == false)
-			{
 				return nullptr;
-			}
-
+			
 			chunks_.pop();
 		}
 
@@ -72,6 +69,40 @@ public:
 	void set_max_object_count(DWORD max_count) { max_object_count_ = max_count; }
 
 private:	
+	class MemPool final
+	{
+	public:
+		MemPool(size_t chunk_cnt)
+			: m_ptr_(nullptr), chunk_cnt_(chunk_cnt), alloc_cnt_(0)
+		{
+			m_ptr_ = std::malloc(sizeof(_Ty) * chunk_cnt_);
+			if (m_ptr_ == nullptr)
+				std::bad_alloc{};
+		}
+
+		~MemPool()
+		{
+			std::free(m_ptr_);
+		}
+
+		void* Alloc()
+		{
+			if (chunk_cnt_ <= alloc_cnt_)
+				return nullptr;
+
+			void* alloc_mem = (BYTE*)m_ptr_ + (sizeof(_Ty) * alloc_cnt_++);
+			return alloc_mem;
+		}
+
+	private:
+
+		void* m_ptr_;
+		size_t chunk_cnt_;
+		size_t alloc_cnt_;
+	};
+
+	using MemPools = std::list<MemPool>;
+
 	virtual void Clear() override
 	{
 		std::for_each(active_objects_.begin(), active_objects_.end(),
@@ -96,19 +127,13 @@ private:
 		if (extend_size == 0)
 			extend_size = extend_object_count_;
 
-#ifdef _DEBUG
-		if (GetTotalChunkSize() >= max_object_count_)
-			return false;
-#else
-		if (GetTotalChunkSize() >= max_object_count_)
-			set_max_object_count(max_object_count_ + extend_object_count_);
-#endif
 		if (GetIdleChunkSize() + extend_size > max_object_count_)
 			extend_size = max_object_count_ - GetIdleChunkSize();
 
 		for (DWORD i = 0; i < extend_size; ++i)
 		{
-			_Ty* object = new _Ty;
+			void* ptr = mem_pool_.Alloc();
+			_Ty* object = new(ptr) _Ty;
 			chunks_.push(object);
 		}
 
@@ -142,6 +167,7 @@ private:
 
 	Chunks chunks_;
 	ActiveObjects active_objects_;
+	MemPool mem_pool_;
 
 	std::mutex mtx_;
 };
