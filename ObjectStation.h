@@ -2,9 +2,7 @@
 #include "stdafx.h"
 #include "ObjectPool.h"
 
-const static DWORD _default_init_count = 1;
-const static DWORD _default_max_count = 10;
-const static DWORD _default_extend_count = 1;
+const static size_t _default_obj_alloc_cnt_ = 10;
 
 class ObjectStation final
 {
@@ -32,9 +30,9 @@ public:
 	}
 
 	template<typename _Ty>
-	bool BindObjectPool(DWORD init_count = _default_init_count, DWORD max_count = _default_max_count, DWORD extend_count = _default_extend_count)
+	bool BindObjectPool(DWORD obj_alloc_cnt = _default_obj_alloc_cnt_)
 	{
-		ObjectPool<_Ty>* object_pool = new ObjectPool<_Ty>(init_count, max_count, extend_count);
+		ObjectPool<_Ty>* object_pool = new ObjectPool<_Ty>(obj_alloc_cnt);
 		return object_pool_by_tid_.insert(ObjectPoolByTid::value_type(typeid(_Ty).hash_code(), object_pool)).second;
 	}
 

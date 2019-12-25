@@ -2,6 +2,11 @@
 #include "stdafx.h"
 #include "object.h"
 
+#define TID					0
+#define ALLOC_ID			1
+#define INVALID_ALLOC_ID	0
+#define INIT_ALLOC_ID		1
+
 class ObjectPoolBase abstract
 {
 protected:
@@ -12,16 +17,115 @@ protected:
 template<typename _Ty, typename is_object<_Ty>::type * = nullptr>
 class ObjectPool final : public ObjectPoolBase
 {
-public:
-	using Chunks = std::queue<_Ty*>;
-	using ActiveObjects = std::set<_Ty*>;
-	using AllocID = DWORD;
+private:
+	class SegmentPool;
+	using AllocID = size_t;
+	using Chunks = std::map<AllocID, SegmentPool>;
+	using ChunkElement = std::pair<AllocID, SegmentPool>;
+	using Objects = std::map<_Ty*, AllocID>;
+	using ObjectElement = std::pair<_Ty*, AllocID>;
 
-	ObjectPool(DWORD init_count, DWORD max_count, DWORD extend_count)
-		: init_object_count_(init_count), max_object_count_(max_count), extend_object_count_(extend_count)
-		, mem_pool_(MemPool(max_object_count_))
+	class SegmentPool final
 	{
-		IncreasePool(init_object_count_);
+	private:
+		enum class STATE
+		{
+			IDLE,
+			USE,
+		};
+
+		using ObjectQue = std::queue<_Ty*>;
+		using ObjectByState = std::map<_Ty*, STATE>;
+
+		size_t obj_cnt_;
+		void* m_ptr_;		
+		ObjectQue object_que_;
+		ObjectByState object_by_state_;
+
+	public:
+		SegmentPool(size_t obj_cnt)
+			: obj_cnt_(obj_cnt), m_ptr_(nullptr)
+		{
+			m_ptr_ = std::malloc(sizeof(_Ty) * obj_cnt_);
+			if (m_ptr_ == nullptr)
+				std::bad_alloc{};
+
+			char* ptr = static_cast<char*>(m_ptr_);
+			for (size_t idx = 0; idx < obj_cnt_; ++idx)
+			{
+				size_t forward_step = idx * sizeof(_Ty);
+				_Ty* data = new(ptr + forward_step) _Ty;
+				if (data == nullptr)
+					std::bad_function_call{};
+
+				object_que_.push(data);
+				object_by_state_.insert(ObjectByState::value_type(data, STATE::IDLE));
+			}
+		}
+
+		~SegmentPool()
+		{
+			std::cout << "delete" << std::endl;
+			//assert(m_ptr_ == nullptr);
+		}
+
+		void Clear()
+		{
+			std::swap(ObjectQue(), object_que_);
+			object_by_state_.clear();
+			std::free(m_ptr_);
+		}
+
+		bool UnusedPool() { return (object_que_.size() == obj_cnt_) ? true : false; }
+		bool Empty() { return object_que_.empty(); }
+
+		_Ty* Pop()
+		{
+			if (object_que_.empty())
+				return nullptr;
+
+			_Ty* object = object_que_.front();
+			if (ChangeState(object, STATE::USE) == false)
+				return nullptr;
+
+			object_que_.pop();
+			object->initilize();
+
+			return object;
+		}
+
+		bool Push(_Ty*& object)
+		{
+			if (ChangeState(object, STATE::IDLE) == false)
+				return false;
+
+			object_que_.push(object);
+
+			return true;
+		}
+
+	private:
+		bool ChangeState(_Ty* object, STATE state)
+		{
+			auto itor = object_by_state_.find(object);
+			if (itor == object_by_state_.end())
+				return false;
+
+			STATE& cur_state = itor->second;
+			if (cur_state == state)
+				return false;
+
+			cur_state = state;
+
+			return true;
+		}
+	};
+	
+public:
+	ObjectPool(size_t segment_object_cnt)
+		: assign_alloc_id_(INIT_ALLOC_ID), segment_object_cnt_(segment_object_cnt)
+	{
+		AllocChunk();
 	}
 
 	ObjectPool(const ObjectPool<_Ty>&) = delete;
@@ -29,145 +133,103 @@ public:
 
 	bool Push(_Ty*& object)
 	{
-		object->initilize();
+		AllocID alloc_id = GetAllocID(object);
+		if (alloc_id == INVALID_ALLOC_ID)
+			return false;
 
-		std::unique_lock<std::mutex> lock(mtx_);
-		{
-			if (active_objects_.find(object) == active_objects_.end())
-			{
-				return false;
-			}
-
-			active_objects_.erase(object);
-			chunks_.push(object);
-		}
-
-		object = nullptr;
-
-		return true;
+		return Push(alloc_id, object);
 	}
 
 	_Ty* Pop()
 	{
+		AllocID alloc_id = INVALID_ALLOC_ID;
 		_Ty* object = nullptr;
-		std::unique_lock<std::mutex> lock(mtx_);
+
+		for (auto & chunk : chunks_)
 		{
-			if (chunks_.empty() && IncreasePool() == false)
+			SegmentPool& segment_pool = chunk.second;
+			if (segment_pool.Empty())
+				continue;
+
+			alloc_id = chunk.first;
+			object = segment_pool.Pop();
+		}
+
+		if (alloc_id == INVALID_ALLOC_ID ||
+			object == nullptr)
+		{
+			if (AllocChunk() == false)
 				return nullptr;
 
-			object = chunks_.front();
-			if (active_objects_.insert(object).second == false)
-				return nullptr;
-			
-			chunks_.pop();
+			return Pop();
 		}
 
 		return object;
 	}
 
-	void set_extend_object_count(DWORD extend_count) { extend_object_count_ = extend_count; }	
-	void set_max_object_count(DWORD max_count) { max_object_count_ = max_count; }
-
-private:	
-	class MemPool final
-	{
-	public:
-		MemPool(size_t chunk_cnt)
-			: m_ptr_(nullptr), chunk_cnt_(chunk_cnt), alloc_cnt_(0)
-		{
-			m_ptr_ = std::malloc(sizeof(_Ty) * chunk_cnt_);
-			if (m_ptr_ == nullptr)
-				std::bad_alloc{};
-		}
-
-		~MemPool()
-		{
-			std::free(m_ptr_);
-		}
-
-		void* Alloc()
-		{
-			if (chunk_cnt_ <= alloc_cnt_)
-				return nullptr;
-
-			void* alloc_mem = (BYTE*)m_ptr_ + (sizeof(_Ty) * alloc_cnt_++);
-			return alloc_mem;
-		}
-
-	private:
-
-		void* m_ptr_;
-		size_t chunk_cnt_;
-		size_t alloc_cnt_;
-	};
-
-	using MemPools = std::list<MemPool>;
+private:
+	AllocID AssignAllocID() { return assign_alloc_id_++; }
 
 	virtual void Clear() override
 	{
-		std::for_each(active_objects_.begin(), active_objects_.end(),
-			[&](_Ty* object)
-		{
-			chunks_.push(object);
-		});
-
-		active_objects_.clear();
-		if (DecreasePool(GetTotalChunkSize()) == false)
-		{
-			//... ?
-		}
+		alloc_objects_.clear();
 	}
 
-	DWORD GetIdleChunkSize() { return static_cast<DWORD>(chunks_.size()); }
-	DWORD GetActiveChunkSize() { return abs(static_cast<DWORD>(chunks_.size() - active_objects_.size())); }
-	DWORD GetTotalChunkSize() { return static_cast<DWORD>(chunks_.size() + active_objects_.size()); }
-
-	bool IncreasePool(DWORD extend_size = 0)
+	bool AllocChunk()
 	{
-		if (extend_size == 0)
-			extend_size = extend_object_count_;
+		AllocID alloc_id = AssignAllocID();
+		chunks_.emplace(ChunkElement(alloc_id, std::forward<SegmentPool>(SegmentPool(segment_object_cnt_))));
 
-		if (GetIdleChunkSize() + extend_size > max_object_count_)
-			extend_size = max_object_count_ - GetIdleChunkSize();
-
-		for (DWORD i = 0; i < extend_size; ++i)
+		/*
+		try
 		{
-			void* ptr = mem_pool_.Alloc();
-			_Ty* object = new(ptr) _Ty;
-			chunks_.push(object);
+			
 		}
+		catch (std::bad_alloc& exception)
+		{
+			// ...
+			return false;
+		}
+		*/
+		return true;
+	}
+
+	bool Push(AllocID alloc_id, _Ty*& object)
+	{
+		auto itor = chunks_.find(alloc_id);
+		if (itor == chunks_.end())
+			return false;
+
+		SegmentPool& segment_pool = itor->second;
+		return segment_pool.Push(object);
+	}
+
+	bool DeAllocChunk()
+	{
+		// ...?
+		return true;
+	}
+
+	bool IsAllocObject(_Ty* object)
+	{
+		if (alloc_objects_.find(object) == alloc_objects_.end())
+			return false;
 
 		return true;
 	}
 
-	bool DecreasePool(DWORD reduce_size = 0)
+	AllocID GetAllocID(_Ty* object)
 	{
-		if (reduce_size == 0)
-			reduce_size = extend_object_count_;
+		auto itor = alloc_objects_.find(object);
+		if (itor == alloc_objects_.end())
+			return INVALID_ALLOC_ID;
 
-		if (GetIdleChunkSize() - reduce_size < init_object_count_)
-			reduce_size = GetIdleChunkSize() - reduce_size;
-
-		for (DWORD i = 0; i < reduce_size; ++i)
-		{
-			if (chunks_.empty())
-				break;
-
-			_Ty* object = std::move(chunks_.front());
-			delete object;
-			chunks_.pop();
-		}
-
-		return true;
+		return itor->second;
 	}
 
-	DWORD init_object_count_;
-	DWORD max_object_count_;
-	DWORD extend_object_count_;
-
+	const size_t segment_object_cnt_;
+	AllocID assign_alloc_id_;
 	Chunks chunks_;
-	ActiveObjects active_objects_;
-	MemPool mem_pool_;
-
+	Objects alloc_objects_;
 	std::mutex mtx_;
 };
