@@ -9,13 +9,22 @@ class ObjectStation final
 public:
 	~ObjectStation()
 	{
-		std::for_each(object_pool_by_tid_.begin(), object_pool_by_tid_.end(),
-			[](std::map<size_t, ObjectPoolBase*>::value_type& value)
+		try
 		{
-			auto ptr = value.second;
-			ptr->Clear();
-			delete value.second;
-		});
+			std::for_each(object_pool_by_tid_.begin(), object_pool_by_tid_.end(),
+				[](std::map<size_t, ObjectPoolBase*>::value_type& value)
+			{
+				auto ptr = value.second;
+				ptr->Clear();
+				delete value.second;
+			});
+		}
+		catch (std::bad_function_call & excp)
+		{
+			//... temp
+			std::cout << excp.what() << std::endl;
+			return;
+		}
 
 		object_pool_by_tid_.clear();
 	}

@@ -2,6 +2,9 @@
 #include "stdafx.h"
 #include "object.h"
 
+//#pragma warning (push)
+//#pragma warning (disable : 6486)
+
 #define TID					0
 #define ALLOC_ID			1
 #define INVALID_ALLOC_ID	0
@@ -50,11 +53,19 @@ private:
 			if (m_ptr_ == nullptr)
 				std::bad_alloc{};
 
-			char* ptr = static_cast<char*>(m_ptr_);
-			for (size_t idx = 0; idx < obj_cnt_; ++idx)
+			auto size = sizeof(_Ty);
+			std::vector<void*> m_ptrs(obj_cnt_, nullptr);
+
+			for (auto idx = 0; idx < obj_cnt_; ++idx)
 			{
-				size_t forward_step = idx * sizeof(_Ty);
-				_Ty* object = new(ptr + forward_step) _Ty;
+				auto forward_step = idx * size;
+				m_ptrs.at(idx) = static_cast<char*>(m_ptr_) + forward_step;				
+			}
+
+			std::for_each(m_ptrs.begin(), m_ptrs.end(),
+				[&](void* ptr)
+			{
+				_Ty* object = new(ptr) _Ty;
 				if (object == nullptr)
 					std::bad_function_call{};
 
@@ -62,7 +73,7 @@ private:
 					std::bad_function_call{};
 
 				object_que_.emplace(object);
-			}
+			});
 		}
 
 		~SegmentPool()
@@ -172,7 +183,13 @@ private:
 
 	virtual void Clear() override
 	{
-		alloc_objects_.clear();
+		while (alloc_objects_.empty() == false)
+		{
+			auto itor = alloc_objects_.begin();
+			if (Push(itor->second, itor->first) == false)
+				std::bad_function_call{};
+		}
+		
 		chunks_.clear();
 	}
 
@@ -199,7 +216,7 @@ private:
 		return true;
 	}
 
-	bool Push(AllocID alloc_id, _Ty*& object)
+	bool Push(AllocID alloc_id, _Ty* object)
 	{
 		auto itor = chunks_.find(alloc_id);
 		if (itor == chunks_.end())
@@ -214,7 +231,7 @@ private:
 		return true;
 	}
 
-	bool DeAllocChunk()
+	bool DeAllocChunk(AllocID alloc_id)
 	{
 		// ...?
 		return true;
@@ -243,3 +260,5 @@ private:
 	Objects alloc_objects_;
 	std::mutex mtx_;
 };
+
+//#pragma warning (pop)
