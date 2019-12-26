@@ -54,24 +54,21 @@ private:
 			for (size_t idx = 0; idx < obj_cnt_; ++idx)
 			{
 				size_t forward_step = idx * sizeof(_Ty);
-				_Ty* data = new(ptr + forward_step) _Ty;
-				if (data == nullptr)
+				_Ty* object = new(ptr + forward_step) _Ty;
+				if (object == nullptr)
 					std::bad_function_call{};
 
-				object_que_.push(data);
-				object_by_state_.insert(ObjectByState::value_type(data, STATE::IDLE));
+				if (object_by_state_.try_emplace(object, STATE::IDLE).second == false)
+					std::bad_function_call{};
+
+				object_que_.emplace(object);
 			}
 		}
 
 		~SegmentPool()
 		{
-			std::cout << "delete" << std::endl;
-			//assert(m_ptr_ == nullptr);
-		}
+			while (!object_que_.empty()) object_que_.pop();
 
-		void Clear()
-		{
-			std::swap(ObjectQue(), object_que_);
 			object_by_state_.clear();
 			std::free(m_ptr_);
 		}
@@ -164,6 +161,9 @@ public:
 			return Pop();
 		}
 
+		if (object != nullptr)
+			alloc_objects_.try_emplace(object, alloc_id);
+
 		return object;
 	}
 
@@ -173,24 +173,29 @@ private:
 	virtual void Clear() override
 	{
 		alloc_objects_.clear();
+		chunks_.clear();
 	}
 
 	bool AllocChunk()
 	{
-		AllocID alloc_id = AssignAllocID();
-		chunks_.emplace(ChunkElement(alloc_id, std::forward<SegmentPool>(SegmentPool(segment_object_cnt_))));
-
-		/*
 		try
 		{
-			
+			if (chunks_.try_emplace(AssignAllocID(), segment_object_cnt_).second == false)
+				return false;
 		}
-		catch (std::bad_alloc& exception)
+		catch (std::bad_alloc & excp)
 		{
-			// ...
+			// temp
+			std::cout << excp.what() << std::endl;			
 			return false;
 		}
-		*/
+		catch (std::bad_function_call & excp)
+		{
+			// temp
+			std::cout << excp.what() << std::endl;
+			return false;
+		}
+		
 		return true;
 	}
 
@@ -201,7 +206,12 @@ private:
 			return false;
 
 		SegmentPool& segment_pool = itor->second;
-		return segment_pool.Push(object);
+		if (segment_pool.Push(object) == false)
+			return false;
+
+		alloc_objects_.erase(object);
+
+		return true;
 	}
 
 	bool DeAllocChunk()
