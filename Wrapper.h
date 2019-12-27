@@ -7,8 +7,6 @@
 #pragma warning (disable : 4348)
 #pragma warning (disable : 4521)
 
-static ObjectStation _object_station;
-
 template<typename _Ty, typename _Size = BYTE>
 class wrapper abstract;
 
@@ -34,17 +32,17 @@ template <typename _Ty, typename _Size = BYTE,
 	typename is_numberic<_Size>::type * = nullptr>
 constexpr wrapper_hub<_Ty, _Size> make_wrapper_hub()
 {
-	if (_object_station.IsBinding<_Ty>() == false)
-		_object_station.BindObjectPool<_Ty>();
+	if (ObjectStation::GetInstance().IsBinding<_Ty>() == false)
+		ObjectStation::GetInstance().BindObjectPool<_Ty>();
 	
-	return wrapper_hub<_Ty, _Size>(_object_station.Pop<_Ty>());
+	return wrapper_hub<_Ty, _Size>(ObjectStation::GetInstance().Pop<_Ty>());
 }
 
 template<typename _Ty,
 	typename is_object<_Ty>::type * = nullptr>
 void Refund(_Ty*& data)
 {
-	_object_station.Push<_Ty>(data);
+	ObjectStation::GetInstance().Push<_Ty>(data);
 }
 
 template<typename _Ty,
@@ -58,9 +56,11 @@ template<typename _Ty, typename _Size>
 class wrapper abstract
 {
 public:
+
+	_Ty* get() { return _data(); }
 	_Ty* operator()() { return _data(); }
 	_Ty& operator*() { return *_data(); }
-	_Ty& operator->() { return *_data(); }
+	_Ty& operator->() { return *_data(); }	
 
 	virtual _Size use_count() abstract;
 	

@@ -2,8 +2,8 @@
 #include "stdafx.h"
 #include "object.h"
 
-//#pragma warning (push)
-//#pragma warning (disable : 6486)
+#pragma warning (push)
+#pragma warning (disable : 4291)
 
 #define TID					0
 #define ALLOC_ID			1
@@ -65,6 +65,8 @@ private:
 			std::for_each(m_ptrs.begin(), m_ptrs.end(),
 				[&](void* ptr)
 			{
+				static_assert(std::is_default_constructible<_Ty>::value, "class undefine default constructor");
+
 				_Ty* object = new(ptr) _Ty;
 				if (object == nullptr)
 					std::bad_function_call{};
@@ -261,4 +263,4 @@ private:
 	std::mutex mtx_;
 };
 
-//#pragma warning (pop)
+#pragma warning (pop)

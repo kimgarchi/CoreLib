@@ -1,10 +1,11 @@
 #pragma once
 #include "stdafx.h"
+#include "singleton.h"
 #include "ObjectPool.h"
 
 const static size_t _default_obj_alloc_cnt_ = 10;
 
-class ObjectStation final
+class ObjectStation final : public Singleton<ObjectStation>
 {
 public:
 	~ObjectStation()
