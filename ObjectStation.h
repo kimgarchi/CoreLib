@@ -69,6 +69,6 @@ public:
 	}
 
 private:
-	using ObjectPoolByTid = std::map<size_t, ObjectPoolBase*>;
+	using ObjectPoolByTid = std::unordered_map<size_t, ObjectPoolBase*>;
 	ObjectPoolByTid object_pool_by_tid_;
 };

@@ -11,15 +11,27 @@ using is_not_object = std::enable_if<!std::is_base_of<object, _Ty>::value, _Ty>;
 template<typename _Ty, typename is_object<_Ty>::type*>
 class ObjectPool;
 
+template<typename _Ty>
+class wrapper;
+
+using Count = std::atomic_size_t;
+
 class object abstract
 {
 public:
+	object()
+		: use_count_(0), node_count_(0)
+	{}
+
 	virtual void initilize() abstract;
 
 	void* operator new (size_t) = delete;
 	void operator delete (void* ptr) = delete;
 	
 private:
+	template<typename _Ty>
+	friend class wrapper;
+
 	template<typename _Ty, typename is_object<_Ty>::type*>
 	friend class ObjectPool;
 
@@ -28,5 +40,11 @@ private:
 		assert(ptr != nullptr);
 		return ptr;
 	}
+
+	Count& use_cnt() { return use_count_; }
+	Count& node_cnt() { return node_count_; }
+
+	Count use_count_;
+	Count node_count_;
 };
 
