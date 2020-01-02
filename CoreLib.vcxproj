@@ -151,6 +151,7 @@
     <ClInclude Include="CallBackManager.h" />
     <ClInclude Include="DataStream.h" />
     <ClInclude Include="Define.h" />
+    <ClInclude Include="Job.h" />
     <ClInclude Include="Msg.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="ObjectCycleCallBack.h" />
@@ -172,7 +173,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CallBackManager.cpp" />
-    <ClCompile Include="ObjectPool.cpp" />
     <ClCompile Include="ObjectStation.cpp" />
     <ClCompile Include="ThreadBase.cpp" />
     <ClCompile Include="Log.cpp" />

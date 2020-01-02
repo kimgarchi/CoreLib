@@ -1,7 +1,9 @@
 #pragma once
 
-class Msg
+class Msg abstract
 {
+public:
 	Msg();
-	//
+
+private:
 };

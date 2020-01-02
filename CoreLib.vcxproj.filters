@@ -55,6 +55,9 @@
     <Filter Include="Object\Station">
       <UniqueIdentifier>{463d4501-d86d-4cff-8e9b-85b4e17a4182}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Job">
+      <UniqueIdentifier>{59580497-2a79-42be-96a4-b8a206785ce3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -123,6 +126,9 @@
     <ClInclude Include="Object.h">
       <Filter>Object\Wrapper</Filter>
     </ClInclude>
+    <ClInclude Include="Job.h">
+      <Filter>Job</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -139,9 +145,6 @@
     </ClCompile>
     <ClCompile Include="CallBackManager.cpp">
       <Filter>CallBack</Filter>
-    </ClCompile>
-    <ClCompile Include="ObjectPool.cpp">
-      <Filter>Object\Pool</Filter>
     </ClCompile>
     <ClCompile Include="ObjectStation.cpp">
       <Filter>Object\Station</Filter>

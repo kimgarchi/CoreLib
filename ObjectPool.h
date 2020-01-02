@@ -20,14 +20,7 @@ protected:
 template<typename _Ty, typename is_object<_Ty>::type * = nullptr>
 class ObjectPool final : public ObjectPoolBase
 {
-private:
-	class SegmentPool;
-	using AllocID = size_t;
-	using Chunks = std::map<AllocID, SegmentPool>;
-	using ChunkElement = std::pair<AllocID, SegmentPool>;
-	using Objects = std::map<_Ty*, AllocID>;
-	using ObjectElement = std::pair<_Ty*, AllocID>;
-
+private:	
 	class SegmentPool final
 	{
 	private:
@@ -131,15 +124,17 @@ private:
 		}
 	};
 	
-public:
-	ObjectPool(size_t segment_object_cnt)
-		: assign_alloc_id_(INIT_ALLOC_ID), segment_object_cnt_(segment_object_cnt)
-	{
-		AllocChunk();
-	}
+	using Chunks = std::map<AllocID, SegmentPool>;
+	using Objects = std::map<_Ty*, AllocID>;
 
+public:
 	ObjectPool(const ObjectPool<_Ty>&) = delete;
 	void operator=(const ObjectPool<_Ty>&) = delete;
+
+	~ObjectPool()
+	{
+		assert(alloc_objects_.empty());
+	}
 
 	bool Push(_Ty*& object)
 	{
@@ -155,7 +150,7 @@ public:
 		AllocID alloc_id = INVALID_ALLOC_ID;
 		_Ty* object = nullptr;
 
-		for (auto & chunk : chunks_)
+		for (auto& chunk : chunks_)
 		{
 			SegmentPool& segment_pool = chunk.second;
 			if (segment_pool.Empty())
@@ -177,10 +172,18 @@ public:
 		if (object != nullptr)
 			alloc_objects_.try_emplace(object, alloc_id);
 
-		return object;
+		return object;		
 	}
 
 private:
+	friend class ObjectStation;
+
+	ObjectPool(size_t segment_object_cnt)
+		: assign_alloc_id_(INIT_ALLOC_ID), segment_object_cnt_(segment_object_cnt)
+	{
+		AllocChunk();
+	}
+
 	AllocID AssignAllocID() { return assign_alloc_id_++; }
 
 	virtual void Clear() override
@@ -260,7 +263,6 @@ private:
 	AllocID assign_alloc_id_;
 	Chunks chunks_;
 	Objects alloc_objects_;
-	std::mutex mtx_;
 };
 
 #pragma warning (pop)

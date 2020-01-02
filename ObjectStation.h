@@ -3,10 +3,18 @@
 #include "singleton.h"
 #include "ObjectPool.h"
 
-const static size_t _default_obj_alloc_cnt_ = 10;
+#ifdef _DEBUG
+#include "ObjectManager.h"
+const static size_t _default_obj_alloc_cnt_ = 100;
+#else
+const static size_t _default_obj_alloc_cnt_ = 1000;
+#endif
 
 class ObjectStation final : public Singleton<ObjectStation>
 {
+private:
+	using ObjectPoolByTid = std::unordered_map<size_t, ObjectPoolBase*>;
+
 public:
 	~ObjectStation()
 	{
@@ -49,26 +57,44 @@ public:
 	template<typename _Ty>
 	_Ty* Pop()
 	{
-		auto itor = object_pool_by_tid_.find(typeid(_Ty).hash_code());
-		if (itor == object_pool_by_tid_.end())
-			return nullptr;
+		std::unique_lock<std::mutex> lock(mtx_);
+		{
+			auto itor = object_pool_by_tid_.find(typeid(_Ty).hash_code());
+			if (itor == object_pool_by_tid_.end())
+				return nullptr;
 
-		ObjectPool<_Ty>* object_pool = static_cast<ObjectPool<_Ty>*>(itor->second);
-		return object_pool->Pop();
+			ObjectPool<_Ty>* object_pool = static_cast<ObjectPool<_Ty>*>(itor->second);
+
+#ifdef _DEBUG
+			_Ty* object = object_pool->Pop();
+			ObjectManager::GetInstance().Regist<_Ty>(object);
+
+			return object;
+#else
+			return object_pool->Pop();
+#endif
+		}
 	}
 
 	template<typename _Ty, typename is_object<_Ty>::type * = nullptr>
 	bool Push(_Ty*& object)
 	{
-		auto itor = object_pool_by_tid_.find(typeid(_Ty).hash_code());
-		if (itor == object_pool_by_tid_.end())
-			return false;
+		std::unique_lock<std::mutex> lock(mtx_);
+		{
+			auto itor = object_pool_by_tid_.find(typeid(_Ty).hash_code());
+			if (itor == object_pool_by_tid_.end())
+				return false;
 
-		ObjectPool<_Ty>* object_pool = static_cast<ObjectPool<_Ty>*>(itor->second);
-		return object_pool->Push(object);
+			ObjectPool<_Ty>* object_pool = static_cast<ObjectPool<_Ty>*>(itor->second);
+
+#ifdef _DEBUG
+			ObjectManager::GetInstance().UnRegist<_Ty>(object);
+#endif
+			return object_pool->Push(object);
+		}
 	}
 
 private:
-	using ObjectPoolByTid = std::unordered_map<size_t, ObjectPoolBase*>;
 	ObjectPoolByTid object_pool_by_tid_;
+	std::mutex mtx_;
 };

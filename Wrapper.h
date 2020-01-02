@@ -16,12 +16,6 @@ class wrapper_hub;
 template<typename _Ty>
 class wrapper_node;
 
-template <typename _Ty, typename... _Tys, typename is_not_object<_Ty>::type * = nullptr>
-	constexpr wrapper_hub<_Ty> make_wrapper_hub(_Tys&&... _Args)
-{
-	return wrapper_hub<_Ty>(new _Ty(std::forward<_Tys>(_Args)...));
-}
-
 template <typename _Ty, typename is_object<_Ty>::type * = nullptr>
 constexpr wrapper_hub<_Ty> make_wrapper_hub()
 {
@@ -31,18 +25,10 @@ constexpr wrapper_hub<_Ty> make_wrapper_hub()
 	return wrapper_hub<_Ty>(ObjectStation::GetInstance().Pop<_Ty>());
 }
 
-template<typename _Ty,
-	typename is_object<_Ty>::type * = nullptr>
+template<typename _Ty, typename is_object<_Ty>::type * = nullptr>
 void Refund(_Ty*& data)
 {
 	ObjectStation::GetInstance().Push<_Ty>(data);
-}
-
-template<typename _Ty,
-	typename is_not_object<_Ty>::type * = nullptr>
-void Refund(_Ty*& data)
-{
-	SAFE_DELETE(data);
 }
 
 template<typename _Ty>
@@ -58,7 +44,7 @@ public:
 	virtual ~wrapper() 
 	{
 		if (_use_count() == 0 && _node_count() == 0)
-			Refund<_Ty>(data_);	
+			Refund<_Ty>(data_);
 	}
 
 	_Ty* get() { return _data(); }
@@ -113,9 +99,6 @@ private:
 	template <typename _Ty, typename is_object<_Ty>::type * = nullptr>
 	friend constexpr wrapper_hub<_Ty> make_wrapper_hub();
 	
-	template <typename _Ty, typename... _Tys, typename is_not_object<_Ty>::type * = nullptr>
-	friend constexpr wrapper_hub<_Ty> make_wrapper_hub(_Tys&&... _Args);
-	
 	friend class wrapper_node<_Ty>;
 
 	wrapper_hub(_Ty* data)
@@ -125,7 +108,6 @@ private:
 	}
 };
 
-// don't put in a container
 template<typename _Ty>
 class wrapper_node : public wrapper<_Ty>
 {
