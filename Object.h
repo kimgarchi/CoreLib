@@ -2,6 +2,7 @@
 #include "stdafx.h"
 
 class object;
+
 template<typename _Ty>
 using is_object = std::enable_if<std::is_base_of<object, _Ty>::value, _Ty>;
 
@@ -21,8 +22,6 @@ public:
 	object()
 		: use_count_(0), node_count_(0)
 	{}
-
-	virtual void initilize() abstract;
 
 	void* operator new (size_t) = delete;
 	void operator delete (void* ptr) = delete;

@@ -147,6 +147,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BlockContorller.h" />
     <ClInclude Include="CallBack.h" />
     <ClInclude Include="CallBackManager.h" />
     <ClInclude Include="DataStream.h" />
@@ -160,7 +161,6 @@
     <ClInclude Include="ThreadBase.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="Logger.h" />
-    <ClInclude Include="ObjectManager.h" />
     <ClInclude Include="ObjectPool.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SocketBase.h" />
@@ -173,7 +173,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CallBackManager.cpp" />
-    <ClCompile Include="ObjectStation.cpp" />
     <ClCompile Include="ThreadBase.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="Logger.cpp" />

@@ -4,24 +4,27 @@
 #include "ObjectPool.h"
 
 #ifdef _DEBUG
-#include "ObjectManager.h"
 const static size_t _default_obj_alloc_cnt_ = 100;
+const static float _default_obj_extend_remain_rate = 30.0f;
 #else
 const static size_t _default_obj_alloc_cnt_ = 1000;
+const static float _default_obj_extend_remain_rate = 50.0f;
 #endif
 
 class ObjectStation final : public Singleton<ObjectStation>
 {
 private:
-	using ObjectPoolByTid = std::unordered_map<size_t, ObjectPoolBase*>;
+	using ObjectPoolByTid = std::unordered_map<TypeID, ObjectPoolBase*>;
 
 public:
 	~ObjectStation()
 	{
+		std::unique_lock<std::mutex> lock(mtx_);
+		
 		try
 		{
 			std::for_each(object_pool_by_tid_.begin(), object_pool_by_tid_.end(),
-				[](std::map<size_t, ObjectPoolBase*>::value_type& value)
+				[](std::map<TypeID, ObjectPoolBase*>::value_type& value)
 			{
 				auto ptr = value.second;
 				ptr->Clear();
@@ -35,12 +38,14 @@ public:
 			return;
 		}
 
-		object_pool_by_tid_.clear();
+		object_pool_by_tid_.clear();		
 	}
 
 	template<typename _Ty>
 	bool IsBinding()
 	{
+		std::unique_lock<std::mutex> lock(mtx_);
+		
 		if (object_pool_by_tid_.find(typeid(_Ty).hash_code()) == object_pool_by_tid_.end())
 			return false;
 
@@ -48,50 +53,42 @@ public:
 	}
 
 	template<typename _Ty>
-	bool BindObjectPool(DWORD obj_alloc_cnt = _default_obj_alloc_cnt_)
-	{
-		ObjectPool<_Ty>* object_pool = new ObjectPool<_Ty>(obj_alloc_cnt);
-		return object_pool_by_tid_.insert(ObjectPoolByTid::value_type(typeid(_Ty).hash_code(), object_pool)).second;
-	}
-
-	template<typename _Ty>
-	_Ty* Pop()
+	bool BindObjectPool(size_t obj_alloc_cnt = _default_obj_alloc_cnt_, float obj_extend_remain_rate = _default_obj_extend_remain_rate)
 	{
 		std::unique_lock<std::mutex> lock(mtx_);
+		
+		auto tid = typeid(_Ty).hash_code();
+		return object_pool_by_tid_.emplace(tid, new ObjectPool<_Ty>(obj_alloc_cnt, obj_extend_remain_rate)).second;
+	}
+
+	template<typename _Ty, typename ..._Tys>
+	_Ty* Pop(_Tys&&... Args)
+	{
+		std::unique_lock<std::mutex> lock(mtx_);
+		
+		auto itor = object_pool_by_tid_.find(typeid(_Ty).hash_code());
+		if (itor == object_pool_by_tid_.end())
 		{
-			auto itor = object_pool_by_tid_.find(typeid(_Ty).hash_code());
-			if (itor == object_pool_by_tid_.end())
-				return nullptr;
-
-			ObjectPool<_Ty>* object_pool = static_cast<ObjectPool<_Ty>*>(itor->second);
-
-#ifdef _DEBUG
-			_Ty* object = object_pool->Pop();
-			ObjectManager::GetInstance().Regist<_Ty>(object);
-
-			return object;
-#else
-			return object_pool->Pop();
-#endif
+			assert(false);
+			return nullptr;
 		}
+
+		ObjectPool<_Ty>* object_pool = static_cast<ObjectPool<_Ty>*>(itor->second);
+		return object_pool->Pop(Args...);
 	}
 
 	template<typename _Ty, typename is_object<_Ty>::type * = nullptr>
 	bool Push(_Ty*& object)
 	{
 		std::unique_lock<std::mutex> lock(mtx_);
-		{
-			auto itor = object_pool_by_tid_.find(typeid(_Ty).hash_code());
-			if (itor == object_pool_by_tid_.end())
-				return false;
+		
+		auto itor = object_pool_by_tid_.find(typeid(_Ty).hash_code());
+		if (itor == object_pool_by_tid_.end())
+			return false;
 
-			ObjectPool<_Ty>* object_pool = static_cast<ObjectPool<_Ty>*>(itor->second);
+		ObjectPool<_Ty>* object_pool = static_cast<ObjectPool<_Ty>*>(itor->second);
 
-#ifdef _DEBUG
-			ObjectManager::GetInstance().UnRegist<_Ty>(object);
-#endif
-			return object_pool->Push(object);
-		}
+		return object_pool->Push(object);
 	}
 
 private:

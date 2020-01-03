@@ -49,9 +49,6 @@
     <Filter Include="Object\Pool">
       <UniqueIdentifier>{79764562-3479-45c7-bb3d-7648bf674267}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Object\Manager">
-      <UniqueIdentifier>{e1939997-8cb6-48d1-b617-6c2c6e920a7b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Object\Station">
       <UniqueIdentifier>{463d4501-d86d-4cff-8e9b-85b4e17a4182}</UniqueIdentifier>
     </Filter>
@@ -117,9 +114,6 @@
     <ClInclude Include="ObjectPool.h">
       <Filter>Object\Pool</Filter>
     </ClInclude>
-    <ClInclude Include="ObjectManager.h">
-      <Filter>Object\Manager</Filter>
-    </ClInclude>
     <ClInclude Include="ObjectStation.h">
       <Filter>Object\Station</Filter>
     </ClInclude>
@@ -127,6 +121,9 @@
       <Filter>Object\Wrapper</Filter>
     </ClInclude>
     <ClInclude Include="Job.h">
+      <Filter>Job</Filter>
+    </ClInclude>
+    <ClInclude Include="BlockContorller.h">
       <Filter>Job</Filter>
     </ClInclude>
   </ItemGroup>
@@ -145,9 +142,6 @@
     </ClCompile>
     <ClCompile Include="CallBackManager.cpp">
       <Filter>CallBack</Filter>
-    </ClCompile>
-    <ClCompile Include="ObjectStation.cpp">
-      <Filter>Object\Station</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

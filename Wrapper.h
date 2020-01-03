@@ -16,19 +16,20 @@ class wrapper_hub;
 template<typename _Ty>
 class wrapper_node;
 
-template <typename _Ty, typename is_object<_Ty>::type * = nullptr>
-constexpr wrapper_hub<_Ty> make_wrapper_hub()
+template <typename _Ty, typename ..._Tys, typename is_object<_Ty>::type * = nullptr>
+constexpr wrapper_hub<_Ty> make_wrapper_hub(_Tys&&... Args)
 {
 	if (ObjectStation::GetInstance().IsBinding<_Ty>() == false)
 		ObjectStation::GetInstance().BindObjectPool<_Ty>();
 	
-	return wrapper_hub<_Ty>(ObjectStation::GetInstance().Pop<_Ty>());
+	return wrapper_hub<_Ty>(ObjectStation::GetInstance().Pop<_Ty>(Args...));
 }
 
 template<typename _Ty, typename is_object<_Ty>::type * = nullptr>
 void Refund(_Ty*& data)
 {
-	ObjectStation::GetInstance().Push<_Ty>(data);
+	if (ObjectStation::GetInstance().Push<_Ty>(data) == false)
+		assert(false);
 }
 
 template<typename _Ty>
@@ -96,8 +97,8 @@ public:
 	wrapper_node<_Ty> operator=(wrapper_hub<_Ty>& hub) { return hub.make_node(); }
 
 private:
-	template <typename _Ty, typename is_object<_Ty>::type * = nullptr>
-	friend constexpr wrapper_hub<_Ty> make_wrapper_hub();
+	template <typename _Ty, typename ..._Tys, typename is_object<_Ty>::type * = nullptr>
+	friend constexpr wrapper_hub<_Ty> make_wrapper_hub(_Tys&&... Args);
 	
 	friend class wrapper_node<_Ty>;
 
