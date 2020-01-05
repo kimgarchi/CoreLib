@@ -24,7 +24,6 @@ public:
 	{}
 
 	void* operator new (size_t) = delete;
-	void operator delete (void* ptr) = delete;
 	
 private:
 	template<typename _Ty>
@@ -38,6 +37,8 @@ private:
 		assert(ptr != nullptr);
 		return ptr;
 	}
+
+	void operator delete (void* ptr) {}
 
 	Count& use_cnt() { return use_count_; }
 	Count& node_cnt() { return node_count_; }

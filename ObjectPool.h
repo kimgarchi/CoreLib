@@ -82,8 +82,9 @@ private:
 			if (alloc_mems_.find(object) == alloc_mems_.end())
 				return false;
 
+			delete object;
 			mem_que_.emplace(object);
-
+			
 			return true;
 		}
 
@@ -231,7 +232,7 @@ private:
 		if (alloc_objects_.find(object) == alloc_objects_.end())
 			return false;
 
-		return true;
+		return true; 
 	}
 
 	AllocID GetAllocID(_Ty* object)

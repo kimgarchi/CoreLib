@@ -19,8 +19,6 @@ private:
 public:
 	~ObjectStation()
 	{
-		std::unique_lock<std::mutex> lock(mtx_);
-		
 		try
 		{
 			std::for_each(object_pool_by_tid_.begin(), object_pool_by_tid_.end(),
@@ -44,8 +42,6 @@ public:
 	template<typename _Ty>
 	bool IsBinding()
 	{
-		std::unique_lock<std::mutex> lock(mtx_);
-		
 		if (object_pool_by_tid_.find(typeid(_Ty).hash_code()) == object_pool_by_tid_.end())
 			return false;
 
@@ -55,8 +51,6 @@ public:
 	template<typename _Ty>
 	bool BindObjectPool(size_t obj_alloc_cnt = _default_obj_alloc_cnt_, float obj_extend_remain_rate = _default_obj_extend_remain_rate)
 	{
-		std::unique_lock<std::mutex> lock(mtx_);
-		
 		auto tid = typeid(_Ty).hash_code();
 		return object_pool_by_tid_.emplace(tid, new ObjectPool<_Ty>(obj_alloc_cnt, obj_extend_remain_rate)).second;
 	}
@@ -64,8 +58,6 @@ public:
 	template<typename _Ty, typename ..._Tys>
 	_Ty* Pop(_Tys&&... Args)
 	{
-		std::unique_lock<std::mutex> lock(mtx_);
-		
 		auto itor = object_pool_by_tid_.find(typeid(_Ty).hash_code());
 		if (itor == object_pool_by_tid_.end())
 		{
@@ -80,8 +72,6 @@ public:
 	template<typename _Ty, typename is_object<_Ty>::type * = nullptr>
 	bool Push(_Ty*& object)
 	{
-		std::unique_lock<std::mutex> lock(mtx_);
-		
 		auto itor = object_pool_by_tid_.find(typeid(_Ty).hash_code());
 		if (itor == object_pool_by_tid_.end())
 			return false;
@@ -93,5 +83,4 @@ public:
 
 private:
 	ObjectPoolByTid object_pool_by_tid_;
-	std::mutex mtx_;
 };
