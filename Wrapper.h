@@ -49,16 +49,15 @@ public:
 	}
 
 	_Ty* get() { return _data(); }
-	_Ty* operator()() { return _data(); }
-	_Ty& operator*() { return *_data(); }
-	_Ty& operator->() { return *_data(); }	
+	_Ty* operator->() { return get(); }
+	_Ty& operator*() { return *_data(); }	
 
 	const Count& use_count() { return _use_count(); }
 	const Count& node_count() { return _node_count(); }
 
 protected:
-	inline Count& _use_count() { return data_->use_cnt(); }
-	inline Count& _node_count() { return data_->node_cnt(); }	
+	inline Count& _use_count() { return get()->use_count(); }
+	inline Count& _node_count() { return get()->node_count(); }	
 
 	void _increase_use_count() { _use_count().fetch_add(1); }
 	void _decrease_use_count() { _use_count().fetch_sub(1); }

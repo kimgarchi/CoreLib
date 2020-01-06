@@ -3,7 +3,7 @@
 #include <thread>
 #include "Object.h"
 
-class ThreadBase abstract : public object
+class ThreadBase abstract
 {
 private:
 	using Thread = std::thread;

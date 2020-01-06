@@ -3,24 +3,30 @@
 #include "singleton.h"
 #include "Object.h"
 
+using SharedMtx = std::shared_mutex;
+using SharedMtxByType = std::map<TypeID, SharedMtx>;
+
 class BlockController final : public Singleton<BlockController>
 {
 private:	
-	using Clasp = std::mutex;
-	using ClaspType = WORD;
-	using ClaspByType = std::map<ClaspType, Clasp>;
-	using LockMaterial = std::unordered_map<TypeID, ClaspByType>;
+	
 
 public:
 
 private:
-
 	template<typename _Ty>
-	bool RegistClasp()
+	SharedMtx ObtainShrMtx()
 	{
+		std::shared_mutex mtx;
+		TypeID tid = typeid(_Ty).hash_code();
+		auto itor = shared_mtx_by_type_.find(tid);
+		if (itor == shared_mtx_by_type_.end())
+			shared_mtx_by_type_.emplace(tid, mtx);
+		else
+			mtx = itor->second;
 
+		return mtx;
 	}
 
-
-	Clasp gate_keeper_;
+	SharedMtxByType shared_mtx_by_type_;
 };

@@ -40,8 +40,8 @@ private:
 
 	void operator delete (void* ptr) {}
 
-	Count& use_cnt() { return use_count_; }
-	Count& node_cnt() { return node_count_; }
+	Count& use_count() { return use_count_; }
+	Count& node_count() { return node_count_; }
 
 	Count use_count_;
 	Count node_count_;
