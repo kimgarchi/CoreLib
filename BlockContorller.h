@@ -1,32 +1,65 @@
 #pragma once
 #include "stdafx.h"
 #include "singleton.h"
-#include "Object.h"
+#include "Wrapper.h"
 
-using SharedMtx = std::shared_mutex;
-using SharedMtxByType = std::map<TypeID, SharedMtx>;
+struct Mutex : public object
+{
+	std::mutex mtx_;
+};
+
+struct SharedMutex : public object
+{
+	std::shared_mutex shr_mtx_;
+};
+
+using MutexHub = wrapper_hub<Mutex>;
+using SharedMutexHub = wrapper_hub<SharedMutex>;
+
+using MutexNode = wrapper_node<Mutex>;
+using SharedMutexNode = wrapper_node<SharedMutex>;
 
 class BlockController final : public Singleton<BlockController>
 {
 private:	
-	
+	using Clasps = std::unordered_map<TypeID, MutexHub>;
+	using ShrClasps = std::unordered_map<TypeID, SharedMutexHub>;
+	using Lock = std::unique_lock<std::mutex>;
 
 public:
-
-private:
-	template<typename _Ty>
-	SharedMtx ObtainShrMtx()
+	template<typename _Ty, is_object<_Ty> = nullptr>
+	decltype(auto) ObtainClasp()
 	{
-		std::shared_mutex mtx;
-		TypeID tid = typeid(_Ty).hash_code();
-		auto itor = shared_mtx_by_type_.find(tid);
-		if (itor == shared_mtx_by_type_.end())
-			shared_mtx_by_type_.emplace(tid, mtx);
-		else
-			mtx = itor->second;
+		Lock(mtx_);
 
-		return mtx;
+		TypeID tid = typeid(_Ty).hash_code();
+		if (clasps_.find(tid) == clasps_.end())
+		{
+			if (clasps_.emplace(tid, make_wrapper_hub<Mutex>()).second)
+				std::bad_alloc{};
+		}
+
+		return clasps_.at(tid).make_node();
 	}
 
-	SharedMtxByType shared_mtx_by_type_;
+	template<typename _Ty, is_object<_Ty> = nullptr>
+	decltype(auto) ObtainShrClasp()
+	{
+		Lock(mtx_);
+
+		TypeID tid = typeid(_Ty).hash_code();
+		if (shr_clasps_.find(tid) == shr_clasps_.end())
+		{
+			if (shr_clasps_.emplace(tid, make_wrapper_hub<Mutex>()).second)
+				std::bad_alloc{};
+		}
+
+		return shr_clasps_.at(tid).make_node();
+	}
+
+private:
+	Clasps clasps_;
+	ShrClasps shr_clasps_;
+
+	std::mutex mtx_;
 };
