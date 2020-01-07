@@ -4,6 +4,8 @@
 
 #pragma warning (push)
 #pragma warning (disable : 4291)
+#pragma warning (disable : 4348)
+#pragma warning (disable : 6305)
 
 #define TID					0
 #define ALLOC_ID			1
@@ -17,7 +19,7 @@ protected:
 	virtual void Clear() abstract;
 };
 
-template<typename _Ty, typename is_object<_Ty>::type * = nullptr>
+template<typename _Ty, is_object<_Ty> = nullptr>
 class ObjectPool final : public ObjectPoolBase
 {
 private:	
@@ -37,11 +39,12 @@ private:
 				std::bad_alloc{};
 
 			auto size = sizeof(_Ty);
+			size_t forward_step = 0;
 			for (auto idx = 0; idx < obj_cnt_; ++idx)
 			{
-				auto forward_step = idx * size;
 				auto ptr = (static_cast<_Ty*>(m_ptr_) + forward_step);
 
+				forward_step += size;
 				alloc_mems_.emplace(ptr, idx);
 				mem_que_.emplace(ptr);
 			}

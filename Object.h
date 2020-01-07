@@ -4,10 +4,7 @@
 class object;
 
 template<typename _Ty>
-using is_object = std::enable_if<std::is_base_of<object, _Ty>::value, _Ty>;
-
-template<typename _Ty, typename is_object<_Ty>::type*>
-class ObjectPool;
+using is_object = typename std::enable_if_t<std::is_base_of_v<object, _Ty>, _Ty>*;
 
 template<typename _Ty>
 class wrapper;
@@ -29,7 +26,7 @@ private:
 	template<typename _Ty>
 	friend class wrapper;
 
-	template<typename _Ty, typename is_object<_Ty>::type*>
+	template<typename _Ty, is_object<_Ty> = nullptr>
 	friend class ObjectPool;
 
 	void* operator new (size_t size, void* ptr)

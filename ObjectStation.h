@@ -69,7 +69,7 @@ public:
 		return object_pool->Pop(Args...);
 	}
 
-	template<typename _Ty, typename is_object<_Ty>::type * = nullptr>
+	template<typename _Ty, is_object<_Ty> = nullptr>
 	bool Push(_Ty*& object)
 	{
 		auto itor = object_pool_by_tid_.find(typeid(_Ty).hash_code());
