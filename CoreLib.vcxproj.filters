@@ -1,14 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="소스 파일">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="헤더 파일">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
     <Filter Include="리소스 파일">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
@@ -55,98 +47,76 @@
     <Filter Include="Job">
       <UniqueIdentifier>{59580497-2a79-42be-96a4-b8a206785ce3}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="stdafx.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="targetver.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="DataStream.h">
-      <Filter>Data</Filter>
-    </ClInclude>
-    <ClInclude Include="Storage.h">
-      <Filter>Data</Filter>
-    </ClInclude>
-    <ClInclude Include="Log.h">
-      <Filter>Define</Filter>
-    </ClInclude>
-    <ClInclude Include="Util.h">
-      <Filter>Define</Filter>
-    </ClInclude>
-    <ClInclude Include="Define.h">
-      <Filter>Define</Filter>
-    </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Logger.h">
-      <Filter>Logger</Filter>
-    </ClInclude>
-    <ClInclude Include="SocketBase.h">
-      <Filter>Socket</Filter>
-    </ClInclude>
-    <ClInclude Include="ThreadBase.h">
-      <Filter>Thread</Filter>
-    </ClInclude>
-    <ClInclude Include="Msg.h">
-      <Filter>Msg</Filter>
-    </ClInclude>
-    <ClInclude Include="ThreadManager.h">
-      <Filter>Thread</Filter>
-    </ClInclude>
-    <ClInclude Include="ObjectCycleCallBack.h">
-      <Filter>CallBack</Filter>
-    </ClInclude>
-    <ClInclude Include="CallBackManager.h">
-      <Filter>CallBack</Filter>
-    </ClInclude>
-    <ClInclude Include="CallBack.h">
-      <Filter>CallBack</Filter>
-    </ClInclude>
-    <ClInclude Include="wrapper.h">
-      <Filter>Object\Wrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="singleton.h">
-      <Filter>DesignPattern</Filter>
-    </ClInclude>
-    <ClInclude Include="ObjectPool.h">
-      <Filter>Object\Pool</Filter>
-    </ClInclude>
-    <ClInclude Include="ObjectStation.h">
-      <Filter>Object\Station</Filter>
-    </ClInclude>
-    <ClInclude Include="Object.h">
-      <Filter>Object\Wrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="Job.h">
-      <Filter>Job</Filter>
-    </ClInclude>
-    <ClInclude Include="BlockContorller.h">
-      <Filter>Job</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="stdafx.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Log.cpp">
-      <Filter>Define</Filter>
-    </ClCompile>
-    <ClCompile Include="Logger.cpp">
-      <Filter>Logger</Filter>
-    </ClCompile>
-    <ClCompile Include="ThreadBase.cpp">
-      <Filter>Thread</Filter>
-    </ClCompile>
-    <ClCompile Include="CallBackManager.cpp">
-      <Filter>CallBack</Filter>
-    </ClCompile>
+    <Filter Include="header">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CoreLib.rc">
       <Filter>리소스 파일</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Wrapper.h">
+      <Filter>Object\Wrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Object.h">
+      <Filter>Object\Wrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="src\BlockContorller.h">
+      <Filter>Job</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Job.h">
+      <Filter>Job</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Msg.h">
+      <Filter>Msg</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stdafx.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Util.h">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ThreadManager.h">
+      <Filter>Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ThreadBase.h">
+      <Filter>Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="src\CallBack.h">
+      <Filter>CallBack</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DataStream.h">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Storage.h">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="src\targetver.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\singleton.h">
+      <Filter>DesignPattern</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Define.h">
+      <Filter>Define</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Logger.h">
+      <Filter>Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ObjectPool.h">
+      <Filter>Object\Pool</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ObjectStation.h">
+      <Filter>Object\Station</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SocketBase.h">
+      <Filter>Socket</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
