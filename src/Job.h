@@ -3,62 +3,37 @@
 #include "Object.h"
 #include "BlockContorller.h"
 
-enum class LOCK_TYPE
-{
-	EXCLUSIVE,
-	SHARED,	
-};
-
 template<typename _Func>
-using is_function = typename std::enable_if_t<std::is_function_v<_Func>, _Func>;
-
-template<typename _Func, is_function<_Func> = nullptr>
-class JobBase abstract
+class JobBase
 {
+private:
+	using LockTypes = std::set<TypeID>;
+
 public:
-	JobBase()
+	JobBase(_Func func)
 		: func_(func)
 	{}
 
-protected:
-
 	template <typename _Ty>
-	void RecordType()
+	void RecordLockType()
 	{
-		types.emplace_back(std::string(typeid(_Ty).name()));
-
-		std::for_each(types.begin(), types.end(),
-			[](std::string str)
-		{
-			std::cout << str << std::endl;
-		});
-
-		func_(12, 13);
+		RecordLockType(typeid(_Ty).hash_code());
 	}
 
-	template<typename _Ty, typename ..._Tys>
-	void RecordType()
+	template<typename _fTy, typename _sTy, typename ..._Tys>
+	void RecordLockType()
 	{
-		RecordType<_Ty, _Tys...>();
+		RecordLockType(typeid(_fTy).hash_code());
+		RecordLockType<_sTy, _Tys...>();
 	}
-
-	template<typename _Ty, typename ..._Tys>
-	void RecordLockType(_Ty type, _Tys ...Args)
-	{
-		bind_try_lock_.emplace(BlockController::GetInstance().ObtainShrMtx(type));
-		ObtainLock(Args...);
-	}
-
-	void ObtainLock()
-	{
-		
-	}
-
-	virtual bool RegistJob() abstract;
-	virtual bool AsyncJob() abstract;
-	virtual bool SyncJob() abstract;
 
 private:
+	bool RecordLockType(TypeID tid) { return lock_types_.emplace(tid).second; }
 
+	virtual bool AsyncJob() abstract;
+	virtual bool SyncJob() abstract;
+	
 	_Func func_;
+	LockTypes lock_types_;	
 };
+
