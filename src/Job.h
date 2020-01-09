@@ -38,12 +38,13 @@ public:
 		RecordLockType<_sTy, _Tys...>();
 	}
 
+protected:
+	virtual bool Run() abstract;
+	virtual bool ClaspsLock() abstract;
+
 private:
 	bool RecordLockType(TypeID tid) { return lock_types_.emplace(tid).second; }
 
-	virtual bool AsyncJob() abstract;
-	virtual bool SyncJob() abstract;
-	
 	LockTypes lock_types_;	
 };
 
@@ -58,6 +59,21 @@ public:
 		: func_(func)
 	{}
 
+	virtual bool Run() override
+	{
+		if (clasps_.empty())
+		{
+			assert(false);
+			return false;
+		}
+
+		while (!ClaspsLock());
+		
+		func_();
+
+		return true;
+	}
+
 private:
 	Function<_ReturnType, _Tys...> func_;
 	Clasps clasps_;
@@ -67,7 +83,7 @@ template<typename _ReturnType, typename ..._Tys>
 class ExclusiveJob : public JobBase
 {
 private:
-	using Clasps = std::set<MutexNode>;
+	using Clasps = std::set<ExclusiveMutexNode>;
 
 public:
 	ExclusiveJob(Function<_ReturnType, _Tys...> func)
