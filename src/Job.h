@@ -94,3 +94,4 @@ private:
 	Function<_ReturnType, _Tys...> func_;
 	Clasps clasps_;
 };
+

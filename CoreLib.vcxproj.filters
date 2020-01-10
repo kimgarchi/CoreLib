@@ -54,6 +54,9 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
+    <Filter Include="Lib\Job\Sync">
+      <UniqueIdentifier>{c84c31bd-1293-4694-a822-0aafc3b5e27c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CoreLib.rc">
@@ -120,6 +123,9 @@
     </ClInclude>
     <ClInclude Include="src\SocketBase.h">
       <Filter>Lib\Socket</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SyncObject.h">
+      <Filter>Lib\Job\Sync</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

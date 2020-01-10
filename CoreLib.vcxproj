@@ -167,6 +167,7 @@
     <ClInclude Include="src\SocketBase.h" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\Storage.h" />
+    <ClInclude Include="src\SyncObject.h" />
     <ClInclude Include="src\targetver.h" />
     <ClInclude Include="src\ThreadBase.h" />
     <ClInclude Include="src\ThreadManager.h" />
