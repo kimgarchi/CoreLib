@@ -23,8 +23,6 @@ private:
 	using LockTypes = std::set<TypeID>;
 
 public:
-	JobBase() {}
-
 	template <typename _Ty>
 	void RecordLockType()
 	{
@@ -38,60 +36,8 @@ public:
 		RecordLockType<_sTy, _Tys...>();
 	}
 
-protected:
-	virtual bool Run() abstract;
-	virtual bool ClaspsLock() abstract;
-
 private:
 	bool RecordLockType(TypeID tid) { return lock_types_.emplace(tid).second; }
 
-	LockTypes lock_types_;	
+	LockTypes lock_types_;
 };
-
-template<typename _ReturnType, typename ..._Tys>
-class SharedJob : public JobBase
-{
-private:
-	using Clasps = std::set<SharedMutexNode>;
-
-public:
-	SharedJob(Function<_ReturnType, _Tys...> func) 
-		: func_(func)
-	{}
-
-	virtual bool Run() override
-	{
-		if (clasps_.empty())
-		{
-			assert(false);
-			return false;
-		}
-
-		while (!ClaspsLock());
-		
-		func_();
-
-		return true;
-	}
-
-private:
-	Function<_ReturnType, _Tys...> func_;
-	Clasps clasps_;
-};
-
-template<typename _ReturnType, typename ..._Tys>
-class ExclusiveJob : public JobBase
-{
-private:
-	using Clasps = std::set<ExclusiveMutexNode>;
-
-public:
-	ExclusiveJob(Function<_ReturnType, _Tys...> func)
-		: func_(func)
-	{}
-
-private:
-	Function<_ReturnType, _Tys...> func_;
-	Clasps clasps_;
-};
-

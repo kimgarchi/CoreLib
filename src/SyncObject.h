@@ -2,10 +2,13 @@
 #include "stdafx.h"
 #include "Wrapper.h"
 
-class SyncHandle final : public object
+class SyncHandle abstract : public object
 {
-	SyncHandle(HANDLE&& handle)
-		: handle_(handle) 
+public:
+	friend class SyncStation;
+
+	SyncHandle(HANDLE handle)
+		: handle_(handle)
 	{
 		assert(handle);
 	}
@@ -15,59 +18,126 @@ class SyncHandle final : public object
 		CloseHandle(handle_);
 	}
 
+	const HANDLE handle() { return handle_; }
+
 private:
 	HANDLE handle_;
 };
 
-class SyncObject abstract
-{
-public:
-	SyncObject(HANDLE&& handle)
-		: sync_handle_(make_wrapper_hub<SyncHandle>(handle))
-	{
-		assert(handle != nullptr);
-	}
+using SyncHub = wrapper_hub<SyncHandle>;
+using SyncNode = wrapper_node<SyncHandle>;
 
-	virtual ~SyncObject()
-	{
-		assert(wait_count() == 0);
-	}
-
-	decltype(auto) node() { return sync_handle_.make_node(); }
-
-	virtual WORD wait_count()
-	{
-		const auto& node_count = sync_handle_.node_count();
-		if (node_count > 0)
-			return node_count - 1;
-
-		return 0;
-	}
-
-private:	
-	wrapper_hub<SyncHandle> sync_handle_;
-};
-
-class Mutex : public SyncObject
+class Mutex : public SyncHandle
 {
 public:
 	Mutex()
-		: SyncObject(std::forward<HANDLE>(CreateMutex(nullptr, false, nullptr)))
+		: SyncHandle(CreateMutex(nullptr, false, nullptr))
 	{}
 };
 
-class Semaphore : public SyncObject
+class Semaphore : public SyncHandle
 {
 public:
 	Semaphore(LONG init_count, LONG max_count)
-		: SyncObject(std::forward<HANDLE>(CreateSemaphore(nullptr, init_count, max_count, nullptr)))
+		: init_count_(init_count), max_count_(max_count), SyncHandle(std::forward<HANDLE>(CreateSemaphore(nullptr, init_count, max_count, nullptr)))
 	{}
+
+private:	
+	LONG init_count_;
+	LONG max_count_;
 };
 
-class Event : public SyncObject
+class Event : public SyncHandle
 {
 public:
 	Event(BOOL is_menual_reset, BOOL init_state)
-		: SyncObject(std::forward<HANDLE>(CreateEvent(nullptr, is_menual_reset, init_state, nullptr)))
+		: SyncHandle(std::forward<HANDLE>(CreateEvent(nullptr, is_menual_reset, init_state, nullptr)))
 	{}
+
+private:
+
+};
+
+using MutexHub = wrapper_hub<Mutex>;
+using MutexNode = wrapper_node<Mutex>;
+using MutexNodes = std::vector<MutexNode>;
+
+class Lock
+{
+public:
+	void* operator new(size_t) = delete;
+	virtual bool WaitSignal() abstract;
+};
+
+class ExclusiveLock : public Lock
+{
+private:
+	using Handles = std::vector<HANDLE>;
+
+public:
+	ExclusiveLock(MutexNodes&& mutex_nodes, DWORD dwMilliseconds = INFINITE)
+		: mutex_nodes_(std::forward<MutexNodes>(mutex_nodes)), handle_count_(static_cast<DWORD>(mutex_nodes.size())), dwMilliseconds_(dwMilliseconds)
+	{
+		assert(mutex_nodes_.empty() == false);
+		auto handle_count = mutex_nodes_.size();
+		if (handle_count == 0)
+			return;
+
+		handles_.reserve(handle_count);
+		std::for_each(mutex_nodes_.begin(), mutex_nodes_.end(),
+			[&](MutexNode& node)
+		{
+			handles_.emplace_back(node->handle());
+		});
+
+		while (!WaitSignal());
+	}
+
+	~ExclusiveLock()
+	{
+		std::for_each(handles_.begin(), handles_.end(),
+			[](HANDLE handle)
+		{
+			assert(ReleaseMutex(handle));
+		});
+	}
+
+private:
+	virtual bool WaitSignal() override
+	{
+		DWORD value = WaitForMultipleObjects(handle_count_, handles_.data(), true, dwMilliseconds_);
+		if (value == WAIT_OBJECT_0 || value == WAIT_ABANDONED_0)
+		{
+			return true;
+		}
+		else if (value > WAIT_OBJECT_0&& value < WAIT_OBJECT_0 + handle_count_)
+		{
+			if (value != WAIT_OBJECT_0 + handle_count_ - 1)
+				return false;
+
+			return true;
+		}
+		else if (value > WAIT_ABANDONED_0&& value < WAIT_ABANDONED_0 + handle_count_)
+		{
+			assert(false);
+			handle_count_ -= (value - WAIT_ABANDONED_0);
+			if (value != WAIT_ABANDONED_0 + handle_count_ - 1)
+				return false;
+
+			return true;
+		}
+		else if (value == WAIT_TIMEOUT)
+		{
+			assert(dwMilliseconds_ == INFINITE);
+			return true;
+		}
+
+		assert(false);
+		return false;
+	}
+
+	MutexNodes mutex_nodes_;
+	DWORD handle_count_;
+	DWORD dwMilliseconds_;
+	Handles handles_;
 };

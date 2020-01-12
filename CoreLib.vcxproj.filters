@@ -128,4 +128,9 @@
       <Filter>Lib\Job\Sync</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\SyncStation.cpp">
+      <Filter>Lib\Job\Sync</Filter>
+    </ClCompile>
+  </ItemGroup>
 </Project>
