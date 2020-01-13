@@ -3,26 +3,20 @@
 #include "Object.h"
 #include "BlockContorller.h"
 
-template<typename _ReturnType, typename ..._Tys>
-class Function
-{
-private:
-	using Func = std::function<_ReturnType(_Tys... Args)>;
-
-public:
-	Function(Func func) : func_(func) {}
-	_ReturnType operator ()(_Tys... Args) { return func_(std::forward<_Tys>(Args)...); }
-
-private:
-	const Func func_;
-};
-
-class JobBase abstract
+template<typename _Func, typename ..._Funcs>
+class JobBase abstract : public object
 {
 private:
 	using LockTypes = std::set<TypeID>;
 
 public:
+	JobBase(_Func func)
+		: func_(func)
+	{}
+
+	virtual ~JobBase()
+	{}
+
 	template <typename _Ty>
 	void RecordLockType()
 	{
@@ -36,8 +30,15 @@ public:
 		RecordLockType<_sTy, _Tys...>();
 	}
 
+	template<typename ..._Tys>
+	decltype(auto) Run(_Tys... Args) { return func_(Args...); }
+
+	virtual bool RegistAsyncJob() abstract;
+
+
 private:
 	bool RecordLockType(TypeID tid) { return lock_types_.emplace(tid).second; }
 
+	_Func func_;
 	LockTypes lock_types_;
 };

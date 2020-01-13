@@ -5,56 +5,56 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Lib">
-      <UniqueIdentifier>{dfaa6620-bcc4-4811-8617-086bdb8f99be}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Lib\Object">
-      <UniqueIdentifier>{245c77e2-250d-49b2-8c61-54904add3c55}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Lib\Object\Wrapper">
-      <UniqueIdentifier>{0992d025-27a2-4c36-963c-1b8b982c04d2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Lib\Object\Pool">
-      <UniqueIdentifier>{79764562-3479-45c7-bb3d-7648bf674267}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Lib\Object\Station">
-      <UniqueIdentifier>{463d4501-d86d-4cff-8e9b-85b4e17a4182}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Lib\Socket">
-      <UniqueIdentifier>{2f6217aa-ad8b-435f-8855-350eb1ef794a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Lib\Socket\Iocp">
-      <UniqueIdentifier>{e5cd6fc7-13e0-4ee6-9d79-a6e2400150ec}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Lib\Thread">
-      <UniqueIdentifier>{85fc7525-a870-4eea-a8d1-f5069007cc45}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Lib\CallBack">
-      <UniqueIdentifier>{c2ae354b-4eb9-45a6-a9af-71706f281938}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Lib\Data">
-      <UniqueIdentifier>{7443491d-904c-4410-b768-69a675b48677}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Lib\Define">
-      <UniqueIdentifier>{732fc5ee-1bdd-47f6-84c9-07766d06b54e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Lib\DesignPattern">
-      <UniqueIdentifier>{5c4d300b-bd49-4290-a40a-429c27656c9a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Lib\Msg">
-      <UniqueIdentifier>{351469e2-65e3-420a-8ccc-421956706d22}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Lib\Job">
-      <UniqueIdentifier>{59580497-2a79-42be-96a4-b8a206785ce3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Lib\Logger">
-      <UniqueIdentifier>{bb506e7a-613c-4183-be9f-5418bc4fc757}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="Lib\Job\Sync">
+    <Filter Include="sorce">
+      <UniqueIdentifier>{dfaa6620-bcc4-4811-8617-086bdb8f99be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sorce\Object">
+      <UniqueIdentifier>{245c77e2-250d-49b2-8c61-54904add3c55}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sorce\Object\Wrapper">
+      <UniqueIdentifier>{0992d025-27a2-4c36-963c-1b8b982c04d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sorce\Object\Pool">
+      <UniqueIdentifier>{79764562-3479-45c7-bb3d-7648bf674267}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sorce\Object\Station">
+      <UniqueIdentifier>{463d4501-d86d-4cff-8e9b-85b4e17a4182}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sorce\Socket">
+      <UniqueIdentifier>{2f6217aa-ad8b-435f-8855-350eb1ef794a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sorce\Socket\Iocp">
+      <UniqueIdentifier>{e5cd6fc7-13e0-4ee6-9d79-a6e2400150ec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sorce\Thread">
+      <UniqueIdentifier>{85fc7525-a870-4eea-a8d1-f5069007cc45}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sorce\CallBack">
+      <UniqueIdentifier>{c2ae354b-4eb9-45a6-a9af-71706f281938}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sorce\Data">
+      <UniqueIdentifier>{7443491d-904c-4410-b768-69a675b48677}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sorce\Define">
+      <UniqueIdentifier>{732fc5ee-1bdd-47f6-84c9-07766d06b54e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sorce\DesignPattern">
+      <UniqueIdentifier>{5c4d300b-bd49-4290-a40a-429c27656c9a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sorce\Msg">
+      <UniqueIdentifier>{351469e2-65e3-420a-8ccc-421956706d22}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sorce\Job">
+      <UniqueIdentifier>{59580497-2a79-42be-96a4-b8a206785ce3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sorce\Logger">
+      <UniqueIdentifier>{bb506e7a-613c-4183-be9f-5418bc4fc757}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sorce\Sync">
       <UniqueIdentifier>{c84c31bd-1293-4694-a822-0aafc3b5e27c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -68,69 +68,69 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="src\Wrapper.h">
-      <Filter>Lib\Object\Wrapper</Filter>
+      <Filter>sorce\Object\Wrapper</Filter>
     </ClInclude>
     <ClInclude Include="src\Object.h">
-      <Filter>Lib\Object\Wrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="src\BlockContorller.h">
-      <Filter>Lib\Job</Filter>
+      <Filter>sorce\Object\Wrapper</Filter>
     </ClInclude>
     <ClInclude Include="src\Job.h">
-      <Filter>Lib\Job</Filter>
+      <Filter>sorce\Job</Filter>
     </ClInclude>
     <ClInclude Include="src\Msg.h">
-      <Filter>Lib\Msg</Filter>
+      <Filter>sorce\Msg</Filter>
     </ClInclude>
     <ClInclude Include="src\stdafx.h">
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="src\Util.h">
-      <Filter>Lib\Data</Filter>
+      <Filter>sorce\Data</Filter>
     </ClInclude>
     <ClInclude Include="src\ThreadManager.h">
-      <Filter>Lib\Thread</Filter>
+      <Filter>sorce\Thread</Filter>
     </ClInclude>
     <ClInclude Include="src\ThreadBase.h">
-      <Filter>Lib\Thread</Filter>
+      <Filter>sorce\Thread</Filter>
     </ClInclude>
     <ClInclude Include="src\CallBack.h">
-      <Filter>Lib\CallBack</Filter>
+      <Filter>sorce\CallBack</Filter>
     </ClInclude>
     <ClInclude Include="src\DataStream.h">
-      <Filter>Lib\Data</Filter>
+      <Filter>sorce\Data</Filter>
     </ClInclude>
     <ClInclude Include="src\Storage.h">
-      <Filter>Lib\Data</Filter>
+      <Filter>sorce\Data</Filter>
     </ClInclude>
     <ClInclude Include="src\targetver.h">
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="src\singleton.h">
-      <Filter>Lib\DesignPattern</Filter>
+      <Filter>sorce\DesignPattern</Filter>
     </ClInclude>
     <ClInclude Include="src\Define.h">
-      <Filter>Lib\Define</Filter>
+      <Filter>sorce\Define</Filter>
     </ClInclude>
     <ClInclude Include="src\Logger.h">
-      <Filter>Lib\Logger</Filter>
+      <Filter>sorce\Logger</Filter>
     </ClInclude>
     <ClInclude Include="src\ObjectPool.h">
-      <Filter>Lib\Object\Pool</Filter>
+      <Filter>sorce\Object\Pool</Filter>
     </ClInclude>
     <ClInclude Include="src\ObjectStation.h">
-      <Filter>Lib\Object\Station</Filter>
+      <Filter>sorce\Object\Station</Filter>
     </ClInclude>
     <ClInclude Include="src\SocketBase.h">
-      <Filter>Lib\Socket</Filter>
+      <Filter>sorce\Socket</Filter>
     </ClInclude>
     <ClInclude Include="src\SyncObject.h">
-      <Filter>Lib\Job\Sync</Filter>
+      <Filter>sorce\Sync</Filter>
+    </ClInclude>
+    <ClInclude Include="src\BlockContorller.h">
+      <Filter>sorce\Sync</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\SyncStation.cpp">
-      <Filter>Lib\Job\Sync</Filter>
+      <Filter>sorce\Sync</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

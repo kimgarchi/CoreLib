@@ -31,7 +31,7 @@ class Mutex : public SyncHandle
 {
 public:
 	Mutex()
-		: SyncHandle(CreateMutex(nullptr, false, nullptr))
+		: SyncHandle(::CreateMutex(nullptr, false, nullptr))
 	{}
 };
 
@@ -39,7 +39,8 @@ class Semaphore : public SyncHandle
 {
 public:
 	Semaphore(LONG init_count, LONG max_count)
-		: init_count_(init_count), max_count_(max_count), SyncHandle(std::forward<HANDLE>(CreateSemaphore(nullptr, init_count, max_count, nullptr)))
+		: SyncHandle(std::forward<HANDLE>(::CreateSemaphore(nullptr, init_count, max_count, nullptr))), 
+		init_count_(init_count), max_count_(max_count)
 	{}
 
 private:	
@@ -51,11 +52,12 @@ class Event : public SyncHandle
 {
 public:
 	Event(BOOL is_menual_reset, BOOL init_state)
-		: SyncHandle(std::forward<HANDLE>(CreateEvent(nullptr, is_menual_reset, init_state, nullptr)))
+		: SyncHandle(std::forward<HANDLE>(::CreateEvent(nullptr, is_menual_reset, init_state, nullptr))),
+		is_menual_reset_(is_menual_reset), init_state_(init_state)
 	{}
-
 private:
-
+	BOOL is_menual_reset_;
+	BOOL init_state_;
 };
 
 using MutexHub = wrapper_hub<Mutex>;
@@ -106,21 +108,25 @@ private:
 	virtual bool WaitSignal() override
 	{
 		DWORD value = WaitForMultipleObjects(handle_count_, handles_.data(), true, dwMilliseconds_);
-		if (value == WAIT_OBJECT_0 || value == WAIT_ABANDONED_0)
+		if (handle_count_ == 1 &&
+			(value == WAIT_OBJECT_0 || value == WAIT_ABANDONED_0))
 		{
 			return true;
 		}
-		else if (value > WAIT_OBJECT_0&& value < WAIT_OBJECT_0 + handle_count_)
+		else if (value > WAIT_OBJECT_0 && value < WAIT_OBJECT_0 + handle_count_)
 		{
 			if (value != WAIT_OBJECT_0 + handle_count_ - 1)
 				return false;
 
 			return true;
 		}
-		else if (value > WAIT_ABANDONED_0&& value < WAIT_ABANDONED_0 + handle_count_)
+		else if (value > WAIT_ABANDONED_0 && value < WAIT_ABANDONED_0 + handle_count_)
 		{
 			assert(false);
 			handle_count_ -= (value - WAIT_ABANDONED_0);
+			if (handle_count_ == 0)
+				return false;
+
 			if (value != WAIT_ABANDONED_0 + handle_count_ - 1)
 				return false;
 

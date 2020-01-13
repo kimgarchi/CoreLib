@@ -21,7 +21,7 @@ using SharedMutexNode = wrapper_node<SharedMutex>;
 
 class BlockController final : public Singleton<BlockController>
 {
-private:	
+private:
 	using Clasps = std::unordered_map<TypeID, ExclusiveMutexHub>;
 	using SharedClasps = std::unordered_map<TypeID, SharedMutexHub>;
 	using Lock = std::unique_lock<std::mutex>;
