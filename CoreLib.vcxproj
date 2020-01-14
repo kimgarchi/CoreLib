@@ -175,7 +175,7 @@
     <ClInclude Include="src\Wrapper.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\SyncStation.cpp" />
+    <ClCompile Include="src\SyncStation.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

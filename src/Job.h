@@ -42,3 +42,19 @@ private:
 	_Func func_;
 	LockTypes lock_types_;
 };
+
+template<typename _Func, typename ..._Funcs>
+class ReadJob
+{
+public:
+
+private:
+};
+
+template<typename _Func, typename ..._Funcs>
+class WriteJob
+{
+public:
+
+private:
+};
