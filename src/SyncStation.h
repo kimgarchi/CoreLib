@@ -9,41 +9,26 @@ using MutexNode = wrapper_node<sync::Mutex>;
 using SemaphoreHub = wrapper_hub<sync::Semaphore>;
 using SemaphoreNode = wrapper_hub<sync::Semaphore>;
 
-enum class HANDLE_STATE
-{
-	NONE,
-	IDLE,
-	READ_LOCK,
-	WRITE_LOCK,
-};
+class JobBase;
+using JobUnit = wrapper_node<JobBase>;
 
 class SyncStation : public Singleton<SyncStation>
 {
 private:
-	friend class BlockController;
+	enum class HANDLE_STATE
+	{
+		IDLE,
+		READ_LOCK,
+		WRITE_LOCK
+	};
 
 	class RWHandle
 	{
 	public:
-		RWHandle(WORD idx)
-			: idx_(idx), mutex_(make_wrapper_hub<sync::Mutex>()), semaphore_(make_wrapper_hub<sync::Semaphore>())
-		{}
-
-		decltype(auto) state()
-		{
-			DWORD ret = WaitForSingleObject(mutex_.get(), 0);
-			if (ret == WAIT_OBJECT_0)
-				return HANDLE_STATE::WRITE_LOCK;
-
-			ret = WaitForSingleObject(semaphore_.get(), 0);
-			if (ret == WAIT_OBJECT_0)
-				return HANDLE_STATE::READ_LOCK;
-
-			return HANDLE_STATE::IDLE;
-		}
-
-		decltype(auto) WriteHandle() { return mutex_.get(); }
-		decltype(auto) Readhandle() { return semaphore_.get(); }
+		RWHandle(WORD idx);			
+		decltype(auto) state();		
+		inline decltype(auto) WriteHandle() { return mutex_.get(); }
+		inline decltype(auto) Readhandle() { return semaphore_.get(); }
 
 	private:
 		WORD idx_;
@@ -54,7 +39,13 @@ private:
 	using HandleByType = std::unordered_map<TypeID, RWHandle>;
 	using Handles = std::vector<HANDLE>;
 	using Types = std::vector<TypeID>;
+	using HandleState = std::unordered_map<TypeID, HANDLE_STATE>;
 
+public:	
+	bool RegistReadJob(JobUnit job_unit);
+	bool RegistWriteJob(JobUnit job_unit);
+	
+private:
 	template<typename _Ty>
 	bool RecordHandle()
 	{
@@ -70,7 +61,7 @@ private:
 		auto ret = handle_by_type_.emplace(tid, idx);
 		auto push_result = ret.second;
 		auto rw_handle = ret.first->second;
-		
+
 		if (push_result == false)
 		{
 			assert(false);
@@ -79,7 +70,7 @@ private:
 
 		write_handles_.emplace_back(rw_handle.WriteHandle());
 		read_handles_.emplace_back(rw_handle.Readhandle());
-		
+
 		return true;
 	}
 
@@ -95,11 +86,10 @@ private:
 			assert(false);
 			return HANDLE_STATE::NONE;
 		}
-			
 
 		return itor->second.state();
 	}
-	
+
 	inline decltype(auto) ReadHandles() { return read_handles_.data(); }
 	inline decltype(auto) WriteHandles() { return write_handles_.data(); }
 

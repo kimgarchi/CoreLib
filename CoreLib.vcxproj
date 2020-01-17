@@ -100,7 +100,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>Create</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
@@ -153,11 +153,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
-    <ClInclude Include="src\BlockContorller.h" />
     <ClInclude Include="src\CallBack.h" />
     <ClInclude Include="src\DataStream.h" />
     <ClInclude Include="src\Define.h" />
     <ClInclude Include="src\Job.h" />
+    <ClInclude Include="src\JobStation .h" />
     <ClInclude Include="src\Logger.h" />
     <ClInclude Include="src\Msg.h" />
     <ClInclude Include="src\Object.h" />
@@ -175,6 +175,7 @@
     <ClInclude Include="src\Wrapper.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\SyncStation.cpp" />
     <ClCompile Include="src\SyncStation.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -124,12 +124,15 @@
     <ClInclude Include="src\SyncObject.h">
       <Filter>sorce\Sync</Filter>
     </ClInclude>
-    <ClInclude Include="src\BlockContorller.h">
-      <Filter>sorce\Sync</Filter>
+    <ClInclude Include="src\JobStation .h">
+      <Filter>sorce\Job</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\SyncStation.h">
+      <Filter>sorce\Sync</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SyncStation.cpp">
       <Filter>sorce\Sync</Filter>
     </ClCompile>
   </ItemGroup>

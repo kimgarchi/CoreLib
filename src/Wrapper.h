@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "Object.h"
 #include "ObjectStation.h"
+#include "singleton.h"
 
 #pragma warning (push)
 #pragma warning (disable : 4348)
@@ -16,20 +17,30 @@ class wrapper_hub;
 template<typename _Ty>
 class wrapper_node;
 
-template <typename _Ty, typename ..._Tys, is_object<_Ty> = nullptr>
+class Packer : public Singleton<Packer>
+{
+public:
+	template <typename _Ty, typename ..._Tys, is_object<_Ty> = nullptr>
+	constexpr decltype(auto) CreateHub(_Tys&&... Args)
+	{
+		if (ObjectStation::GetInstance().IsBinding<_Ty>() == false)
+			ObjectStation::GetInstance().BindObjectPool<_Ty>();
+
+		return wrapper_hub<_Ty>(ObjectStation::GetInstance().Pop<_Ty>(Args...));
+	}
+
+	template<typename _Ty, is_object<_Ty> = nullptr>
+	void Refund(_Ty*& data)
+	{
+		if (ObjectStation::GetInstance().Push<_Ty>(data) == false)
+			assert(false);
+	}
+};
+
+template <typename _Ty, typename ..._Tys>
 constexpr decltype(auto) make_wrapper_hub(_Tys&&... Args)
 {
-	if (ObjectStation::GetInstance().IsBinding<_Ty>() == false)
-		ObjectStation::GetInstance().BindObjectPool<_Ty>();
-	
-	return wrapper_hub<_Ty>(ObjectStation::GetInstance().Pop<_Ty>(Args...));
-}
-
-template<typename _Ty, is_object<_Ty> = nullptr>
-void Refund(_Ty*& data)
-{
-	if (ObjectStation::GetInstance().Push<_Ty>(data) == false)
-		assert(false);
+	return Packer::GetInstance().CreateHub<_Ty, _Tys...>(std::forward<_Tys...>(Args)...);
 }
 
 template<typename _Ty>
@@ -45,7 +56,7 @@ public:
 	virtual ~wrapper() 
 	{
 		if (_use_count() == 0 && _node_count() == 0)
-			Refund<_Ty>(data_);
+			Packer::GetInstance().Refund<_Ty>(data_);
 	}
 
 	_Ty* get() { return _data(); }
@@ -96,8 +107,7 @@ public:
 	decltype(auto) operator=(wrapper_hub<_Ty>& hub) { return hub.make_node(); }
 
 private:
-	template <typename _Ty, typename ..._Tys, is_object<_Ty> = nullptr>
-	friend constexpr decltype(auto) make_wrapper_hub(_Tys&&... Args);
+	friend class Packer;
 	
 	friend class wrapper_node<_Ty>;
 
