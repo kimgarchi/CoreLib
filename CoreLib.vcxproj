@@ -165,6 +165,7 @@
     <ClInclude Include="src\ObjectStation.h" />
     <ClInclude Include="src\singleton.h" />
     <ClInclude Include="src\SocketBase.h" />
+    <ClInclude Include="src\SocketPool.h" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\Storage.h" />
     <ClInclude Include="src\SyncObject.h" />
@@ -176,6 +177,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\JobStation.cpp" />
+    <ClCompile Include="src\SocketPool.cpp" />
     <ClCompile Include="src\SyncStation.cpp" />
     <ClCompile Include="src\SyncStation.h" />
   </ItemGroup>

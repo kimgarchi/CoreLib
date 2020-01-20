@@ -127,6 +127,9 @@
     <ClInclude Include="src\JobStation.h">
       <Filter>sorce\Job</Filter>
     </ClInclude>
+    <ClInclude Include="src\SocketPool.h">
+      <Filter>sorce\Socket</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\SyncStation.h">
@@ -137,6 +140,9 @@
     </ClCompile>
     <ClCompile Include="src\JobStation.cpp">
       <Filter>sorce\Job</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SocketPool.cpp">
+      <Filter>sorce\Socket</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
