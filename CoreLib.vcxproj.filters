@@ -88,9 +88,6 @@
     <ClInclude Include="src\ThreadManager.h">
       <Filter>sorce\Thread</Filter>
     </ClInclude>
-    <ClInclude Include="src\ThreadBase.h">
-      <Filter>sorce\Thread</Filter>
-    </ClInclude>
     <ClInclude Include="src\CallBack.h">
       <Filter>sorce\CallBack</Filter>
     </ClInclude>
@@ -124,7 +121,10 @@
     <ClInclude Include="src\SyncObject.h">
       <Filter>sorce\Sync</Filter>
     </ClInclude>
-    <ClInclude Include="src\JobStation .h">
+    <ClInclude Include="src\Thread.h">
+      <Filter>sorce\Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="src\JobStation.h">
       <Filter>sorce\Job</Filter>
     </ClInclude>
   </ItemGroup>
@@ -134,6 +134,9 @@
     </ClCompile>
     <ClCompile Include="src\SyncStation.cpp">
       <Filter>sorce\Sync</Filter>
+    </ClCompile>
+    <ClCompile Include="src\JobStation.cpp">
+      <Filter>sorce\Job</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

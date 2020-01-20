@@ -1,38 +1,40 @@
 #pragma once
 #include "stdafx.h"
 #include "Object.h"
-#include "SyncStation.h"
 
-class JobBase abstract : public object
+using JobID = size_t;
+using Func = std::function<void()>;
+
+class Job : public object
 {
 public:
-	bool Run() { return Execute(); }
+	Job(Func func)
+		: func_(func), job_id_(INVALID_JOB_ID), begin_thread_id_(GetCurrentThreadId())
+	{}
 
-protected:
-	virtual bool Execute() abstract;
-
-private:
-	friend class SyncStation;
-};
-
-using JobUnit = wrapper_node<JobBase>;
-
-template<typename _Func>
-class ReadJob
-{
-private:
-	virtual bool Execute()
+	virtual ~Job()
 	{
-		// Require Job Station prev
-		//SyncStation::GetInstance().RegistReadJob();
+		assert(job_id_ != INVALID_JOB_ID);
+	}
+
+	bool Run(JobID job_id)
+	{
+		job_id_ = job_id;
+		if (job_id_ != INVALID_JOB_ID)
+			return false;
+
+		if (begin_thread_id_ != GetCurrentThreadId())
+			return false;
+
+		func_();
+
 		return true;
 	}
-};
-
-template<typename _Func>
-class WriteJob
-{
-public:
 
 private:
+	friend class JobStation;
+
+	JobID job_id_;
+	DWORD begin_thread_id_;
+	Func func_;
 };

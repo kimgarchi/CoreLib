@@ -1,8 +1,11 @@
 #pragma once
-#include "ThreadBase.h"
+#include "singleton.h"
+#include "Wrapper.h"
+#include "Thread.h"
 
-enum class SyncType
+class ThreadManager : Singleton<ThreadManager>
 {
-	//...
-	SyncTypeMax,
+public:
+
+private:
 };
