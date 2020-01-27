@@ -5,9 +5,11 @@
 class SocketBase abstract : public object
 {
 public:
-	SocketBase(SOCKET sock)
-		: sock_(sock)
-	{}
+	SocketBase()
+		: sock_(INVALID_SOCKET)
+	{
+		
+	}
 
 	virtual ~SocketBase() 
 	{
