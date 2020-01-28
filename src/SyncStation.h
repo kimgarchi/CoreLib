@@ -27,8 +27,8 @@ private:
 	public:
 		RWHandle(WORD idx);			
 		decltype(auto) state();		
-		inline decltype(auto) WriteHandle() { return mutex_.get(); }
-		inline decltype(auto) Readhandle() { return semaphore_.get(); }
+		inline decltype(auto) WriteHandle() { return *mutex_.get(); }
+		inline decltype(auto) Readhandle() { return *semaphore_.get(); }
 
 	private:
 		WORD idx_;
@@ -42,53 +42,13 @@ private:
 	using HandleState = std::unordered_map<TypeID, HANDLE_STATE>;
 
 public:	
-	bool RegistReadJob(JobUnit job_unit);
-	bool RegistWriteJob(JobUnit job_unit);
+	bool RegistReadJob(HarvestTypes types, JobUnit job_unit);
+	bool RegistWriteJob(HarvestTypes types, JobUnit job_unit);
 	
 private:
-	template<typename _Ty>
-	bool RecordHandle()
-	{
-		std::unique_lock<std::mutex>(mtx_);
-		auto tid = typeid(_Ty).hash_code();
-
-		if (handle_by_type_.find(tid) == handle_by_type_.end())
-			return false;
-
-		auto idx = handle_by_type_.size();
-		assert(handle_by_type_.size() == write_handles_.size() && write_handles_.size() == read_handles_.size());
-
-		auto ret = handle_by_type_.emplace(tid, idx);
-		auto push_result = ret.second;
-		auto rw_handle = ret.first->second;
-
-		if (push_result == false)
-		{
-			assert(false);
-			return false;
-		}
-
-		write_handles_.emplace_back(rw_handle.WriteHandle());
-		read_handles_.emplace_back(rw_handle.Readhandle());
-
-		return true;
-	}
-
-	template<typename _Ty>
-	HANDLE_STATE handle_state()
-	{
-		std::unique_lock<std::mutex>(mtx_);
-		auto tid = typeid(_Ty).hash_code();
-
-		auto itor = handle_by_type_.find(tid);
-		if (itor == handle_by_type_.end())
-		{
-			assert(false);
-			return HANDLE_STATE::NONE;
-		}
-
-		return itor->second.state();
-	}
+	bool RecordHandle(TypeID tid);
+	HANDLE_STATE handle_state(TypeID tid);
+	bool IsRecordType(TypeID tid);
 
 	inline decltype(auto) ReadHandles() { return read_handles_.data(); }
 	inline decltype(auto) WriteHandles() { return write_handles_.data(); }
@@ -98,5 +58,6 @@ private:
 	Handles write_handles_;
 	Types types_;
 
-	std::mutex mtx_;
+	std::shared_mutex distribute_mtx_;
+	std::mutex depot_mtx_;
 };

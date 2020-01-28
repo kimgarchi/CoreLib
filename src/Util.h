@@ -5,10 +5,10 @@
 #pragma warning (push)
 #pragma warning (disable : 26444)
 
+using HarvestTypes = std::vector<size_t>;
 class TypeHarvest : public Singleton<TypeHarvest>
 {
 protected:
-	using HarvestTypes = std::vector<size_t>;
 	using Types = std::set<size_t>;
 
 public:
@@ -39,6 +39,35 @@ private:
 		harvect_type<_sTy, _Tys...>(tids);
 		return tids;
 	}
+};
+
+class CPUsage
+{
+private:
+	using Specimens = std::queue<float>;
+	using SpecimenCount = size_t;
+	using TotalSpecimentUsage = float;
+
+public:
+	CPUsage(SpecimenCount count = 10)
+	{
+		PdhOpenQuery(NULL, NULL, &cpuQuery);
+		PdhAddCounter(cpuQuery, L"\\Processor(_Total)\\% Processor Time", NULL, &cpuTotal);
+		PdhCollectQueryData(cpuQuery);
+	}
+
+	decltype(auto) Get()
+	{
+		PdhCollectQueryData(cpuQuery);
+		PdhGetFormattedCounterValue(cpuTotal, PDH_FMT_DOUBLE, NULL, &counterVal);
+		return counterVal;
+	}
+
+private:
+	PDH_HQUERY cpuQuery;
+	PDH_HCOUNTER cpuTotal;
+	PDH_FMT_COUNTERVALUE counterVal;
+
 };
 
 #pragma warning (pop)

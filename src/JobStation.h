@@ -20,11 +20,12 @@ private:
 	
 public:
 	template<typename ..._Tys>
-	bool BookingJob(JOB_TYPE type, Job job) 
+	bool BookingJob(JOB_TYPE type, Job job)
 	{
 		std::unique_lock<std::mutex> lock(mtx_);
 		auto types = TypeHarvest::GetInstance().harvest<_Tys...>();
 
+		
 		return true;
 	}
 
