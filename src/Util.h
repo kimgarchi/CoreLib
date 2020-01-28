@@ -49,7 +49,7 @@ private:
 	using TotalSpecimentUsage = float;
 
 public:
-	CPUsage(SpecimenCount count = 10)
+	CPUsage(SpecimenCount count = 10)		
 	{
 		PdhOpenQuery(NULL, NULL, &cpuQuery);
 		PdhAddCounter(cpuQuery, L"\\Processor(_Total)\\% Processor Time", NULL, &cpuTotal);

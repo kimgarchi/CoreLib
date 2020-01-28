@@ -1,6 +1,7 @@
 #pragma once
 #include "stdafx.h"
 #include "SyncStation.h"
+#include "Wrapper.h"
 #include "Job.h"
 
 SyncStation::RWHandle::RWHandle(WORD idx)
@@ -35,6 +36,7 @@ bool SyncStation::RegistWriteJob(HarvestTypes types, JobUnit job_unit)
 
 bool SyncStation::RecordHandle(TypeID tid)
 {
+	/*
 	//std::unique_lock<std::mutex>(mtx_);
 	if (handle_by_type_.find(tid) == handle_by_type_.end())
 		return false;
@@ -52,9 +54,9 @@ bool SyncStation::RecordHandle(TypeID tid)
 		return false;
 	}
 
-	write_handles_.emplace_back(rw_handle.WriteHandle());
-	read_handles_.emplace_back(rw_handle.Readhandle());
-
+	//write_handles_.emplace_back(rw_handle.WriteHandle());
+	//read_handles_.emplace_back(rw_handle.Readhandle());
+	*/
 	return true;
 }
 

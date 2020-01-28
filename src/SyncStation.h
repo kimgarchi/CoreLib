@@ -9,8 +9,8 @@ using MutexNode = wrapper_node<sync::Mutex>;
 using SemaphoreHub = wrapper_hub<sync::Semaphore>;
 using SemaphoreNode = wrapper_hub<sync::Semaphore>;
 
-class JobBase;
-using JobUnit = wrapper_node<JobBase>;
+class Job;
+using JobUnit = wrapper_node<Job>;
 
 class SyncStation : public Singleton<SyncStation>
 {
