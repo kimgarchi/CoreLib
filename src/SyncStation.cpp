@@ -24,6 +24,7 @@ decltype(auto) SyncStation::RWHandle::state()
 
 bool SyncStation::RegistReadJob(HarvestTypes types, JobUnit job_unit)
 {
+
 	return false;
 }
 
@@ -35,6 +36,7 @@ bool SyncStation::RegistWriteJob(HarvestTypes types, JobUnit job_unit)
 
 bool SyncStation::RecordHandle(TypeID tid)
 {
+	/*
 	//std::unique_lock<std::mutex>(mtx_);
 	if (handle_by_type_.find(tid) == handle_by_type_.end())
 		return false;
@@ -54,7 +56,7 @@ bool SyncStation::RecordHandle(TypeID tid)
 
 	write_handles_.emplace_back(rw_handle.WriteHandle());
 	read_handles_.emplace_back(rw_handle.Readhandle());
-
+	*/
 	return true;
 }
 

@@ -21,10 +21,16 @@ public:
 	{
 		job_id_ = job_id;
 		if (job_id_ != INVALID_JOB_ID)
+		{
+			assert(false);
 			return false;
+		}
 
 		if (begin_thread_id_ != GetCurrentThreadId())
+		{
+			assert(false);
 			return false;
+		}	
 
 		func_();
 

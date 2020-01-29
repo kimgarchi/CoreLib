@@ -144,5 +144,8 @@
     <ClCompile Include="src\SocketPool.cpp">
       <Filter>sorce\Socket</Filter>
     </ClCompile>
+    <ClCompile Include="src\Thread.cpp">
+      <Filter>sorce\Thread</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
