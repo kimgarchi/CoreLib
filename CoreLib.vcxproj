@@ -180,6 +180,7 @@
     <ClCompile Include="src\SocketPool.cpp" />
     <ClCompile Include="src\SyncStation.cpp" />
     <ClCompile Include="src\SyncStation.h" />
+    <ClCompile Include="src\Thread.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

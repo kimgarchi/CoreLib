@@ -1,22 +1,21 @@
 #pragma once
 #include "stdafx.h"
-#include "Object.h"
+#include "JobStation.h"
 
-__interface ThreadBase
+class Thread : public object
 {
 public:
-	virtual bool Run() abstract;
-	virtual bool Stop() abstract;
-	virtual bool Join() abstract;
-};
+	friend class ThreadManager;
 
+	Thread(JobHub job_hub);
+	virtual ~Thread();
 
-class Thread : public ThreadBase, public object
-{
-private:
-
-public:
+	bool Run();
+	bool Stop();
+	bool Join();
 
 private:
+	std::future 
 	std::thread thread_;
+	JobNode job_node_;
 };
