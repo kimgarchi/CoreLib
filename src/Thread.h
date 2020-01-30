@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "Object.h"
 
-class Thread : object
+class Thread : public object
 {
 public:
     using Func = std::function<void()>;
@@ -10,7 +10,7 @@ public:
     Thread();
     Thread(Func&& func);
     
-    ~Thread();
+    virtual ~Thread();
 
     bool Run();
     bool Run(Func&& func);
