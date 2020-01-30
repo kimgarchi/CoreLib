@@ -1,21 +1,26 @@
 #pragma once
 #include "stdafx.h"
-#include "JobStation.h"
+#include "Object.h"
 
 class Thread : public object
 {
 public:
-	friend class ThreadManager;
+    using Func = std::function<void()>;
 
-	Thread(JobHub job_hub);
-	virtual ~Thread();
+    Thread();
+    Thread(Func&& func);
+    
+    virtual ~Thread();
 
-	bool Run();
-	bool Stop();
-	bool Join();
+    bool Run();
+    bool Run(Func&& func);
+    bool Stop();
 
 private:
-	std::future 
-	std::thread thread_;
-	JobNode job_node_;
+    Func func_;
+    std::mutex mtx_;
+    std::condition_variable cond_var_;
+    std::future<bool> future_;
+    std::thread thread_;
+    std::atomic_bool is_runable_;
 };
