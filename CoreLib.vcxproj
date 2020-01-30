@@ -174,12 +174,12 @@
     <ClInclude Include="src\ThreadManager.h" />
     <ClInclude Include="src\Util.h" />
     <ClInclude Include="src\Wrapper.h" />
+	<ClInclude Include="src\SyncStation.h" />	
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\JobStation.cpp" />
     <ClCompile Include="src\SocketPool.cpp" />
-    <ClCompile Include="src\SyncStation.cpp" />
-    <ClCompile Include="src\SyncStation.h" />
+    <ClCompile Include="src\SyncStation.cpp" />    
     <ClCompile Include="src\Thread.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

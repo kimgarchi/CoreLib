@@ -40,7 +40,7 @@ private:
 		return tids;
 	}
 };
-
+/*
 class CPUsage
 {
 private:
@@ -69,5 +69,5 @@ private:
 	PDH_FMT_COUNTERVALUE counterVal;
 
 };
-
+*/
 #pragma warning (pop)
