@@ -34,16 +34,15 @@ private:
 		SegmentPool(size_t obj_cnt)
 			: obj_cnt_(obj_cnt), m_ptr_(nullptr)
 		{
-			m_ptr_ = std::malloc(sizeof(_Ty) * obj_cnt_);
+			auto size = sizeof(_Ty);
+			m_ptr_ = std::malloc(size * obj_cnt_);
 			if (m_ptr_ == nullptr)
 				std::bad_alloc{};
 
-			auto size = sizeof(_Ty);
 			size_t forward_step = 0;
 			for (auto idx = 0; idx < obj_cnt_; ++idx)
 			{
-				auto ptr = (static_cast<_Ty*>(m_ptr_) + forward_step);
-
+				auto ptr = static_cast<char*>(m_ptr_) + forward_step;
 				forward_step += size;
 				alloc_mems_.emplace(ptr, idx);
 				mem_que_.emplace(ptr);

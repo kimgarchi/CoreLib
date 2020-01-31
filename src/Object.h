@@ -17,7 +17,7 @@ class object abstract
 {
 public:
 	object()
-		: use_count_(0), node_count_(0), _val_(0)
+		: use_count_(0), node_count_(0)
 	{}
 
 	void* operator new (size_t) = delete;
@@ -42,6 +42,5 @@ private:
 
 	Count use_count_;
 	Count node_count_;
-	int _val_;
 };
 
