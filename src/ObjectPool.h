@@ -41,7 +41,7 @@ private:
 			size_t forward_step = 0;
 			for (auto idx = 0; idx < obj_cnt_; ++idx)
 			{
-				auto ptr = static_cast<char*>(m_ptr_) + idx;
+				auto ptr = static_cast<_Ty*>(m_ptr_) + idx;
 				alloc_mems_.emplace(ptr, idx);
 				mem_que_.emplace(ptr);
 			}
