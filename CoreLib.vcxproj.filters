@@ -27,9 +27,6 @@
     <Filter Include="sorce\Socket">
       <UniqueIdentifier>{2f6217aa-ad8b-435f-8855-350eb1ef794a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="sorce\Socket\Iocp">
-      <UniqueIdentifier>{e5cd6fc7-13e0-4ee6-9d79-a6e2400150ec}</UniqueIdentifier>
-    </Filter>
     <Filter Include="sorce\Thread">
       <UniqueIdentifier>{85fc7525-a870-4eea-a8d1-f5069007cc45}</UniqueIdentifier>
     </Filter>
@@ -130,11 +127,17 @@
     <ClInclude Include="src\SocketPool.h">
       <Filter>sorce\Socket</Filter>
     </ClInclude>
+    <ClInclude Include="src\SyncStation.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PostCenter.h">
+      <Filter>sorce\Socket</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Sock.h">
+      <Filter>Header</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\SyncStation.h">
-      <Filter>sorce\Sync</Filter>
-    </ClCompile>
     <ClCompile Include="src\SyncStation.cpp">
       <Filter>sorce\Sync</Filter>
     </ClCompile>
@@ -146,6 +149,9 @@
     </ClCompile>
     <ClCompile Include="src\Thread.cpp">
       <Filter>sorce\Thread</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PostCenter.cpp">
+      <Filter>sorce\Socket</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

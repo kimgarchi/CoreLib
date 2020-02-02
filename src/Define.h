@@ -5,3 +5,5 @@
 #define SAFE_DELETE(data) delete data; data = nullptr;
 
 #define INVALID_JOB_ID 0
+
+using Func = std::function<void()>;

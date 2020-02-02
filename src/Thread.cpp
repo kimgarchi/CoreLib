@@ -30,12 +30,13 @@ Thread::Thread()
     thread_ = std::thread(std::move(task));
 }
 
-Thread::Thread(Func&& func)
+Thread::Thread(Func&& func, bool immedidate_run)
     : func_(func), is_runable_(false)
 {
     std::packaged_task<bool()> task = std::packaged_task<bool()>(
         [&]()
     {
+        if (immedidate_run == false)
         {
             std::unique_lock<std::mutex> lock(mtx_);
             cond_var_.wait(lock, [&] {return is_runable_ == true; });

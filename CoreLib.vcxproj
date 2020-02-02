@@ -163,7 +163,9 @@
     <ClInclude Include="src\Object.h" />
     <ClInclude Include="src\ObjectPool.h" />
     <ClInclude Include="src\ObjectStation.h" />
+    <ClInclude Include="src\PostCenter.h" />
     <ClInclude Include="src\singleton.h" />
+    <ClInclude Include="src\Sock.h" />
     <ClInclude Include="src\SocketBase.h" />
     <ClInclude Include="src\SocketPool.h" />
     <ClInclude Include="src\stdafx.h" />
@@ -174,12 +176,13 @@
     <ClInclude Include="src\ThreadManager.h" />
     <ClInclude Include="src\Util.h" />
     <ClInclude Include="src\Wrapper.h" />
-	<ClInclude Include="src\SyncStation.h" />	
+    <ClInclude Include="src\SyncStation.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\JobStation.cpp" />
+    <ClCompile Include="src\PostCenter.cpp" />
     <ClCompile Include="src\SocketPool.cpp" />
-    <ClCompile Include="src\SyncStation.cpp" />    
+    <ClCompile Include="src\SyncStation.cpp" />
     <ClCompile Include="src\Thread.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

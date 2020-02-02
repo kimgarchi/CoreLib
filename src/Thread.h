@@ -2,13 +2,13 @@
 #include "stdafx.h"
 #include "Object.h"
 
+using ThreadID = DWORD;
+
 class Thread : public object
 {
 public:
-    using Func = std::function<void()>;
-
     Thread();
-    Thread(Func&& func);
+    Thread(Func&& func, bool immedidate_run = true);
     
     virtual ~Thread();
 
