@@ -1,10 +1,10 @@
 #pragma once
-#include <WinSock2.h>
-#include "Object.h"
+#include "stdafx.h"
+#include "Sock.h"
 
 #define BUF_SIZE 256
 
-class SocketBase abstract
+class SocketBase abstract : public object
 {
 public:
 	SocketBase(SOCKET sock, SOCKADDR_IN sock_addr)
@@ -19,9 +19,9 @@ public:
 
 	SOCKET sock() { return sock_; }
 
-private:	
-	SOCKET sock_;
-	SOCKADDR_IN sock_addr_;
+private:
+	const SOCKET sock_;
+	const SOCKADDR_IN sock_addr_;
 };
 
 class IocpSock : public SocketBase
@@ -48,3 +48,6 @@ private:
 	WSABUF wsa_buf_;
 	char buffer[BUF_SIZE];
 };
+
+using IocpSockHub = wrapper_hub<IocpSock>;
+using IocpSockNode = wrapper_node<IocpSock>;

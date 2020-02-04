@@ -127,14 +127,14 @@
     <ClInclude Include="src\SocketPool.h">
       <Filter>sorce\Socket</Filter>
     </ClInclude>
-    <ClInclude Include="src\SyncStation.h">
-      <Filter>Header</Filter>
-    </ClInclude>
     <ClInclude Include="src\PostCenter.h">
       <Filter>sorce\Socket</Filter>
     </ClInclude>
+    <ClInclude Include="src\SyncStation.h">
+      <Filter>sorce\Sync</Filter>
+    </ClInclude>
     <ClInclude Include="src\Sock.h">
-      <Filter>Header</Filter>
+      <Filter>sorce\Socket</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

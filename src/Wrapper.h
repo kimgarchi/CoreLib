@@ -1,6 +1,5 @@
 #pragma once
 #include "stdafx.h"
-#include "Object.h"
 #include "ObjectStation.h"
 #include "singleton.h"
 
@@ -40,7 +39,7 @@ public:
 template <typename _Ty, typename ..._Tys>
 constexpr decltype(auto) make_wrapper_hub(_Tys&&... Args)
 {
-	return Packer::GetInstance().CreateHub<_Ty, _Tys...>(std::forward<_Tys...>(Args)...);
+	return Packer::GetInstance().CreateHub<_Ty, _Tys...>(Args...);
 }
 
 template<typename _Ty>
@@ -126,7 +125,7 @@ public:
 	wrapper_node<_Ty>& operator=(const wrapper_node<_Ty>&) = delete;
 
 	wrapper_node(const wrapper_node<_Ty>& node)
-		: wrapper<_Ty>(node->_data())
+		: wrapper<_Ty>(const_cast<wrapper_node<_Ty>&>(node).get())
 	{
 		wrapper<_Ty>::_increase_node_count();
 	}

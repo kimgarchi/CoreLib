@@ -7,10 +7,9 @@
 #pragma warning (disable : 4348)
 #pragma warning (disable : 6305)
 
-#define TID					0
-#define ALLOC_ID			1
-#define INVALID_ALLOC_ID	0
-#define INIT_ALLOC_ID		1
+#define ALLOC_ID 1
+#define INVALID_ALLOC_ID 0
+#define INIT_ALLOC_ID 1
 
 class ObjectPoolBase abstract
 {
