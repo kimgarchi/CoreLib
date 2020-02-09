@@ -5,7 +5,7 @@
 using JobID = size_t;
 using Func = std::function<void()>;
 
-class Job : public object
+class Job
 {
 public:
 	Job(Func func)
@@ -30,7 +30,7 @@ public:
 		{
 			assert(false);
 			return false;
-		}	
+		}
 
 		func_();
 

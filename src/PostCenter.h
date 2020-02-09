@@ -1,6 +1,5 @@
 #pragma once
 #include "stdafx.h"
-#include "Sock.h"
 #include "singleton.h"
 #include "SocketBase.h"
 
@@ -18,7 +17,7 @@ private:
 		using BindSocks = std::map<SOCKET, IocpSock>;
 		using BindThreadIds = std::set<DWORD>;
 	public:
-		CompletionPort(Func func, DWORD thread_count);
+		CompletionPort();
 		~CompletionPort();
 		bool BindSock(SOCKET sock);
 
@@ -34,13 +33,11 @@ public:
 	PostCenter();
 	~PostCenter();
 
-	PostID RecordCompletionPort(Func func, DWORD thread_count);
+	//PostID RecordCompletionPort(const Func& response_func, const Func& entertain_func, DWORD thread_count);
 	bool BindSocket(PostID post_id, SOCKET sock);
 
 private:
 	HANDLE NewCompletionPort(DWORD thread_count);
-
-
 	CompletionPorts completion_ports_;
 	BindAllSocks bind_all_socks_;
 	static std::atomic<PostID> alloc_post_id_;

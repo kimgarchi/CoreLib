@@ -54,6 +54,9 @@
     <Filter Include="sorce\Sync">
       <UniqueIdentifier>{c84c31bd-1293-4694-a822-0aafc3b5e27c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="sorce\DB">
+      <UniqueIdentifier>{ec66ab8b-f3b8-4915-a61c-d3febba837b0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CoreLib.rc">
@@ -152,6 +155,9 @@
     </ClCompile>
     <ClCompile Include="src\PostCenter.cpp">
       <Filter>sorce\Socket</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ThreadManager.cpp">
+      <Filter>sorce\Thread</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

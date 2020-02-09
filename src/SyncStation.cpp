@@ -21,7 +21,7 @@ decltype(auto) SyncStation::RWHandle::state()
 
 	return HANDLE_STATE::IDLE;
 }
-
+/*
 bool SyncStation::RegistReadJob(HarvestTypes types, JobUnit job_unit)
 {
 
@@ -33,7 +33,7 @@ bool SyncStation::RegistWriteJob(HarvestTypes types, JobUnit job_unit)
 	// ...
 	return false;
 }
-
+*/
 bool SyncStation::RecordHandle(TypeID tid)
 {
 	/*

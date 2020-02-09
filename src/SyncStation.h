@@ -10,7 +10,7 @@ using SemaphoreHub = wrapper_hub<sync::Semaphore>;
 using SemaphoreNode = wrapper_hub<sync::Semaphore>;
 
 class Job;
-using JobUnit = wrapper_node<Job>;
+//using JobUnit = wrapper_node<Job>;
 
 class SyncStation : public Singleton<SyncStation>
 {
@@ -42,8 +42,8 @@ private:
 	using HandleState = std::unordered_map<TypeID, HANDLE_STATE>;
 
 public:	
-	bool RegistReadJob(HarvestTypes types, JobUnit job_unit);
-	bool RegistWriteJob(HarvestTypes types, JobUnit job_unit);
+	//bool RegistReadJob(HarvestTypes types, JobUnit job_unit);
+	//bool RegistWriteJob(HarvestTypes types, JobUnit job_unit);
 	
 private:
 	bool RecordHandle(TypeID tid);

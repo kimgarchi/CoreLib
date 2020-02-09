@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "PostCenter.h"
+#include "JobStation.h"
 
 PostCenter::PostCenter()
 {
@@ -11,22 +12,25 @@ PostCenter::PostCenter()
 PostCenter::~PostCenter()
 {
 }
-
-PostID PostCenter::RecordCompletionPort(Func func, DWORD thread_count)
+/*
+PostID PostCenter::RecordCompletionPort(const Func& response_func, const Func& entertain_func, DWORD thread_count)
 {
 	PostID post_id = alloc_post_id_.fetch_add(1);
 	if (completion_ports_.find(post_id) != completion_ports_.end())
 		return INVALID_POST_ID;
 
-	return true;
-}
 
+
+	return post_id;
+}
+*/
 HANDLE PostCenter::NewCompletionPort(DWORD thread_count)
 {
 	return CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, thread_count);
 }
 
-PostCenter::CompletionPort::CompletionPort(Func func, DWORD thread_count)
+PostCenter::CompletionPort::CompletionPort()
+	: handle_(nullptr)
 {
 }
 

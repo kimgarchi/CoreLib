@@ -184,6 +184,7 @@
     <ClCompile Include="src\SocketPool.cpp" />
     <ClCompile Include="src\SyncStation.cpp" />
     <ClCompile Include="src\Thread.cpp" />
+    <ClCompile Include="src\ThreadManager.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

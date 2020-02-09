@@ -6,4 +6,4 @@
 
 #define INVALID_JOB_ID 0
 
-using Func = std::function<void()>;
+using ThrFunc = std::function<void()>;

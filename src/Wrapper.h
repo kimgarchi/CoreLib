@@ -7,6 +7,92 @@
 #pragma warning (disable : 4348)
 #pragma warning (disable : 4521)
 
+#ifdef _DEBUG
+#pragma comment(lib, "dbghelp.lib")
+
+const static size_t default_stack_depth_ = 32;
+using Hash = ULONG;
+using Stacks = std::vector<void*>;
+
+class CallStack;
+class CallStackGroup;
+using vPtr = void*;
+using vPtrNode = std::map<vPtr, Hash>;
+using vPtrs = std::set<vPtr>;
+using CallStackByHash = std::map<Hash, CallStack>;
+using StackTrace = std::map<TypeID, CallStackGroup>;
+
+class CallStack
+{
+public:
+	CallStack(const Stacks& stacks, vPtr ptr)
+		: stacks_(stacks)
+	{
+		assert(Attach(ptr));
+	}
+
+	inline bool Attach(vPtr ptr) { return vptrs_.emplace(ptr).second; }
+	inline bool Deattach(vPtr ptr) { return static_cast<bool>(vptrs_.erase(ptr)); }
+
+private:
+	const Stacks stacks_;
+	vPtrs vptrs_;
+};
+
+class CallStackGroup
+{
+public:
+	CallStackGroup(const std::wstring& type_name, const Hash& hash, const Stacks& stacks, vPtr ptr)
+		: type_name_(type_name)
+	{
+		assert(vptr_node_.emplace(ptr, hash).second);
+		assert(callstack_by_hash_.emplace(hash, CallStack(stacks, ptr)).second);
+	}
+
+	bool Attach(const Hash& hash, const Stacks& stacks, vPtr ptr)
+	{
+		if (vptr_node_.emplace(ptr, hash).second == false)
+		{
+			//...
+			return false;
+		}
+
+		auto itor = callstack_by_hash_.find(hash);
+		if (itor == callstack_by_hash_.end())
+			return callstack_by_hash_.emplace(hash, CallStack(stacks, ptr)).second;
+
+		return itor->second.Attach(ptr);
+	}
+
+	bool Deattach(vPtr ptr)
+	{
+		auto vptr_itor = vptr_node_.find(ptr);
+		if (vptr_itor == vptr_node_.end())
+		{
+			//...
+			return false;
+		}
+
+
+		const Hash& hash = vptr_itor->second;
+		auto hash_itor = callstack_by_hash_.find(hash);
+		if (hash_itor == callstack_by_hash_.end())
+		{
+			//...
+			return false;
+		}
+
+		return hash_itor->second.Deattach(ptr);
+	}
+
+private:
+	const std::wstring type_name_;
+	CallStackByHash callstack_by_hash_;
+	vPtrNode vptr_node_;
+};
+
+#endif
+
 template<typename _Ty>
 class wrapper abstract;
 
@@ -25,15 +111,58 @@ public:
 		if (ObjectStation::GetInstance().IsBinding<_Ty>() == false)
 			ObjectStation::GetInstance().BindObjectPool<_Ty>();
 
+#ifdef _DEBUG
+		Hash hash;
+		Stacks stacks(default_stack_depth_);
+		CaptureStackBackTrace(0, static_cast<DWORD>(default_stack_depth_), stacks.data(), &hash);
+
+		auto var = wrapper_hub<_Ty>(ObjectStation::GetInstance().Pop<_Ty>(Args...));
+		assert(AttackCallStack<_Ty>(hash, stacks, static_cast<vPtr>(var.get())));
+
+		return var;
+#else
 		return wrapper_hub<_Ty>(ObjectStation::GetInstance().Pop<_Ty>(Args...));
+#endif
 	}
 
 	template<typename _Ty, is_object<_Ty> = nullptr>
 	void Refund(_Ty*& data)
 	{
+#ifdef _DEBUG
+		assert(DeattachCallStack<_Ty>(data));
+#endif
 		if (ObjectStation::GetInstance().Push<_Ty>(data) == false)
 			assert(false);
 	}
+
+#ifdef _DEBUG
+private:
+	template<typename _Ty>
+	bool AttackCallStack(const Hash& hash, const Stacks& stacks, vPtr ptr)
+	{
+		TypeID tid = typeid(_Ty).hash_code();
+		auto name = std::string(typeid(_Ty).name());
+		std::wstring tname;
+		tname.assign(name.begin(), name.end());
+
+		if (stack_trace_.find(tid) == stack_trace_.end())
+			return stack_trace_.emplace(tid, CallStackGroup(tname, hash, stacks, ptr)).second;
+
+		return stack_trace_.at(tid).Attach(hash, stacks, ptr);
+	}
+
+	template<typename _Ty>
+	bool DeattachCallStack(const vPtr ptr)
+	{
+		auto tid = typeid(_Ty).hash_code();
+		if (stack_trace_.find(tid) == stack_trace_.end())
+			return false;
+
+		return stack_trace_.at(tid).Deattach(ptr);
+	}
+
+	StackTrace stack_trace_;
+#endif
 };
 
 template <typename _Ty, typename ..._Tys>
