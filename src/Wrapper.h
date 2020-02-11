@@ -66,23 +66,20 @@ public:
 
 	bool Deattach(vPtr ptr)
 	{
-		auto vptr_itor = vptr_node_.find(ptr);
-		if (vptr_itor == vptr_node_.end())
+		if (vptr_node_.find(ptr) == vptr_node_.end())
 		{
 			//...
 			return false;
 		}
 
-
-		const Hash& hash = vptr_itor->second;
-		auto hash_itor = callstack_by_hash_.find(hash);
-		if (hash_itor == callstack_by_hash_.end())
+		const Hash& hash = vptr_node_.at(ptr);
+		if (callstack_by_hash_.find(hash) == callstack_by_hash_.end())
 		{
 			//...
 			return false;
 		}
 
-		return hash_itor->second.Deattach(ptr);
+		return callstack_by_hash_.at(hash).Deattach(ptr);
 	}
 
 private:
@@ -129,7 +126,7 @@ public:
 	void Refund(_Ty*& data, TypeID type_id)
 	{
 #ifdef _DEBUG
-		assert(DeattachCallStack<_Ty>(data));
+		assert(DeattachCallStack(data, type_id));
 #endif
 		if (ObjectStation::GetInstance().Push<_Ty>(data, type_id) == false)
 			assert(false);
@@ -151,14 +148,12 @@ private:
 		return stack_trace_.at(tid).Attach(hash, stacks, ptr);
 	}
 
-	template<typename _Ty>
-	bool DeattachCallStack(const vPtr ptr)
+	bool DeattachCallStack(const vPtr ptr, TypeID type_id)
 	{
-		auto tid = typeid(_Ty).hash_code();
-		if (stack_trace_.find(tid) == stack_trace_.end())
-			return true;
+		if (stack_trace_.find(type_id) == stack_trace_.end())
+			return false;
 
-		return stack_trace_.at(tid).Deattach(ptr);
+		return stack_trace_.at(type_id).Deattach(ptr);
 	}
 
 	StackTrace stack_trace_;
