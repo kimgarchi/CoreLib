@@ -36,7 +36,7 @@ public:
 			return;
 		}
 
-		object_pool_by_tid_.clear();		
+		object_pool_by_tid_.clear();
 	}
 
 	template<typename _Ty>
@@ -70,14 +70,13 @@ public:
 	}
 
 	template<typename _Ty, is_object<_Ty> = nullptr>
-	bool Push(_Ty*& object)
+	bool Push(_Ty*& object, TypeID type_id)
 	{
-		auto itor = object_pool_by_tid_.find(typeid(_Ty).hash_code());
-		if (itor == object_pool_by_tid_.end())
+		
+		if (object_pool_by_tid_.find(type_id) == object_pool_by_tid_.end())
 			return false;
 
-		ObjectPool<_Ty>* object_pool = static_cast<ObjectPool<_Ty>*>(itor->second);
-
+		ObjectPoolBase* object_pool = object_pool_by_tid_.at(type_id);
 		return object_pool->Push(object);
 	}
 

@@ -15,6 +15,8 @@ class ObjectPoolBase abstract
 {
 protected:
 	friend class ObjectStation;
+
+	virtual bool Push(void* ptr) abstract;
 	virtual void Clear() abstract;
 };
 
@@ -52,6 +54,7 @@ private:
 
 			alloc_mems_.clear();
 			std::free(m_ptr_);
+			m_ptr_ = nullptr;
 		}
 
 		bool UnusedPool() { return (mem_que_.size() == obj_cnt_) ? true : false; }
@@ -76,13 +79,13 @@ private:
 			return object;
 		}
 
-		bool Push(_Ty*& object)
+		bool Push(void* ptr)
 		{
-			if (alloc_mems_.find(object) == alloc_mems_.end())
+			if (alloc_mems_.find(ptr) == alloc_mems_.end())
 				return false;
 
-			delete object;
-			mem_que_.emplace(object);
+			delete (_Ty*)ptr;
+			mem_que_.emplace(ptr);
 			
 			return true;
 		}
@@ -97,7 +100,7 @@ private:
 	
 	using ObjectCount = std::atomic_size_t;
 	using Chunks = std::map<AllocID, SegmentPool>;
-	using Objects = std::map<_Ty*, AllocID>;
+	using Objects = std::map<void*, AllocID>;
 
 public:
 	ObjectPool(const ObjectPool<_Ty>&) = delete;
@@ -108,13 +111,13 @@ public:
 		assert(alloc_objects_.empty());
 	}
 
-	bool Push(_Ty*& object)
+	virtual bool Push(void* ptr) override
 	{
-		AllocID alloc_id = GetAllocID(object);
+		AllocID alloc_id = GetAllocID(ptr);
 		if (alloc_id == INVALID_ALLOC_ID)
 			return false;
 
-		if (Push(alloc_id, object) == false)
+		if (Push(alloc_id, ptr) == false)
 			return false;
 
 		add_object_count(1);
@@ -206,17 +209,17 @@ private:
 		AllocChunk();
 	}
 
-	bool Push(AllocID alloc_id, _Ty* object)
+	bool Push(AllocID alloc_id, void* ptr)
 	{
 		auto itor = chunks_.find(alloc_id);
 		if (itor == chunks_.end())
 			return false;
 
 		SegmentPool& segment_pool = itor->second;
-		if (segment_pool.Push(object) == false)
+		if (segment_pool.Push(ptr) == false)
 			return false;
 
-		alloc_objects_.erase(object);
+		alloc_objects_.erase(ptr);
 		return true;
 	}
 
@@ -234,9 +237,9 @@ private:
 		return true; 
 	}
 
-	AllocID GetAllocID(_Ty* object)
+	AllocID GetAllocID(void* ptr)
 	{
-		auto itor = alloc_objects_.find(object);
+		auto itor = alloc_objects_.find(ptr);
 		if (itor == alloc_objects_.end())
 			return INVALID_ALLOC_ID;
 
