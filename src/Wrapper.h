@@ -161,7 +161,7 @@ private:
 };
 
 template <typename _Ty, typename ..._Tys>
-decltype(auto) make_wrapper_hub(_Tys&&... Args)
+_NODISCARD decltype(auto) make_wrapper_hub(_Tys&&... Args)
 {
 	return Packer::GetInstance().CreateHub<_Ty, _Tys...>(Args...);
 }
@@ -178,8 +178,10 @@ public:
 
 	virtual ~wrapper() 
 	{
-		if (_use_count() == 0 && _node_count() == 0)
-			Packer::GetInstance().Refund<_Ty>(data_, type_id_);
+		if (_use_count() > 0 || _node_count() > 0)
+			return;
+
+		Packer::GetInstance().Refund<_Ty>(data_, type_id_);	
 	}
 
 	_Ty* get() { return _data(); }
@@ -215,23 +217,10 @@ public:
 	{
 		wrapper<_Ty>::_increase_use_count();
 	}
-
-	wrapper_hub(wrapper_hub<_Ty>& hub)
-		: wrapper<_Ty>(hub.get(), typeid(_Ty).hash_code())
-	{
-		wrapper<_Ty>::_increase_use_count();
-	}
-
-	template<typename _pTy>
-	wrapper_hub(const wrapper_hub<_pTy>& hub)
-		: wrapper<_Ty>(const_cast<wrapper_hub<_pTy>&>(hub).get(), typeid(_pTy).hash_code())
-	{
-		wrapper<_Ty>::_increase_use_count();
-	}
-
-	template<typename _pTy>
-	wrapper_hub(wrapper_hub<_pTy>& hub)
-		: wrapper<_Ty>(hub.get(), typeid(_pTy).hash_code())
+	
+	template<typename _rTy>
+	wrapper_hub(const wrapper_hub<_rTy>& hub)
+		: wrapper<_Ty>(const_cast<wrapper_hub<_rTy>&>(hub).get(), typeid(_rTy).hash_code())
 	{
 		wrapper<_Ty>::_increase_use_count();
 	}
@@ -241,12 +230,10 @@ public:
 		wrapper<_Ty>::_decrease_use_count();
 	}
 
-	decltype(auto) make_node() { return wrapper_node<_Ty>(*this); }
-	decltype(auto) operator=(wrapper_hub<_Ty>& hub) { return hub.make_node(); }
+	_NODISCARD decltype(auto) make_node() { return wrapper_node<_Ty>(this->get()); }
 
 private:
-	friend class Packer;
-	
+	friend class Packer;	
 	friend class wrapper_node<_Ty>;
 
 	wrapper_hub(_Ty* data)
@@ -263,19 +250,13 @@ public:
 	wrapper_node(wrapper_node<_Ty>& node) = delete;
 	wrapper_node<_Ty>& operator=(const wrapper_node<_Ty>&) = delete;
 
-	wrapper_node(const wrapper_node<_Ty>& node)
-		: wrapper<_Ty>(const_cast<wrapper_node<_Ty>&>(node).get())
+	template<typename _rTy>
+	wrapper_node(const wrapper_node<_rTy>& node)
+		: wrapper<_Ty>(const_cast<wrapper_node<_rTy>&>(node).get(), typeid(_rTy).hash_code())
 	{
 		wrapper<_Ty>::_increase_node_count();
 	}
-
-	template<typename _pTy>
-	wrapper_node(const wrapper_node<_pTy>& node)
-		: wrapper<_Ty>(const_cast<wrapper_node<_pTy>&>(node).get(), typeid(_pTy).hash_code())
-	{
-		wrapper<_Ty>::_increase_node_count();
-	}
-
+	
 	virtual ~wrapper_node()
 	{
 		wrapper<_Ty>::_decrease_node_count();
@@ -284,8 +265,8 @@ public:
 private:
 	friend class wrapper_hub<_Ty>;
 
-	wrapper_node(const wrapper_hub<_Ty>& hub)
-		: wrapper<_Ty>(const_cast<wrapper_hub<_Ty>&>(hub).get())
+	wrapper_node(_Ty* data)
+		: wrapper<_Ty>(data, typeid(_Ty).hash_code())
 	{
 		wrapper<_Ty>::_increase_node_count();
 	}
