@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "SyncStation.h"
 #include "Job.h"
-
+/*
 SyncStation::RWHandle::RWHandle(WORD idx)
 	: idx_(idx), 
 	mutex_(make_wrapper_hub<sync::Mutex>()), 
@@ -21,7 +21,7 @@ decltype(auto) SyncStation::RWHandle::state()
 
 	return HANDLE_STATE::IDLE;
 }
-/*
+
 bool SyncStation::RegistReadJob(HarvestTypes types, JobUnit job_unit)
 {
 
@@ -33,10 +33,9 @@ bool SyncStation::RegistWriteJob(HarvestTypes types, JobUnit job_unit)
 	// ...
 	return false;
 }
-*/
+
 bool SyncStation::RecordHandle(TypeID tid)
 {
-	/*
 	//std::unique_lock<std::mutex>(mtx_);
 	if (handle_by_type_.find(tid) == handle_by_type_.end())
 		return false;
@@ -56,7 +55,7 @@ bool SyncStation::RecordHandle(TypeID tid)
 
 	write_handles_.emplace_back(rw_handle.WriteHandle());
 	read_handles_.emplace_back(rw_handle.Readhandle());
-	*/
+
 	return true;
 }
 
@@ -79,3 +78,4 @@ bool SyncStation::IsRecordType(TypeID tid)
 	auto itor = handle_by_type_.find(tid);
 	return false;
 }
+*/
