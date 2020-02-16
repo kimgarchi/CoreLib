@@ -1,17 +1,24 @@
 #include "stdafx.h"
 #include "ThreadManager.h"
-#include "Thread.h"
+
+ThreadManager::Task::Task(JobHub job, size_t thread_count)
+	: job_(job)
+{
+	threads_.reserve(thread_count);
+	for (size_t idx = 0; idx < thread_count; ++idx)
+		threads_.emplace_back(job_.make_node());
+}
 
 ThreadManager::Task::~Task()
 {
-	//std::for_each()
+	assert(Stop());
 }
 
 bool ThreadManager::Task::Run()
 {
 	size_t ret_val = 0;
 	for (size_t idx = 0; idx < threads_.size(); ++idx)
-		ret_val += threads_.at(idx)->Run();
+		ret_val += threads_.at(idx).Run();
 	
 	if (threads_.size() != ret_val)
 	{
@@ -26,7 +33,7 @@ bool ThreadManager::Task::Stop()
 {
 	size_t ret_val = 0;
 	for (size_t idx = 0; idx < threads_.size(); ++idx)
-		ret_val += threads_.at(idx)->Stop();
+		ret_val += threads_.at(idx).RepeatStop();
 
 	if (threads_.size() != ret_val)
 	{
@@ -44,7 +51,7 @@ bool ThreadManager::DeattachTask(TaskID task_id)
 	if (tasks_.find(task_id) == tasks_.end())
 		return false;
 
-	tasks_.at(task_id).Stop();
+	tasks_.at(task_id)->Stop();
 	return static_cast<bool>(tasks_.erase(task_id));
 }
 
@@ -54,7 +61,7 @@ bool ThreadManager::Run(TaskID task_id)
 	if (tasks_.find(task_id) == tasks_.end())
 		return false;
 
-	return tasks_.at(task_id).Run();
+	return tasks_.at(task_id)->Run();
 }
 
 bool ThreadManager::Stop(TaskID task_id)
@@ -63,5 +70,5 @@ bool ThreadManager::Stop(TaskID task_id)
 	if (tasks_.find(task_id) == tasks_.end())
 		return false;
 
-	return tasks_.at(task_id).Stop();
+	return tasks_.at(task_id)->Stop();
 }

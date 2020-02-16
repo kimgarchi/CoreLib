@@ -1,46 +1,15 @@
 #pragma once
 #include "stdafx.h"
-#include "Object.h"
 
-using JobID = size_t;
-using Func = std::function<void()>;
-
-class Job
+class JobBase abstract : public object
 {
 public:
-	Job(Func func)
-		: func_(func), job_id_(INVALID_JOB_ID), begin_thread_id_(GetCurrentThreadId())
-	{}
-
-	virtual ~Job()
-	{
-		assert(job_id_ != INVALID_JOB_ID);
-	}
-
-	bool Run(JobID job_id)
-	{
-		job_id_ = job_id;
-		if (job_id_ != INVALID_JOB_ID)
-		{
-			assert(false);
-			return false;
-		}
-
-		if (begin_thread_id_ != GetCurrentThreadId())
-		{
-			assert(false);
-			return false;
-		}
-
-		func_();
-
-		return true;
-	}
-
-private:
-	friend class JobStation;
-
-	JobID job_id_;
-	DWORD begin_thread_id_;
-	Func func_;
+	virtual bool Prepare() abstract;
+	virtual bool RepeatWork() abstract;
 };
+
+template<typename _Ty>
+using is_job = typename std::enable_if_t<std::is_base_of_v<JobBase, _Ty>, _Ty>*;
+
+using JobHub = wrapper_hub<JobBase>;
+using JobNode = wrapper_node<JobBase>;

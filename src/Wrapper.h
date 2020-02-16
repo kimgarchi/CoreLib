@@ -210,7 +210,7 @@ template<typename _Ty>
 class wrapper_hub final : public wrapper<_Ty>
 {
 public:
-	wrapper_hub<_Ty>& operator=(const wrapper_hub<_Ty>&) = delete;
+	void operator=(const wrapper_hub<_Ty>&) = delete;
 	
 	template<typename _rTy>
 	wrapper_hub(wrapper_hub<_rTy> hub)
@@ -247,9 +247,15 @@ template<typename _Ty>
 class wrapper_node : public wrapper<_Ty>
 {
 public:
-	wrapper_node<_Ty>& operator=(const wrapper_hub<_Ty>&) = delete;
-	wrapper_node<_Ty>& operator=(const wrapper_node<_Ty>&) = delete;
+	void operator=(const wrapper_hub<_Ty>&) = delete;
+	void operator=(const wrapper_node<_Ty>&) = delete;
 	
+	wrapper_node(wrapper_hub<_Ty>& hub)
+		: wrapper<_Ty>(hub.get())
+	{
+		wrapper<_Ty>::_increase_node_count();
+	}
+
 	wrapper_node(const wrapper_node<_Ty>& node)
 		: wrapper<_Ty>(const_cast<wrapper_node<_Ty>&>(node).get())
 	{
