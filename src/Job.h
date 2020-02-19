@@ -11,5 +11,5 @@ public:
 template<typename _Ty>
 using is_job = typename std::enable_if_t<std::is_base_of_v<JobBase, _Ty>, _Ty>*;
 
-using JobHub = wrapper_hub<JobBase>;
-using JobNode = wrapper_node<JobBase>;
+DEFINE_WRAPPER_HUB(JobBase);
+DEFINE_WRAPPER_NODE(JobBase);

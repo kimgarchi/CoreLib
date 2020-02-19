@@ -7,3 +7,7 @@
 #define INVALID_JOB_ID 0
 
 using ThrFunc = std::function<void()>;
+using CondVar = std::condition_variable;
+
+#define DEFINE_WRAPPER_HUB(Type) using Type##Hub = wrapper_hub<Type>;
+#define DEFINE_WRAPPER_NODE(Type) using Type##Node = wrapper_node<Type>;

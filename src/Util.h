@@ -4,7 +4,7 @@
 
 #pragma warning (push)
 #pragma warning (disable : 26444)
-
+/*
 using HarvestTypes = std::vector<size_t>;
 class TypeHarvest : public Singleton<TypeHarvest>
 {
@@ -40,7 +40,7 @@ private:
 		return tids;
 	}
 };
-/*
+
 class CPUsage
 {
 private:

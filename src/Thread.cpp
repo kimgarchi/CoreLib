@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "Thread.h"
 
-Thread::Thread(JobNode job)
-    : is_runable_(false), job_(job)
+Thread::Thread(JobBaseNode job, CondVar& cond_var, std::atomic_bool& is_runable)
+    : job_(job), cond_var_(cond_var), is_runable_(is_runable)
 {
     std::packaged_task<bool()> task = std::packaged_task<bool()>(
         [&]()
@@ -31,32 +31,21 @@ Thread::Thread(JobNode job)
 }
 
 Thread::Thread(const Thread& thread)
-    : job_(thread.job_)
+    : job_(const_cast<Thread&>(thread).job_), cond_var_(const_cast<Thread&>(thread).cond_var_), is_runable_(const_cast<Thread&>(thread).is_runable_)
 {
 }
 
 Thread::~Thread()
 {
-    assert(RepeatStop());
+    if (thread_.joinable())
+        assert(RepeatStop(0));
 }
 
-bool Thread::Run()
+bool Thread::RepeatStop(DWORD timeout)
 {
-    if (is_runable_ == false)
-    {
-        is_runable_ = true;
-        cond_var_.notify_one();
-    }
-
-    return true;
-}
-
-bool Thread::RepeatStop()
-{
-    if (is_runable_ == false)
-        assert(Run());
+    if (thread_.joinable() == false)
+        return true;
     
-    is_runable_ = false;
     thread_.join();
-    return future_.get();
+    return future_.get();    
 }
