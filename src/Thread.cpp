@@ -1,15 +1,12 @@
 #include "stdafx.h"
 #include "Thread.h"
 
-Thread::Thread(JobBaseNode job, CondVar& cond_var, std::atomic_bool& is_runable)
-    : job_(job), cond_var_(cond_var), is_runable_(is_runable)
+Thread::Thread(JobBaseNode job, std::atomic_bool& is_runable)
+    : job_(job), is_runable_(is_runable)
 {
     std::packaged_task<bool()> task = std::packaged_task<bool()>(
         [&]()
     {
-        std::unique_lock<std::mutex> lock(mtx_);
-        cond_var_.wait(lock, [&] {return is_runable_ == true; });
-
         if (job_->Prepare() == false)
             return false;
 
@@ -31,7 +28,7 @@ Thread::Thread(JobBaseNode job, CondVar& cond_var, std::atomic_bool& is_runable)
 }
 
 Thread::Thread(const Thread& thread)
-    : job_(const_cast<Thread&>(thread).job_), cond_var_(const_cast<Thread&>(thread).cond_var_), is_runable_(const_cast<Thread&>(thread).is_runable_)
+    : job_(const_cast<Thread&>(thread).job_), is_runable_(const_cast<Thread&>(thread).is_runable_)
 {
 }
 

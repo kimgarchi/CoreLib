@@ -2,11 +2,11 @@
 #include "ThreadManager.h"
 
 ThreadManager::Task::Task(JobBaseHub job, size_t thread_count)
-	: job_(job), is_runable_(false)
+	: job_(job), is_runable_(true)
 {
 	threads_.reserve(thread_count);
 	for (size_t idx = 0; idx < thread_count; ++idx)
-		threads_.emplace_back(job_.make_node(), std::ref(cond_var_), std::ref(is_runable_));
+		threads_.emplace_back(job_.make_node(), std::ref(is_runable_));
 }
 
 ThreadManager::Task::~Task()
@@ -14,12 +14,6 @@ ThreadManager::Task::~Task()
 	assert(Stop(_default_thread_stop_timeout_));
 
 	threads_.clear();
-}
-
-void ThreadManager::Task::Run()
-{
-	cond_var_.notify_all();
-	is_runable_ = true;
 }
 
 bool ThreadManager::Task::Stop(DWORD timeout)
@@ -52,16 +46,6 @@ bool ThreadManager::DeattachTask(TaskID task_id, DWORD timeout)
 		assert(tasks_.at(task_id)->Stop(timeout));
 
 	return static_cast<bool>(tasks_.erase(task_id));
-}
-
-bool ThreadManager::Run(TaskID task_id)
-{
-	std::unique_lock<std::mutex> lock(mtx_);
-	if (tasks_.find(task_id) == tasks_.end())
-		return false;
-
-	tasks_.at(task_id)->Run();
-	return true;
 }
 
 bool ThreadManager::Stop(TaskID task_id, DWORD timeout)

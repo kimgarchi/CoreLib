@@ -9,8 +9,6 @@ const static DWORD _default_thread_stop_timeout_ = 1000;
 const static DWORD _default_thread_stop_timeout_ = 0;
 #endif
 
-using TaskID = size_t;
-using ThreadID = size_t;
 class ThreadManager : public Singleton<ThreadManager>
 {
 private:
@@ -22,7 +20,6 @@ private:
 		Task(JobBaseHub job, size_t thread_count);
 		~Task();
 
-		void Run();
 		bool Stop(DWORD timeout);
 		inline bool is_runable() { return is_runable_.load(); }
 
@@ -31,11 +28,10 @@ private:
 	private:
 		JobBaseHub job_;
 		Threads threads_;
-		CondVar cond_var_;
 		std::atomic_bool is_runable_;
 	};
 
-	DEFINE_WRAPPER_HUB(Task);
+	DEFINE_WRAPPER_HUB(Task)
 	using AllocTaskID = std::atomic<TaskID>;
 	using Tasks = std::map<TaskID, TaskHub>;
 
@@ -48,7 +44,6 @@ public:
 	TaskID AttachTask(size_t thread_count, _Tys&&... Args);
 	bool DeattachTask(TaskID task_id, DWORD timeout = _default_thread_stop_timeout_);
 
-	bool Run(TaskID task_id);
 	bool Stop(TaskID task_id, DWORD timeout = _default_thread_stop_timeout_);
 
 private:

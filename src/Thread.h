@@ -5,7 +5,7 @@
 class Thread
 {
 public:
-    Thread(JobBaseNode job, CondVar& cond_var, std::atomic_bool& is_runable);
+    Thread(JobBaseNode job, std::atomic_bool& is_runable);
     Thread(const Thread& thread);
     ~Thread();
 
@@ -16,7 +16,5 @@ private:
     std::future<bool> future_;
     std::thread thread_;
     JobBaseNode job_;
-
-    CondVar& cond_var_;
     std::atomic_bool& is_runable_;
 };
