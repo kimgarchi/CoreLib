@@ -18,10 +18,10 @@ private:
 	{
 	public:
 		Task(JobBaseHub job, size_t thread_count);
-		~Task();
+		virtual ~Task();
 
 		bool Stop(DWORD timeout);
-		inline bool is_runable() { return is_runable_.load(); }
+		inline bool is_runable() const { return is_runable_.load(); }
 
 		size_t thread_count() { return threads_.size(); }
 
@@ -45,6 +45,7 @@ public:
 	bool DeattachTask(TaskID task_id, DWORD timeout = _default_thread_stop_timeout_);
 
 	bool Stop(TaskID task_id, DWORD timeout = _default_thread_stop_timeout_);
+	bool AllStop(DWORD timeout = _default_thread_stop_timeout_);
 
 private:
 	std::mutex mtx_;

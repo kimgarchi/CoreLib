@@ -25,7 +25,7 @@ private:
 	class CompletionPort
 	{
 	public:
-		CompletionPort(TaskID task_id, SOCKET sock, USHORT port, int wait_que_size, size_t thread_count = 0);
+		CompletionPort(TaskID task_id, SOCKET sock, USHORT port, int wait_que_size, DWORD thread_count);
 		~CompletionPort();
 
 	private:
@@ -63,25 +63,24 @@ public:
 	~PostCenter();
 
 	template<typename _Job, typename ..._Tys, is_job<_Job> = nullptr>
-	PostID RecordCompletionPort(SOCK_TYPE type, USHORT port, int wait_que_size, size_t thread_count, _Tys&&... Args);
+	PostID RecordCompletionPort(SOCK_TYPE type, USHORT port, int wait_que_size, DWORD thread_count, _Tys&&... Args);
 	bool BindSocket(PostID post_id, SOCKET sock);
 
 private:
 	CompletionPorts completion_ports_;
 	BindAllSocks bind_all_socks_;
-	WORD default_thread_count_;
 	std::atomic<PostID> alloc_post_id_;
 	std::mutex mtx_;
 };
 
 template<typename _Job, typename ..._Tys, is_job<_Job>>
-PostID PostCenter::RecordCompletionPort(SOCK_TYPE type, USHORT port, int wait_que_size, size_t thread_count, _Tys&& ...Args)
+PostID PostCenter::RecordCompletionPort(SOCK_TYPE type, USHORT port, int wait_que_size, DWORD thread_count, _Tys&& ...Args)
 {
+	std::unique_lock<std::mutex> lock(mtx_);
 	TaskID task_id = ThreadManager::GetInstance().AttachTask<_Job>(thread_count, Args...);
 	if (task_id == INVALID_ALLOC_ID)
 		return INVALID_ALLOC_ID;
-
-	std::unique_lock<std::mutex> lock(mtx_);
+	
 	PostID post_id = alloc_post_id_.fetch_add(1);
 	SOCKET sock = INVALID_SOCKET;
 
@@ -98,10 +97,7 @@ PostID PostCenter::RecordCompletionPort(SOCK_TYPE type, USHORT port, int wait_qu
 	}
 	break;
 	}
-
-	if (thread_count == 0)
-		thread_count = default_thread_count_;
-
+	
 	completion_ports_.emplace(post_id, task_id, sock, port, wait_que_size, thread_count);
 
 	return post_id;

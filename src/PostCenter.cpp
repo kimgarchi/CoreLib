@@ -3,34 +3,17 @@
 #include "JobStation.h"
 
 PostCenter::PostCenter()
-	: default_thread_count_(0)
 {
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 		std::bad_exception{};
-
-	SYSTEM_INFO sysinfo;
-	GetSystemInfo(&sysinfo);
-	default_thread_count_ = sysinfo.dwNumberOfProcessors * 2;
 }
 
 PostCenter::~PostCenter()
 {
 }
-/*
-PostID PostCenter::RecordCompletionPort(const Func& response_func, const Func& entertain_func, DWORD thread_count)
-{
-	PostID post_id = alloc_post_id_.fetch_add(1);
-	if (completion_ports_.find(post_id) != completion_ports_.end())
-		return INVALID_POST_ID;
 
-
-
-	return post_id;
-}
-*/
-
-PostCenter::CompletionPort::CompletionPort(TaskID task_id, SOCKET sock, USHORT port, int wait_que_size, size_t thread_count)
+PostCenter::CompletionPort::CompletionPort(TaskID task_id, SOCKET sock, USHORT port, int wait_que_size, DWORD thread_count)
 	: task_id_(task_id), sock_(sock), comp_port_(CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, thread_count))
 {
 	sock_addr_.sin_family = AF_INET;

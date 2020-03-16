@@ -1,49 +1,33 @@
 #pragma once
 #include "stdafx.h"
 #include "SyncStation.h"
-#include "Job.h"
-/*
-SyncStation::RWHandle::RWHandle(WORD idx)
-	: idx_(idx), 
-	mutex_(make_wrapper_hub<sync::Mutex>()), 
-	semaphore_(make_wrapper_hub<sync::Semaphore>())
+
+SyncStation::RWHandle::RWHandle(LONG read_job_init_count, LONG read_job_max_count)
+	: mutex_(make_wrapper_hub<SyncMutex>()), semaphore_(make_wrapper_hub<SyncSemaphore>(read_job_init_count, read_job_max_count))
 {}
 
 decltype(auto) SyncStation::RWHandle::state()
 {
-	DWORD ret = WaitForSingleObject(mutex_.get(), 0);
+	DWORD ret = WaitForSingleObject(mutex_.get(), WAIT_TIME_ZERO);
 	if (ret == WAIT_OBJECT_0)
 		return HANDLE_STATE::WRITE_LOCK;
 
-	ret = WaitForSingleObject(semaphore_.get(), 0);
+	ret = WaitForSingleObject(semaphore_.get(), WAIT_TIME_ZERO);
 	if (ret == WAIT_OBJECT_0)
 		return HANDLE_STATE::READ_LOCK;
 
 	return HANDLE_STATE::IDLE;
 }
 
-bool SyncStation::RegistReadJob(HarvestTypes types, JobUnit job_unit)
-{
-
-	return false;
-}
-
-bool SyncStation::RegistWriteJob(HarvestTypes types, JobUnit job_unit)
-{
-	// ...
-	return false;
-}
-
-bool SyncStation::RecordHandle(TypeID tid)
+bool SyncStation::RecordHandle(TypeID tid, LONG read_job_init_count, LONG read_job_max_count)
 {
 	//std::unique_lock<std::mutex>(mtx_);
 	if (handle_by_type_.find(tid) == handle_by_type_.end())
 		return false;
 
-	auto idx = handle_by_type_.size();
 	assert(handle_by_type_.size() == write_handles_.size() && write_handles_.size() == read_handles_.size());
 
-	auto ret = handle_by_type_.emplace(tid, idx);
+	auto ret = handle_by_type_.emplace(tid, std::forward<RWHandle>(RWHandle(read_job_init_count, read_job_max_count)));
 	auto push_result = ret.second;
 	auto rw_handle = ret.first->second;
 
@@ -78,4 +62,3 @@ bool SyncStation::IsRecordType(TypeID tid)
 	auto itor = handle_by_type_.find(tid);
 	return false;
 }
-*/

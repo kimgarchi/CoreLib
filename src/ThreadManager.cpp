@@ -62,3 +62,11 @@ bool ThreadManager::Stop(TaskID task_id, DWORD timeout)
 
 	return static_cast<bool>(tasks_.erase(task_id));
 }
+
+bool ThreadManager::AllStop(DWORD timeout)
+{
+	std::unique_lock<std::mutex> lock(mtx_);
+	tasks_.clear();
+
+	return true;
+}

@@ -35,7 +35,7 @@ Thread::Thread(const Thread& thread)
 Thread::~Thread()
 {
     if (thread_.joinable())
-        assert(RepeatStop(0));
+        assert(RepeatStop(TIME_OUT_INFINITE));
 }
 
 bool Thread::RepeatStop(DWORD timeout)
