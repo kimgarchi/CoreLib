@@ -4,16 +4,13 @@
 ThreadManager::Task::Task(JobBaseHub job, size_t thread_count)
 	: job_(job), is_runable_(true)
 {
-	threads_.reserve(thread_count);
-	for (size_t idx = 0; idx < thread_count; ++idx)
-		threads_.emplace_back(job_.make_node(), std::ref(is_runable_));
+	Attach(thread_count);
 }
 
 ThreadManager::Task::~Task()
 {
 	assert(Stop(_default_thread_stop_timeout_));
-
-	threads_.clear();
+	thread_que_.clear();
 }
 
 bool ThreadManager::Task::Stop(DWORD timeout)
@@ -23,15 +20,36 @@ bool ThreadManager::Task::Stop(DWORD timeout)
 
 	is_runable_ = false;
 	size_t ret_val = 0;
-	for (size_t idx = 0; idx < threads_.size(); ++idx)
-		ret_val += threads_.at(idx).RepeatStop(timeout);
+	for (size_t idx = 0; idx < thread_que_.size(); ++idx)
+		ret_val += thread_que_.at(idx).Stop(timeout);
 
-	if (threads_.size() != ret_val)
+	if (thread_que_.size() != ret_val)
 	{
 		assert(false);
 		return false;
 	}
 	
+	return true;
+}
+
+void ThreadManager::Task::Attach(size_t count)
+{
+	for (size_t idx = 0; idx < count; idx++)
+		thread_que_.emplace_back(job_.make_node(), std::ref(is_runable_));
+}
+
+bool ThreadManager::Task::Deattach(size_t count, DWORD timeout)
+{
+	if (thread_count() < count)
+		return false;
+
+	for (size_t idx = 0; idx < count; ++idx)
+	{
+		auto& thread = thread_que_.front();
+		if (thread.Stop(timeout) == false)
+			return false;
+	}
+
 	return true;
 }
 

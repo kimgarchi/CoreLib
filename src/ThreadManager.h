@@ -12,10 +12,11 @@ const static DWORD _default_thread_stop_timeout_ = 0;
 class ThreadManager : public Singleton<ThreadManager>
 {
 private:
-	using Threads = std::vector<Thread>;
-
 	class Task : public object
 	{
+	private:
+		using ThreadQue = std::deque<Thread>;
+
 	public:
 		Task(JobBaseHub job, size_t thread_count);
 		virtual ~Task();
@@ -23,13 +24,13 @@ private:
 		bool Stop(DWORD timeout);
 		inline bool is_runable() const { return is_runable_.load(); }
 		void Attach(size_t count);
-		bool Deattach(size_t count);
+		bool Deattach(size_t count, DWORD timeout = TIME_OUT_INFINITE);
 
-		size_t thread_count() { return threads_.size(); }
+		size_t thread_count() { return thread_que_.size(); }
 
-	private:
+	private:		
 		JobBaseHub job_;
-		Threads threads_;
+		ThreadQue thread_que_;
 		std::atomic_bool is_runable_;
 	};
 

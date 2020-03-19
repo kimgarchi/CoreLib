@@ -5,16 +5,19 @@
 class Thread
 {
 public:
-    Thread(JobBaseNode job, std::atomic_bool& is_runable);
+    Thread(JobBaseNode job, std::atomic_bool& task_runable);
     Thread(const Thread& thread);
     ~Thread();
 
-    bool RepeatStop(DWORD timeout);
+    bool Stop(DWORD timeout);
 
 private:
+    bool is_runable() { return task_runable_.load() && local_runable_.load(); }
+
     std::mutex mtx_;
     std::future<bool> future_;
     std::thread thread_;
     JobBaseNode job_;
-    std::atomic_bool& is_runable_;
+    std::atomic_bool& task_runable_;
+    std::atomic_bool local_runable_;
 };
