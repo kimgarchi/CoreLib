@@ -22,6 +22,8 @@ private:
 
 		bool Stop(DWORD timeout);
 		inline bool is_runable() const { return is_runable_.load(); }
+		void Attach(size_t count);
+		bool Deattach(size_t count);
 
 		size_t thread_count() { return threads_.size(); }
 

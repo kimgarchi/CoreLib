@@ -1,10 +1,10 @@
 #pragma once
 #include "stdafx.h"
+#include "SyncObject.h"
 
 class JobBase abstract : public object
 {
 public:
-	virtual bool Prepare() abstract;
 	virtual bool RepeatWork() abstract;
 };
 

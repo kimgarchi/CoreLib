@@ -37,8 +37,6 @@ bool ThreadManager::Task::Stop(DWORD timeout)
 
 bool ThreadManager::DeattachTask(TaskID task_id, DWORD timeout)
 {
-	std::unique_lock<std::mutex> lock(mtx_);
-	
 	if (tasks_.find(task_id) == tasks_.end())
 		return false;
 

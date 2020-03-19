@@ -37,7 +37,7 @@ private:
 		{
 			m_ptr_ = std::malloc(sizeof(_Ty) * obj_cnt_);
 			if (m_ptr_ == nullptr)
-				std::bad_alloc{};
+				throw std::runtime_error("malloc failed");
 
 			size_t forward_step = 0;
 			for (auto idx = 0; idx < obj_cnt_; ++idx)
@@ -68,11 +68,11 @@ private:
 
 			void* ptr = mem_que_.front();
 			if (ptr == nullptr)
-				std::bad_alloc{};
+				throw std::runtime_error("mem que nullptr");
 
 			_Ty* object = new (ptr)_Ty(std::forward<_Tys>(Args)...);
 			if (object == nullptr)
-				std::bad_alloc{};
+				throw std::runtime_error("new failed");
 
 			mem_que_.pop();
 
@@ -173,7 +173,7 @@ private:
 		{
 			auto itor = alloc_objects_.begin();
 			if (Push(itor->second, itor->first) == false)
-				std::bad_function_call{};
+				throw std::runtime_error("mem que clear failed");
 		}
 		
 		chunks_.clear();
@@ -187,13 +187,11 @@ private:
 		}
 		catch (std::bad_alloc & excp)
 		{
-			// temp
 			std::cout << excp.what() << std::endl;
 			return;
 		}
 		catch (std::bad_function_call & excp)
 		{
-			// temp
 			std::cout << excp.what() << std::endl;
 			return;
 		}

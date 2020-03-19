@@ -7,9 +7,6 @@ Thread::Thread(JobBaseNode job, std::atomic_bool& is_runable)
     std::packaged_task<bool()> task = std::packaged_task<bool()>(
         [&]()
     {
-        if (job_->Prepare() == false)
-            return false;
-
         try
         {
             while (is_runable_ && job_->RepeatWork());

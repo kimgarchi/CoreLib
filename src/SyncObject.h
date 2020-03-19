@@ -2,9 +2,7 @@
 #include "stdafx.h"
 
 
-static const WORD default_semaphore_init_value = 0;
-static const WORD default_semaphore_limit_value = 300;
-
+static const WORD default_semaphore_max_value = 100;
 static const BOOL default_event_is_menual_reset = FALSE;
 static const BOOL default_event_init_state = FALSE;
 
@@ -41,14 +39,56 @@ public:
 class SyncSemaphore : public SyncHandle
 {
 public:
-	SyncSemaphore(LONG init_count = default_semaphore_init_value, LONG max_count = default_semaphore_limit_value)
-		: SyncHandle(::CreateSemaphore(nullptr, init_count, max_count, nullptr)), init_count_(init_count), max_count_(max_count)
+	SyncSemaphore(LONG init_count = default_semaphore_max_value, LONG max_count = default_semaphore_max_value)
+		: SyncHandle(::CreateSemaphore(nullptr, init_count, max_count, nullptr)), prev_signal_count_(init_count), max_count_(max_count)
 	{
 		assert(init_count <= max_count);
 	}
 
+	bool Release(LONG& prev_count, LONG release_count = 1) 
+	{
+		std::unique_lock<std::mutex> lock(mtx_);
+		if (prev_signal_count_ - release_count > max_count_)
+		{
+			assert(false);
+			return false;
+		}
+
+		if (ReleaseSemaphore(handle(), release_count, &prev_count) == false)
+		{
+			assert(false);
+			return false;
+		}
+
+		prev_signal_count_.store(prev_count);
+
+		return true;
+	}
+
+	bool Release(LONG release_count = 1)
+	{
+		std::unique_lock<std::mutex> lock(mtx_);
+		if (prev_signal_count_ - release_count > max_count_)
+		{
+			assert(false);
+			return false;
+		}
+
+		LONG prev_count = 1;
+		if (ReleaseSemaphore(handle(), release_count, &prev_count) == false)
+		{
+			assert(false);
+			return false;
+		}
+
+		prev_signal_count_.store(prev_count);
+
+		return true;
+	}
+
 private:
-	LONG init_count_;
+	std::mutex mtx_;
+	std::atomic<LONG> prev_signal_count_;
 	LONG max_count_;
 };
 

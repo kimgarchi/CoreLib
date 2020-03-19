@@ -6,7 +6,7 @@ PostCenter::PostCenter()
 {
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
-		std::bad_exception{};
+		throw std::runtime_error("WSAStartup");
 }
 
 PostCenter::~PostCenter()
@@ -67,11 +67,6 @@ PostCenter::SockAcceptJob::SockAcceptJob(CompletionPort& compe_port)
 
 PostCenter::SockAcceptJob::~SockAcceptJob()
 {
-}
-
-bool PostCenter::SockAcceptJob::Prepare()
-{
-	return false;
 }
 
 bool PostCenter::SockAcceptJob::RepeatWork()

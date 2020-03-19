@@ -49,7 +49,6 @@ private:
 		SockAcceptJob(CompletionPort& compe_port __in);
 		virtual ~SockAcceptJob();
 
-		virtual bool Prepare() override;
 		virtual bool RepeatWork() override;
 
 	private:
