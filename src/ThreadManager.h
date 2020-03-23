@@ -24,7 +24,7 @@ private:
 		bool Stop(DWORD timeout);
 		inline bool is_runable() const { return is_runable_.load(); }
 		void Attach(size_t count);
-		bool Deattach(size_t count, DWORD timeout = TIME_OUT_INFINITE);
+		bool Deattach(size_t count, DWORD timeout = _default_thread_stop_timeout_);
 
 		size_t thread_count() { return thread_que_.size(); }
 
@@ -46,11 +46,14 @@ public:
 	template<typename _Job, typename ..._Tys, is_job<_Job> = nullptr>
 	TaskID AttachTask(size_t thread_count, _Tys&&... Args);
 	bool DeattachTask(TaskID task_id, DWORD timeout = _default_thread_stop_timeout_);
-
+	bool change_thread_count(TaskID task_id, size_t thread_count);
+	
 	bool Stop(TaskID task_id, DWORD timeout = _default_thread_stop_timeout_);
 	bool AllStop(DWORD timeout = _default_thread_stop_timeout_);
-
+	
 private:
+	size_t thread_count(TaskID task_id);
+
 	std::mutex mtx_;
 	Tasks tasks_;
 	AllocTaskID alloc_task_id_;

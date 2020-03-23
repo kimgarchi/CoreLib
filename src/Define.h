@@ -13,5 +13,4 @@ using ThreadID = size_t;
 #define DEFINE_WRAPPER_HUB(Type) using Type##Hub = wrapper_hub<Type>;
 #define DEFINE_WRAPPER_NODE(Type) using Type##Node = wrapper_node<Type>;
 
-#define TIME_OUT_INFINITE 0
 #define WAIT_TIME_ZERO 0

@@ -14,10 +14,9 @@ public:
 private:
     bool is_runable() { return task_runable_.load() && local_runable_.load(); }
 
-    std::mutex mtx_;
+    JobBaseNode job_;
     std::future<bool> future_;
     std::thread thread_;
-    JobBaseNode job_;
     std::atomic_bool& task_runable_;
     std::atomic_bool local_runable_;
 };
