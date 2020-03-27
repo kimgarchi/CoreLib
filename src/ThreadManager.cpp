@@ -57,6 +57,8 @@ bool ThreadManager::Task::Deattach(size_t count, DWORD timeout)
 
 bool ThreadManager::DeattachTask(TaskID task_id, DWORD timeout)
 {
+	std::unique_lock<std::mutex> lock(mtx_);
+
 	if (tasks_.find(task_id) == tasks_.end())
 		return false;
 
@@ -68,6 +70,8 @@ bool ThreadManager::DeattachTask(TaskID task_id, DWORD timeout)
 
 bool ThreadManager::change_thread_count(TaskID task_id, size_t thread_count)
 {
+	std::unique_lock<std::mutex> lock(mtx_);
+
 	if (tasks_.find(task_id) == tasks_.end())
 		return false;
 
@@ -79,6 +83,9 @@ bool ThreadManager::change_thread_count(TaskID task_id, size_t thread_count)
 		task->Deattach(prev_count - thread_count);
 	else
 		task->Attach(thread_count - prev_count);
+
+	if (task->thread_count() == 0)
+		return tasks_.erase(task_id);
 
 	return true;
 }
@@ -96,14 +103,6 @@ bool ThreadManager::Stop(TaskID task_id, DWORD timeout)
 	}
 
 	return static_cast<bool>(tasks_.erase(task_id));
-}
-
-bool ThreadManager::AllStop(DWORD timeout)
-{
-	std::unique_lock<std::mutex> lock(mtx_);
-	tasks_.clear();
-
-	return true;
 }
 
 size_t ThreadManager::thread_count(TaskID task_id)

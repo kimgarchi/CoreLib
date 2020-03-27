@@ -36,9 +36,6 @@
     <Filter Include="source\Data">
       <UniqueIdentifier>{7443491d-904c-4410-b768-69a675b48677}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\Define">
-      <UniqueIdentifier>{732fc5ee-1bdd-47f6-84c9-07766d06b54e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="source\DesignPattern">
       <UniqueIdentifier>{5c4d300b-bd49-4290-a40a-429c27656c9a}</UniqueIdentifier>
     </Filter>
@@ -56,6 +53,9 @@
     </Filter>
     <Filter Include="source\DB">
       <UniqueIdentifier>{ec66ab8b-f3b8-4915-a61c-d3febba837b0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header\Define">
+      <UniqueIdentifier>{732fc5ee-1bdd-47f6-84c9-07766d06b54e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -82,9 +82,6 @@
     <ClInclude Include="src\stdafx.h">
       <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="src\Util.h">
-      <Filter>source\Data</Filter>
-    </ClInclude>
     <ClInclude Include="src\ThreadManager.h">
       <Filter>source\Thread</Filter>
     </ClInclude>
@@ -104,7 +101,7 @@
       <Filter>source\DesignPattern</Filter>
     </ClInclude>
     <ClInclude Include="src\Define.h">
-      <Filter>source\Define</Filter>
+      <Filter>Header\Define</Filter>
     </ClInclude>
     <ClInclude Include="src\Logger.h">
       <Filter>source\Logger</Filter>
@@ -138,6 +135,9 @@
     </ClInclude>
     <ClInclude Include="src\Sock.h">
       <Filter>source\Socket</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Util.h">
+      <Filter>Header\Define</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

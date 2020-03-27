@@ -34,6 +34,8 @@ public:
 	SyncMutex()
 		: SyncHandle(::CreateMutex(nullptr, false, nullptr))
 	{}
+
+	inline bool Release() { return ReleaseMutex(handle()); }
 };
 
 class SyncSemaphore : public SyncHandle
@@ -99,6 +101,9 @@ public:
 		: SyncHandle(::CreateEvent(nullptr, is_menual_reset, init_state, nullptr)),
 		is_menual_reset_(is_menual_reset), init_state_(init_state)
 	{}
+
+	inline bool Release() { return is_menual_reset_ == false ? SetEvent(handle()) : ResetEvent(handle()); }
+
 private:
 	BOOL is_menual_reset_;
 	BOOL init_state_;

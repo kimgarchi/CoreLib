@@ -5,20 +5,14 @@
 #pragma warning (push)
 #pragma warning (disable : 26444)
 
-using HarvestTypes = std::vector<size_t>;
+using Types = std::set<size_t>;
 class TypeHarvest : public Singleton<TypeHarvest>
 {
-protected:
-	using Types = std::set<size_t>;
-
 public:
 	template<typename ..._Tys>
-	decltype(auto) harvest() 
+	inline decltype(auto) harvest() 
 	{
-		Types tids = harvect_type<_Tys...>();
-		HarvestTypes havest_types;
-		std::copy(tids.begin(), tids.end(), std::back_inserter(havest_types));
-		return havest_types;
+		return harvect_type<_Tys...>();
 	}
 
 private:

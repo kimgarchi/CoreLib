@@ -33,7 +33,7 @@ private:
 
 public:
 	template<typename ... _Tys>
-	bool RegistReadJob(JobBaseHub job);
+	bool RegistReadJob();
 
 	template<typename ... _Tys>
 	bool RegistWriteJob(JobBaseHub job);
@@ -55,13 +55,15 @@ private:
 };
 
 template<typename ..._Tys>
-bool SyncStation::RegistReadJob(JobBaseHub job)
+bool SyncStation::RegistReadJob()
 {
-	return false;
+	auto tids = TypeHarvest::GetInstance().harvest<_Tys...>();
+
+	return true;
 }
 
 template<typename ..._Tys>
 bool SyncStation::RegistWriteJob(JobBaseHub job)
 {
-	return false;
+	return true;
 }

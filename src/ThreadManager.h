@@ -43,13 +43,14 @@ public:
 		: alloc_task_id_(0)
 	{}
 
+	~ThreadManager() { tasks_.clear(); }
+
 	template<typename _Job, typename ..._Tys, is_job<_Job> = nullptr>
 	TaskID AttachTask(size_t thread_count, _Tys&&... Args);
 	bool DeattachTask(TaskID task_id, DWORD timeout = _default_thread_stop_timeout_);
 	bool change_thread_count(TaskID task_id, size_t thread_count);
 	
 	bool Stop(TaskID task_id, DWORD timeout = _default_thread_stop_timeout_);
-	bool AllStop(DWORD timeout = _default_thread_stop_timeout_);
 	
 private:
 	size_t thread_count(TaskID task_id);
