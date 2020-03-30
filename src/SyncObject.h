@@ -1,28 +1,22 @@
 #pragma once
 #include "stdafx.h"
 
-
-static const WORD default_semaphore_max_value = 100;
-static const BOOL default_event_is_menual_reset = FALSE;
-static const BOOL default_event_init_state = FALSE;
+enum class SYNC_STATE
+{
+	UNLOCK,
+	SEGMENT_LOCK,
+	FULL_LOCK,
+	MAX,
+};
 
 class SyncHandle abstract : public object
 {
 public:
-	friend class SyncStation;
+	SyncHandle(HANDLE handle);
+	virtual ~SyncHandle();
 
-	SyncHandle(HANDLE handle)
-		: handle_(handle)
-	{
-		assert(handle);
-	}
-
-	~SyncHandle()
-	{
-		CloseHandle(handle_);
-	}
-
-	const HANDLE handle() { return handle_; }
+	inline const HANDLE handle() { return handle_; }
+	virtual SYNC_STATE state() abstract;
 
 private:
 	HANDLE handle_;
@@ -31,78 +25,39 @@ private:
 class SyncMutex : public SyncHandle
 {
 public:
-	SyncMutex()
-		: SyncHandle(::CreateMutex(nullptr, false, nullptr))
-	{}
-
+	SyncMutex();
+	virtual ~SyncMutex();
+	
 	inline bool Release() { return ReleaseMutex(handle()); }
+	virtual SYNC_STATE state() override;
 };
 
 class SyncSemaphore : public SyncHandle
 {
 public:
-	SyncSemaphore(LONG init_count = default_semaphore_max_value, LONG max_count = default_semaphore_max_value)
-		: SyncHandle(::CreateSemaphore(nullptr, init_count, max_count, nullptr)), prev_signal_count_(init_count), max_count_(max_count)
-	{
-		assert(init_count <= max_count);
-	}
+	SyncSemaphore(LONG max_count);
+	SyncSemaphore(LONG init_count, LONG max_count);
+	virtual ~SyncSemaphore();
 
-	bool Release(LONG& prev_count, LONG release_count = 1) 
-	{
-		std::unique_lock<std::mutex> lock(mtx_);
-		if (prev_signal_count_ - release_count > max_count_)
-		{
-			assert(false);
-			return false;
-		}
-
-		if (ReleaseSemaphore(handle(), release_count, &prev_count) == false)
-		{
-			assert(false);
-			return false;
-		}
-
-		prev_signal_count_.store(prev_count);
-
-		return true;
-	}
-
-	bool Release(LONG release_count = 1)
-	{
-		std::unique_lock<std::mutex> lock(mtx_);
-		if (prev_signal_count_ - release_count > max_count_)
-		{
-			assert(false);
-			return false;
-		}
-
-		LONG prev_count = 1;
-		if (ReleaseSemaphore(handle(), release_count, &prev_count) == false)
-		{
-			assert(false);
-			return false;
-		}
-
-		prev_signal_count_.store(prev_count);
-
-		return true;
-	}
+	bool Release(LONG& prev_count __out, LONG release_count = 1);
+	bool Release(LONG release_count = 1);
+	
+	virtual SYNC_STATE state() override;	
 
 private:
 	std::mutex mtx_;
-	std::atomic<LONG> prev_signal_count_;
-	LONG max_count_;
+	std::atomic<LONG> current_count_;
+	const LONG max_count_;
 };
 
 class SyncEvent : public SyncHandle
 {
 public:
-	SyncEvent(BOOL is_menual_reset = default_event_is_menual_reset, BOOL init_state = default_event_init_state)
-		: SyncHandle(::CreateEvent(nullptr, is_menual_reset, init_state, nullptr)),
-		is_menual_reset_(is_menual_reset), init_state_(init_state)
-	{}
-
+	SyncEvent(BOOL is_menual_reset = false, BOOL init_state = false);
+	virtual ~SyncEvent();
+	
 	inline bool Release() { return is_menual_reset_ == false ? SetEvent(handle()) : ResetEvent(handle()); }
+	virtual SYNC_STATE state() override;
 
 private:
 	BOOL is_menual_reset_;

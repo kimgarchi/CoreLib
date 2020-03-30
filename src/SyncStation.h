@@ -7,17 +7,10 @@
 class SyncStation : public Singleton<SyncStation>
 {
 private:
-	enum class HANDLE_STATE
-	{
-		IDLE,
-		READ_LOCK,
-		WRITE_LOCK
-	};
-
 	class RWHandle
 	{
 	public:
-		RWHandle(LONG read_job_init_count, LONG read_job_max_count);
+		RWHandle(size_t array_idx, LONG read_job_max_count);
 		decltype(auto) state();		
 		inline decltype(auto) WriteHandle() { return mutex_.get(); }
 		inline decltype(auto) Readhandle() { return semaphore_.get(); }
@@ -25,11 +18,11 @@ private:
 	private:
 		SyncMutexHub mutex_;
 		SyncSemaphoreHub semaphore_;
+		size_t array_idx_;
 	};
 
 	using HandleByType = std::unordered_map<TypeID, RWHandle>;
 	using Handles = std::vector<HANDLE>;
-	using HandleState = std::unordered_map<TypeID, HANDLE_STATE>;
 
 public:
 	template<typename ... _Tys>
@@ -40,7 +33,7 @@ public:
 	
 private:
 	bool RecordHandle(TypeID tid, LONG read_job_init_count, LONG read_job_max_count);
-	HANDLE_STATE handle_state(TypeID tid);
+	SYNC_STATE handle_state(TypeID tid);
 	bool IsRecordType(TypeID tid);
 
 	inline decltype(auto) ReadHandles() { return read_handles_.data(); }

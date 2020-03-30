@@ -139,6 +139,9 @@
     <ClInclude Include="src\Util.h">
       <Filter>Header\Define</Filter>
     </ClInclude>
+    <ClInclude Include="src\Worker.h">
+      <Filter>source\Job</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\SyncStation.cpp">
@@ -158,6 +161,9 @@
     </ClCompile>
     <ClCompile Include="src\ThreadManager.cpp">
       <Filter>source\Thread</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SyncObject.cpp">
+      <Filter>source\Sync</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

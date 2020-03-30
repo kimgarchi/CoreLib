@@ -175,6 +175,7 @@
     <ClInclude Include="src\Thread.h" />
     <ClInclude Include="src\ThreadManager.h" />
     <ClInclude Include="src\Util.h" />
+    <ClInclude Include="src\Worker.h" />
     <ClInclude Include="src\Wrapper.h" />
     <ClInclude Include="src\SyncStation.h" />
   </ItemGroup>
@@ -182,6 +183,7 @@
     <ClCompile Include="src\JobStation.cpp" />
     <ClCompile Include="src\PostCenter.cpp" />
     <ClCompile Include="src\SocketPool.cpp" />
+    <ClCompile Include="src\SyncObject.cpp" />
     <ClCompile Include="src\SyncStation.cpp" />
     <ClCompile Include="src\Thread.cpp" />
     <ClCompile Include="src\ThreadManager.cpp" />

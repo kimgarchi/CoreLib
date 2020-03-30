@@ -2,21 +2,17 @@
 #include "stdafx.h"
 #include "SyncStation.h"
 
-SyncStation::RWHandle::RWHandle(LONG read_job_init_count, LONG read_job_max_count)
-	: mutex_(make_wrapper_hub<SyncMutex>()), semaphore_(make_wrapper_hub<SyncSemaphore>(read_job_init_count, read_job_max_count))
+SyncStation::RWHandle::RWHandle(size_t array_idx, LONG read_job_max_count)
+	: array_idx_(array_idx), mutex_(make_wrapper_hub<SyncMutex>()), semaphore_(make_wrapper_hub<SyncSemaphore>(read_job_max_count))
 {}
 
 decltype(auto) SyncStation::RWHandle::state()
 {
-	DWORD ret = WaitForSingleObject(mutex_.get(), WAIT_TIME_ZERO);
-	if (ret == WAIT_OBJECT_0)
-		return HANDLE_STATE::WRITE_LOCK;
+	auto state = mutex_->state();
+	if (state == SYNC_STATE::FULL_LOCK)
+		return state;
 
-	ret = WaitForSingleObject(semaphore_.get(), WAIT_TIME_ZERO);
-	if (ret == WAIT_OBJECT_0)
-		return HANDLE_STATE::READ_LOCK;
-
-	return HANDLE_STATE::IDLE;
+	return semaphore_->state();
 }
 
 bool SyncStation::RecordHandle(TypeID tid, LONG read_job_init_count, LONG read_job_max_count)
@@ -43,7 +39,7 @@ bool SyncStation::RecordHandle(TypeID tid, LONG read_job_init_count, LONG read_j
 	return true;
 }
 
-SyncStation::HANDLE_STATE SyncStation::handle_state(TypeID tid)
+SYNC_STATE SyncStation::handle_state(TypeID tid)
 {
 	std::unique_lock<std::mutex>(distribute_mtx_);
 
@@ -51,7 +47,7 @@ SyncStation::HANDLE_STATE SyncStation::handle_state(TypeID tid)
 	if (itor == handle_by_type_.end())
 	{
 		assert(false);
-		return HANDLE_STATE::IDLE;
+		return SYNC_STATE::MAX;
 	}
 
 	return itor->second.state();
