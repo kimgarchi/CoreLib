@@ -163,7 +163,9 @@
     <ClInclude Include="src\Object.h" />
     <ClInclude Include="src\ObjectPool.h" />
     <ClInclude Include="src\ObjectStation.h" />
+    <ClInclude Include="src\ODBC.h" />
     <ClInclude Include="src\PostCenter.h" />
+    <ClInclude Include="src\QueryBase.h" />
     <ClInclude Include="src\singleton.h" />
     <ClInclude Include="src\Sock.h" />
     <ClInclude Include="src\SocketBase.h" />
@@ -181,7 +183,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\JobStation.cpp" />
+    <ClCompile Include="src\ODBC.cpp" />
     <ClCompile Include="src\PostCenter.cpp" />
+    <ClCompile Include="src\QueryBase.cpp" />
     <ClCompile Include="src\SocketPool.cpp" />
     <ClCompile Include="src\SyncObject.cpp" />
     <ClCompile Include="src\SyncStation.cpp" />

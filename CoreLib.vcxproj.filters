@@ -57,6 +57,12 @@
     <Filter Include="Header\Define">
       <UniqueIdentifier>{732fc5ee-1bdd-47f6-84c9-07766d06b54e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\DB\Odbc">
+      <UniqueIdentifier>{f1e29c5a-1199-42ea-ad14-aaba21950815}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\DB\Query">
+      <UniqueIdentifier>{1e7e3eb3-f45f-42a6-8911-b0d59e1e24aa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CoreLib.rc">
@@ -142,6 +148,12 @@
     <ClInclude Include="src\Worker.h">
       <Filter>source\Job</Filter>
     </ClInclude>
+    <ClInclude Include="src\ODBC.h">
+      <Filter>source\DB\Odbc</Filter>
+    </ClInclude>
+    <ClInclude Include="src\QueryBase.h">
+      <Filter>source\DB\Query</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\SyncStation.cpp">
@@ -164,6 +176,12 @@
     </ClCompile>
     <ClCompile Include="src\SyncObject.cpp">
       <Filter>source\Sync</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ODBC.cpp">
+      <Filter>source\DB\Odbc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\QueryBase.cpp">
+      <Filter>source\DB\Query</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
