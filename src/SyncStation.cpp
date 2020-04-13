@@ -15,15 +15,23 @@ decltype(auto) SyncStation::RWHandle::state()
 	return semaphore_->state();
 }
 
-bool SyncStation::RecordHandle(TypeID tid, LONG read_job_init_count, LONG read_job_max_count)
+SyncStation::SyncStation()
 {
-	//std::unique_lock<std::mutex>(mtx_);
-	if (handle_by_type_.find(tid) == handle_by_type_.end())
-		return false;
 
-	assert(handle_by_type_.size() == write_handles_.size() && write_handles_.size() == read_handles_.size());
+}
 
-	auto ret = handle_by_type_.emplace(tid, std::forward<RWHandle>(RWHandle(read_job_init_count, read_job_max_count)));
+bool SyncStation::RecordHandle(TypeID tid, LONG read_job_max_count)
+{
+	if (handle_by_type_.find(tid) != handle_by_type_.end())
+	{
+		assert(false);
+		return true;
+	}
+	
+	assert(handle_by_type_.size() == write_handles_.size() && handle_by_type_.size() == read_handles_.size());
+
+	auto array_idx = handle_by_type_.size() + 1;
+	auto ret = handle_by_type_.emplace(tid, std::forward<RWHandle>(RWHandle(array_idx, read_job_max_count)));
 	auto push_result = ret.second;
 	auto rw_handle = ret.first->second;
 

@@ -25,6 +25,8 @@ private:
 	using Handles = std::vector<HANDLE>;
 
 public:
+	SyncStation();
+
 	template<typename ... _Tys>
 	bool RegistReadJob();
 
@@ -32,7 +34,7 @@ public:
 	bool RegistWriteJob(JobBaseHub job);
 	
 private:
-	bool RecordHandle(TypeID tid, LONG read_job_init_count, LONG read_job_max_count);
+	bool RecordHandle(TypeID tid, LONG read_job_max_count);
 	SYNC_STATE handle_state(TypeID tid);
 	bool IsRecordType(TypeID tid);
 
@@ -45,12 +47,15 @@ private:
 
 	std::shared_mutex distribute_mtx_;
 	std::mutex depot_mtx_;
+
 };
 
 template<typename ..._Tys>
 bool SyncStation::RegistReadJob()
 {
 	auto tids = TypeHarvest::GetInstance().harvest<_Tys...>();
+
+
 
 	return true;
 }
