@@ -87,7 +87,7 @@ bool SyncSemaphore::Release(LONG release_count)
 SYNC_STATE SyncSemaphore::state()
 {
 	auto ret = Lock(WAIT_TIME_ZERO);
-	if (ret == WAIT_OBJECT_0)
+	if (ret >= WAIT_OBJECT_0 && ret <= WAIT_OBJECT_0 + max_count())
 	{
 		LONG key_count = 0;
 		assert(ReleaseSemaphore(handle(), 1, &key_count));
@@ -136,7 +136,49 @@ SingleLock::SingleLock(SyncMutexNode& node, bool immedidate_lock)
 
 SingleLock::~SingleLock()
 {
-	assert(Release());	
+	if (state() != SYNC_STATE::UNLOCK)
+		assert(Release());
+}
+
+DWORD SingleLock::Lock(DWORD timeout)
+{
+	ULONGLONG begin_tick = GetTickCount64();
+	auto ret = sync_mutex_.Lock(timeout);
+	if (ret != WAIT_OBJECT_0)
+		return ret;
+
+	ret = mutex_node_->Lock(GetTickCount64() - begin_tick);
+	if (sync_mutex_.Release())
+		return ret;
+
+	assert(false);
+	return WAIT_FAILED;
+}
+
+DWORD SingleLock::SpinLock(DWORD timeout)
+{
+	ULONGLONG begin_tick = GetTickCount64();
+	auto ret = sync_mutex_.Lock(timeout);
+	if (ret != WAIT_OBJECT_0)
+		return ret;
+
+	do
+	{
+		auto ret = Lock(WAIT_TIME_ZERO);
+		if (ret == WAIT_OBJECT_0)
+		{
+			if (sync_mutex_.Release() == false)
+			{
+				assert(false);
+				return WAIT_TIMEOUT;
+			}
+			
+			return ret;
+		}
+	} while (timeout == INFINITE || begin_tick + timeout > GetTickCount64());
+
+	assert(sync_mutex_.Release());
+	return WAIT_TIMEOUT;
 }
 
 bool SingleLock::Release()
@@ -157,14 +199,14 @@ bool SingleLock::Release()
 }
 
 MultiLock::MultiLock(SyncSemaphoreHub& hub, bool immedidate_lock)
-	: semaphore_node_(hub.make_node())
+	: semaphore_node_(hub.make_node()), sync_semaphore_(hub->max_count())
 {
 	if (immedidate_lock)
 		assert(Lock());
 }
 
 MultiLock::MultiLock(SyncSemaphoreNode& node, bool immedidate_lock)
-	: semaphore_node_(node)
+	: semaphore_node_(node), sync_semaphore_(node->max_count())
 {
 	if (immedidate_lock)
 		assert(Lock());
@@ -172,7 +214,28 @@ MultiLock::MultiLock(SyncSemaphoreNode& node, bool immedidate_lock)
 
 MultiLock::~MultiLock()
 {
-	assert(Release());
+	if (state() != SYNC_STATE::UNLOCK)
+		assert(Release());
+}
+
+DWORD MultiLock::Lock(DWORD timeout)
+{
+	return semaphore_node_->Lock(timeout);
+}
+
+DWORD MultiLock::SpinLock(DWORD timeout)
+{
+	const ULONGLONG begin_tick = GetTickCount64();
+	
+	do
+	{
+		auto ret = Lock(WAIT_TIME_ZERO);
+		if (ret >= WAIT_OBJECT_0 && ret <= WAIT_OBJECT_0 + semaphore_node_->max_count())
+			return ret;
+
+	} while (timeout == INFINITE || begin_tick + timeout > GetTickCount64());
+
+	return WAIT_TIMEOUT;
 }
 
 bool MultiLock::Release()
@@ -194,19 +257,19 @@ bool MultiLock::Release()
 }
 
 RWLock::RWLock(SyncMutexHub& mutex_hub, SyncSemaphoreHub& semaphore_hub)
-	: SingleLock(mutex_hub, false), MultiLock(semaphore_hub, false)
+	: SingleLock(mutex_hub, false), MultiLock(semaphore_hub, false), lock_type_(LOCK_TYPE::MAX)
 {}
 
 RWLock::RWLock(SyncMutexNode& mutex_node, SyncSemaphoreHub& semaphore_hub)
-	: SingleLock(mutex_node, false), MultiLock(semaphore_hub, false)
+	: SingleLock(mutex_node, false), MultiLock(semaphore_hub, false), lock_type_(LOCK_TYPE::MAX)
 {}
 
 RWLock::RWLock(SyncMutexHub& mutex_hub, SyncSemaphoreNode& semaphore_node)
-	: SingleLock(mutex_hub, false), MultiLock(semaphore_node, false)
+	: SingleLock(mutex_hub, false), MultiLock(semaphore_node, false), lock_type_(LOCK_TYPE::MAX)
 {}
 
 RWLock::RWLock(SyncMutexNode& mutex_node, SyncSemaphoreNode& semaphore_node)
-	: SingleLock(mutex_node, false), MultiLock(semaphore_node, false)
+	: SingleLock(mutex_node, false), MultiLock(semaphore_node, false), lock_type_(LOCK_TYPE::MAX)
 {}
 
 SYNC_STATE RWLock::state()
@@ -226,7 +289,11 @@ bool RWLock::ReadLock(DWORD timeout)
 		return false;
 	}
 
-	return (MultiLock::Lock() == WAIT_OBJECT_0);
+	auto ret = MultiLock::Lock(timeout);
+	if (ret >= WAIT_OBJECT_0 && ret <= WAIT_OBJECT_0 + semaphore_node_->max_count())
+		return true;
+
+	return false;
 }
 
 bool RWLock::WriteLock(DWORD timeout)
@@ -238,5 +305,61 @@ bool RWLock::WriteLock(DWORD timeout)
 		return false;
 	}
 
-	return (SingleLock::Lock() == WAIT_OBJECT_0);
+	return (SingleLock::Lock(timeout) == WAIT_OBJECT_0);
+}
+
+bool RWLock::ReadSpinLock(DWORD timeout)
+{
+	const ULONGLONG begin_tick = GetTickCount64();
+
+	do
+	{
+		auto ret = WriteLock(WAIT_TIME_ZERO);
+		if (ret != WAIT_OBJECT_0)
+			continue;
+			
+		ret = ReadLock(WAIT_TIME_ZERO);
+		if (ret < WAIT_OBJECT_0 && ret > WAIT_OBJECT_0 + semaphore_node_->max_count())
+			continue;
+
+		if (SingleLock::Release() == false)
+		{
+			if (MultiLock::Release())
+			{
+				assert(false);
+				// ...
+			}
+				
+			return WAIT_TIMEOUT;
+		}
+
+		return ret;
+
+	} while (timeout == INFINITE || begin_tick + timeout > GetTickCount64());
+
+	return WAIT_TIMEOUT;
+}
+
+bool RWLock::WriteSpinLock(DWORD timeout)
+{
+	const ULONGLONG begin_tick = GetTickCount64();
+
+	do
+	{
+		auto ret = ReadLock(WAIT_TIME_ZERO);
+		if (ret != WAIT_OBJECT_0 + semaphore_node_->max_count())
+		{
+			continue;
+		}
+			
+
+		ret = WriteLock(WAIT_TIME_ZERO);
+		if (ret != WAIT_OBJECT_0)
+			continue;
+
+		return ret;
+
+	} while (timeout == INFINITE || begin_tick + timeout > GetTickCount64());
+
+	return WAIT_TIMEOUT;
 }
