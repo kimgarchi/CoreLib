@@ -155,6 +155,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\CallBack.h" />
     <ClInclude Include="src\DataStream.h" />
+    <ClInclude Include="src\DBTable.h" />
     <ClInclude Include="src\Define.h" />
     <ClInclude Include="src\Job.h" />
     <ClInclude Include="src\JobStation.h" />
@@ -165,7 +166,7 @@
     <ClInclude Include="src\ObjectStation.h" />
     <ClInclude Include="src\ODBC.h" />
     <ClInclude Include="src\PostCenter.h" />
-    <ClInclude Include="src\QueryBase.h" />
+    <ClInclude Include="src\DBColumn.h" />
     <ClInclude Include="src\singleton.h" />
     <ClInclude Include="src\Sock.h" />
     <ClInclude Include="src\SocketBase.h" />
@@ -182,10 +183,11 @@
     <ClInclude Include="src\SyncStation.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\DBTable.cpp" />
     <ClCompile Include="src\JobStation.cpp" />
     <ClCompile Include="src\ODBC.cpp" />
     <ClCompile Include="src\PostCenter.cpp" />
-    <ClCompile Include="src\QueryBase.cpp" />
+    <ClCompile Include="src\DBColumn.cpp" />
     <ClCompile Include="src\SocketPool.cpp" />
     <ClCompile Include="src\SyncObject.cpp" />
     <ClCompile Include="src\SyncStation.cpp" />

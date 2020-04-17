@@ -151,7 +151,10 @@
     <ClInclude Include="src\ODBC.h">
       <Filter>source\DB\Odbc</Filter>
     </ClInclude>
-    <ClInclude Include="src\QueryBase.h">
+    <ClInclude Include="src\DBColumn.h">
+      <Filter>source\DB\Query</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DBTable.h">
       <Filter>source\DB\Query</Filter>
     </ClInclude>
   </ItemGroup>
@@ -180,7 +183,10 @@
     <ClCompile Include="src\ODBC.cpp">
       <Filter>source\DB\Odbc</Filter>
     </ClCompile>
-    <ClCompile Include="src\QueryBase.cpp">
+    <ClCompile Include="src\DBColumn.cpp">
+      <Filter>source\DB\Query</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DBTable.cpp">
       <Filter>source\DB\Query</Filter>
     </ClCompile>
   </ItemGroup>
