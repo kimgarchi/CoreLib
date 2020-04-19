@@ -115,3 +115,8 @@ SQLRETURN ODBC::Connect(std::wstring address, std::wstring port, std::wstring da
 	}
 	*/
 }
+
+SQLHANDLE ODBC::Execute(DynamicQuery query)
+{
+	return SQLHANDLE();
+}

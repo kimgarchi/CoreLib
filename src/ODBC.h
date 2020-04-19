@@ -6,6 +6,7 @@
 
 #define SQL_RETURN_CODE_LEN 1024
 
+class DynamicQuery;
 class ODBC
 {
 public:
@@ -14,7 +15,8 @@ public:
 
 	bool Cleanup();
 	SQLRETURN Connect(std::wstring address, std::wstring port, std::wstring database, std::wstring id, std::wstring password);
-	
+	SQLHANDLE Execute(DynamicQuery query);
+
 private:
 	SQLHANDLE connect_;
 	SQLHANDLE statement_;
