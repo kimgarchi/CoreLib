@@ -17,11 +17,15 @@ enum class COLUMN_TYPE
 };
 
 using BindIndexNames = std::set<std::wstring>;
-class Column : public object
+class Column
 {
 public:
 	Column(std::wstring name, COLUMN_TYPE type, bool is_null)
 		: name_(name), type_(type), is_null_(is_null)
+	{}
+
+	Column(const Column& column)
+		: name_(column.name_), type_(column.type_), is_null_(column.is_null_)
 	{}
 
 	virtual ~Column() {}
@@ -29,6 +33,8 @@ public:
 	inline const COLUMN_TYPE& type() { return type_; }
 	inline const std::wstring& name() { return name_; }
 	inline const bool& is_null() { return is_null_; }
+
+	inline bool is_valid() { return name_.compare(L"") != 0; }
 
 	bool AttachIndex(std::wstring&& index_name) { return bind_index_names_.emplace(index_name).second; }
 
@@ -72,8 +78,8 @@ public:
 	DBTable(std::wstring name, TABLE_TYPE type = TABLE_TYPE::BASIC);
 	~DBTable();
 
-	bool AttachColumn(Column&& column);
-	bool AttachIndex(std::wstring name, TABLE_INDEX_TYPE type, Columns&& columns);
+	bool AttachColumn(const std::wstring& name __in, Column& column __in);
+	bool AttachIndex(std::wstring name, TABLE_INDEX_TYPE type, Columns& columns);
 
 private:
 	const std::wstring name_;

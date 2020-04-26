@@ -28,7 +28,7 @@ public:
 	SyncStation();
 
 	template<typename ... _Tys>
-	bool RegistReadJob();
+	bool RegistReadJob(JobBaseHub job);
 
 	template<typename ... _Tys>
 	bool RegistWriteJob(JobBaseHub job);
@@ -47,11 +47,10 @@ private:
 
 	std::shared_mutex distribute_mtx_;
 	std::mutex depot_mtx_;
-
 };
 
 template<typename ..._Tys>
-bool SyncStation::RegistReadJob()
+bool SyncStation::RegistReadJob(JobBaseHub job)
 {
 	auto tids = TypeHarvest::GetInstance().harvest<_Tys...>();
 

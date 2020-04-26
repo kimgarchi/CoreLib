@@ -18,9 +18,10 @@ private:
 class DynamicQuery : public QueryBase
 {
 public:
-	DynamicQuery();
-	virtual ~DynamicQuery();
+	DynamicQuery() {}
+	virtual ~DynamicQuery() {}
 
+	virtual bool Execute(bool timeout) override { return true; }
 
 
 private:

@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "ODBC.h"
+#include "Query.h"
 
 ODBC::ODBC()
 	: connect_(nullptr), statement_(nullptr), environment_(nullptr)

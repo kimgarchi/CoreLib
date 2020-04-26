@@ -14,3 +14,5 @@ using ThreadID = size_t;
 #define DEFINE_WRAPPER_NODE(Type) using Type##Node = wrapper_node<Type>;
 
 #define WAIT_TIME_ZERO 0
+
+#define SECONDS_TO_TICK 1000

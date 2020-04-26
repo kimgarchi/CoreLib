@@ -88,31 +88,51 @@ DEFINE_WRAPPER_NODE(SyncSemaphore);
 DEFINE_WRAPPER_HUB(SyncEvent);
 DEFINE_WRAPPER_NODE(SyncEvent);
 
+class InnerLock : public SyncMutex
+{
+public:
+	InnerLock(const SyncMutex& sync_mutex, DWORD timeout = INFINITE);
+	virtual ~InnerLock();
+
+	inline DWORD remain_wait_seconds() { return remain_wait_seconds_; }
+	SYNC_STATE state() { return SyncMutex::state(); }
+
+private:
+	DWORD remain_wait_seconds_;
+};
+
 class LockBase abstract : public object
 {
 public:
-	virtual DWORD Lock(DWORD timeout) abstract;
-	virtual DWORD SpinLock(DWORD timeout) abstract;
+	DWORD Lock(DWORD timeout = INFINITE);
+	DWORD SpinLock(DWORD timeout = INFINITE);
 
-	virtual bool Release() abstract;
+	bool Release();
+	
+protected:
+	virtual DWORD _Lock(DWORD timeout) abstract;
+	virtual DWORD _SpinLock(DWORD timeout) abstract;
+	virtual bool _Release() abstract;
 	virtual SYNC_STATE state() abstract;
+
+private:
+	SyncMutex sync_mutex_;
 };
 
-class SingleLock : public LockBase
+class SingleLock : protected LockBase
 {
 public:
-	SingleLock(SyncMutexHub& hub, bool immedidate_lock = true);
-	SingleLock(SyncMutexNode& node, bool immedidate_lock = true);
+	SingleLock(SyncMutexHub& hub);
+	SingleLock(SyncMutexNode& node);
 
 	virtual ~SingleLock();
 
-	virtual DWORD Lock(DWORD timeout = INFINITE) override;
-	virtual DWORD SpinLock(DWORD timeout = INFINITE) override;
-
-	virtual bool Release() override;
+protected:
+	virtual DWORD _Lock(DWORD timeout) override;
+	virtual DWORD _SpinLock(DWORD timeout) override;
+	virtual bool _Release() override;
 	virtual SYNC_STATE state() override { return mutex_node_->state(); }
 
-protected:
 	SyncMutex sync_mutex_;
 	SyncMutexNode mutex_node_;
 };
@@ -120,18 +140,17 @@ protected:
 class MultiLock : public LockBase
 {
 public:
-	MultiLock(SyncSemaphoreHub& hub, bool immedidate_lock = true);
-	MultiLock(SyncSemaphoreNode& node, bool immedidate_lock = true);
+	MultiLock(SyncSemaphoreHub& hub);
+	MultiLock(SyncSemaphoreNode& node);
 
 	virtual ~MultiLock();
-
-	virtual DWORD Lock(DWORD timeout = INFINITE) override;
-	virtual DWORD SpinLock(DWORD timeout = INFINITE) override;
-
-	virtual bool Release() override;
+	
+protected:
+	virtual DWORD _Lock(DWORD timeout = INFINITE) override;
+	virtual DWORD _SpinLock(DWORD timeout = INFINITE) override;
+	virtual bool _Release() override;
 	virtual SYNC_STATE state() override { return semaphore_node_->state(); }
 
-protected:
 	SyncSemaphore sync_semaphore_;
 	SyncSemaphoreNode semaphore_node_;	
 };

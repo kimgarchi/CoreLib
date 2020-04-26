@@ -1,5 +1,4 @@
-
-
+#include "stdafx.h"
 #include "DBTable.h"
 
 DBTable::DBTable(std::wstring name, TABLE_TYPE type)
@@ -13,16 +12,20 @@ DBTable::~DBTable()
 	index_by_type_.clear();
 }
 
-bool DBTable::AttachColumn(Column&& column)
+bool DBTable::AttachColumn(const std::wstring& name, Column& column)
 {
-	if (column_by_name_.find(column.name) != column_by_name_.end())
+	if (column_by_name_.find(name) != column_by_name_.end())
+		return false;
+
+	auto ret = column_by_name_.emplace(name, column);
+	if (ret.second == false)
 		return false;
 
 	columns_.emplace_back(column);
-	return column_by_name_.emplace(column.name, column).second;
+	return true;
 }
 
-bool DBTable::AttachIndex(std::wstring name, TABLE_INDEX_TYPE type, Columns&& columns)
+bool DBTable::AttachIndex(std::wstring name, TABLE_INDEX_TYPE type, Columns& columns)
 {
 	auto type_itor = index_by_type_.find(type);
 	if (type_itor != index_by_type_.end())
