@@ -6,7 +6,6 @@ enum class SYNC_STATE
 	UNLOCK,
 	SEGMENT_LOCK,
 	FULL_LOCK,
-	MAX,
 };
 
 class SyncHandle abstract : public object
@@ -19,12 +18,14 @@ public:
 	
 protected:
 	friend class LockBase;
+	friend class InnerLock;
 	friend class SingleLock;
 	friend class MultiLock;
-	friend class RWLock;
+	friend class RWLock;	
 
 	inline const HANDLE handle() { return handle_; }
 	DWORD Lock(DWORD timeout = INFINITE);
+	virtual bool Release() abstract;
 
 private:
 	HANDLE handle_;
@@ -38,7 +39,7 @@ public:
 
 	virtual ~SyncMutex();
 	
-	inline bool Release() { return ReleaseMutex(handle()); }
+	virtual bool Release() override { return ReleaseMutex(handle()); }
 	virtual SYNC_STATE state() override;
 };
 
@@ -49,15 +50,15 @@ public:
 	SyncSemaphore(LONG init_count, LONG max_count);
 	virtual ~SyncSemaphore();
 
-	bool Release(LONG& prev_count __out, LONG release_count = 1);
-	bool Release(LONG release_count = 1);
-	
+	virtual bool Release() override { return _Release(); }
 	virtual SYNC_STATE state() override;	
 	LONG lock_count() { return current_count_.load(); }
-
 	LONG max_count() { return max_count_; }
 
 private:
+	bool _Release(LONG& prev_count __out, LONG release_count = 1);
+	bool _Release(LONG release_count = 1);
+
 	std::atomic<LONG> current_count_;
 	const LONG max_count_;
 };
@@ -88,35 +89,19 @@ DEFINE_WRAPPER_NODE(SyncSemaphore);
 DEFINE_WRAPPER_HUB(SyncEvent);
 DEFINE_WRAPPER_NODE(SyncEvent);
 
-class InnerLock : public SyncMutex
-{
-public:
-	InnerLock(const SyncMutex& sync_mutex, DWORD timeout = INFINITE);
-	virtual ~InnerLock();
-
-	inline DWORD remain_wait_seconds() { return remain_wait_seconds_; }
-	SYNC_STATE state() { return SyncMutex::state(); }
-
-private:
-	DWORD remain_wait_seconds_;
-};
-
 class LockBase abstract : public object
 {
 public:
-	DWORD Lock(DWORD timeout = INFINITE);
-	DWORD SpinLock(DWORD timeout = INFINITE);
+	virtual DWORD Lock(DWORD timeout = INFINITE) { return _Lock(timeout); }
+	virtual DWORD SpinLock(DWORD timeout = INFINITE) { return _SpinLock(timeout); }
+	virtual bool Release() { return _Release(); }
 
-	bool Release();
-	
+	virtual SYNC_STATE state() abstract;
+
 protected:
 	virtual DWORD _Lock(DWORD timeout) abstract;
 	virtual DWORD _SpinLock(DWORD timeout) abstract;
 	virtual bool _Release() abstract;
-	virtual SYNC_STATE state() abstract;
-
-private:
-	SyncMutex sync_mutex_;
 };
 
 class SingleLock : protected LockBase
@@ -127,13 +112,13 @@ public:
 
 	virtual ~SingleLock();
 
-protected:
-	virtual DWORD _Lock(DWORD timeout) override;
-	virtual DWORD _SpinLock(DWORD timeout) override;
-	virtual bool _Release() override;
 	virtual SYNC_STATE state() override { return mutex_node_->state(); }
 
-	SyncMutex sync_mutex_;
+protected:
+	virtual DWORD _Lock(DWORD timeout) override { return mutex_node_->Lock(timeout); }
+	virtual DWORD _SpinLock(DWORD timeout) override;
+	virtual bool _Release() override;
+
 	SyncMutexNode mutex_node_;
 };
 
@@ -145,26 +130,18 @@ public:
 
 	virtual ~MultiLock();
 	
-protected:
-	virtual DWORD _Lock(DWORD timeout = INFINITE) override;
-	virtual DWORD _SpinLock(DWORD timeout = INFINITE) override;
-	virtual bool _Release() override;
 	virtual SYNC_STATE state() override { return semaphore_node_->state(); }
 
-	SyncSemaphore sync_semaphore_;
-	SyncSemaphoreNode semaphore_node_;	
+protected:
+	virtual DWORD _Lock(DWORD timeout) override { return semaphore_node_->Lock(timeout); }
+	virtual DWORD _SpinLock(DWORD timeout) override;
+	virtual bool _Release() override;
+
+	SyncSemaphoreNode semaphore_node_;
 };
 
 class RWLock : public SingleLock, MultiLock
 {
-private:
-	enum class LOCK_TYPE
-	{
-		READ,
-		WRITE,
-		MAX,
-	};
-
 public:
 	RWLock(SyncMutexHub& mutex_hub, SyncSemaphoreHub& semaphore_hub);
 	RWLock(SyncMutexNode& mutex_node, SyncSemaphoreHub& semaphore_hub);
@@ -173,14 +150,16 @@ public:
 
 	virtual SYNC_STATE state() override;
 
-	bool ReadLock(DWORD timeout = INFINITE);
-	bool WriteLock(DWORD timeout = INFINITE);
+	DWORD ReadLock(DWORD timeout = INFINITE);
+	DWORD WriteLock(DWORD timeout = INFINITE);
 
-	bool ReadSpinLock(DWORD timeout = INFINITE);
-	bool WriteSpinLock(DWORD timeout = INFINITE);
+	DWORD ReadSpinLock(DWORD timeout = INFINITE);
+	DWORD WriteSpinLock(DWORD timeout = INFINITE);
 
 private:
-	LOCK_TYPE lock_type_;
+	virtual DWORD Lock(DWORD timeout) override { return WAIT_OBJECT_0; };
+	virtual DWORD SpinLock(DWORD timeout) override { return WAIT_OBJECT_0; };
+	virtual bool Release() { return true; };
 };
 
 DEFINE_WRAPPER_HUB(SingleLock);
@@ -188,3 +167,6 @@ DEFINE_WRAPPER_NODE(SingleLock);
 
 DEFINE_WRAPPER_HUB(MultiLock);
 DEFINE_WRAPPER_NODE(MultiLock);
+
+DEFINE_WRAPPER_HUB(RWLock);
+DEFINE_WRAPPER_NODE(RWLock);

@@ -55,7 +55,7 @@ SYNC_STATE SyncStation::handle_state(TypeID tid)
 	if (itor == handle_by_type_.end())
 	{
 		assert(false);
-		return SYNC_STATE::MAX;
+		return SYNC_STATE::FULL_LOCK;
 	}
 
 	return itor->second.state();
