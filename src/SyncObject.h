@@ -92,15 +92,15 @@ DEFINE_WRAPPER_NODE(SyncEvent);
 class LockBase abstract : public object
 {
 public:
-	virtual DWORD Lock(DWORD timeout = INFINITE) { return _Lock(timeout); }
-	virtual DWORD SpinLock(DWORD timeout = INFINITE) { return _SpinLock(timeout); }
+	virtual SYNC_STATE Lock(DWORD timeout = INFINITE) { return _Lock(timeout); }
+	virtual SYNC_STATE SpinLock(DWORD timeout = INFINITE) { return _SpinLock(timeout); }
 	virtual bool Release() { return _Release(); }
 
 	virtual SYNC_STATE state() abstract;
 
 protected:
-	virtual DWORD _Lock(DWORD timeout) abstract;
-	virtual DWORD _SpinLock(DWORD timeout) abstract;
+	virtual SYNC_STATE _Lock(DWORD timeout) abstract;
+	virtual SYNC_STATE _SpinLock(DWORD timeout) abstract;
 	virtual bool _Release() abstract;
 };
 
@@ -115,8 +115,8 @@ public:
 	virtual SYNC_STATE state() override { return mutex_node_->state(); }
 
 protected:
-	virtual DWORD _Lock(DWORD timeout) override { return mutex_node_->Lock(timeout); }
-	virtual DWORD _SpinLock(DWORD timeout) override;
+	virtual SYNC_STATE _Lock(DWORD timeout) override;
+	virtual SYNC_STATE _SpinLock(DWORD timeout) override;
 	virtual bool _Release() override;
 
 	SyncMutexNode mutex_node_;
@@ -133,8 +133,8 @@ public:
 	virtual SYNC_STATE state() override { return semaphore_node_->state(); }
 
 protected:
-	virtual DWORD _Lock(DWORD timeout) override { return semaphore_node_->Lock(timeout); }
-	virtual DWORD _SpinLock(DWORD timeout) override;
+	virtual SYNC_STATE _Lock(DWORD timeout) override;
+	virtual SYNC_STATE _SpinLock(DWORD timeout) override;
 	virtual bool _Release() override;
 
 	SyncSemaphoreNode semaphore_node_;
@@ -150,16 +150,16 @@ public:
 
 	virtual SYNC_STATE state() override;
 
-	DWORD ReadLock(DWORD timeout = INFINITE);
-	DWORD WriteLock(DWORD timeout = INFINITE);
-
-	DWORD ReadSpinLock(DWORD timeout = INFINITE);
-	DWORD WriteSpinLock(DWORD timeout = INFINITE);
-
+	SYNC_STATE WriteLock(DWORD timeout = INFINITE);
+	SYNC_STATE ReadLock(DWORD timeout = INFINITE);
+	
+	SYNC_STATE WriteSpinLock(DWORD timeout = INFINITE);
+	SYNC_STATE ReadSpinLock(DWORD timeout = INFINITE);
+	
 private:
-	virtual DWORD Lock(DWORD timeout) override { return WAIT_OBJECT_0; };
-	virtual DWORD SpinLock(DWORD timeout) override { return WAIT_OBJECT_0; };
-	virtual bool Release() { return true; };
+	virtual SYNC_STATE Lock(DWORD timeout) override { throw std::bad_function_call{}; }
+	virtual SYNC_STATE SpinLock(DWORD timeout) override { throw std::bad_function_call{}; }
+	virtual bool Release() { throw std::bad_function_call{}; }
 };
 
 DEFINE_WRAPPER_HUB(SingleLock);
