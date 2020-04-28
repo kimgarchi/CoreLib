@@ -155,7 +155,7 @@ SYNC_STATE SingleLock::_SpinLock(DWORD timeout)
 		if (ret == WAIT_OBJECT_0)
 			return SYNC_STATE::UNLOCK;
 
-	} while (timeout == INFINITE || begin_tick + timeout * SECONDS_TO_TICK > GetTickCount64());
+	} while (timeout == INFINITE || static_cast<DWORD>(GetTickCount() - begin_tick) / SECONDS_TO_TICK > timeout);
 
 	return SYNC_STATE::FULL_LOCK;
 }
@@ -217,7 +217,7 @@ SYNC_STATE MultiLock::_SpinLock(DWORD timeout)
 		else if (ret > WAIT_OBJECT_0 && ret <= WAIT_OBJECT_0 + semaphore_node_->max_count())
 			return SYNC_STATE::SEGMENT_LOCK;
 
-	} while (timeout == INFINITE || begin_tick + timeout * SECONDS_TO_TICK > GetTickCount64());
+	} while (timeout == INFINITE || static_cast<DWORD>(GetTickCount() - begin_tick) / SECONDS_TO_TICK > timeout);
 
 	return SYNC_STATE::FULL_LOCK;
 }
@@ -324,6 +324,7 @@ SYNC_STATE RWLock::WriteLock(DWORD timeout)
 SYNC_STATE RWLock::ReadSpinLock(DWORD timeout)
 {
 	ULONGLONG begin_tick = GetTickCount64();
+
 	do
 	{
 		switch (SingleLock::Lock(WAIT_TIME_ZERO))
@@ -335,20 +336,39 @@ SYNC_STATE RWLock::ReadSpinLock(DWORD timeout)
 
 		auto ret = MultiLock::Lock(WAIT_TIME_ZERO);
 		if (ret == SYNC_STATE::FULL_LOCK)
-		{
-			assert(SingleLock::Release());
 			continue;
-		}
 		
 		assert(SingleLock::Release());		
 		return ret;
 
-	} while (timeout == INFINITE || begin_tick + timeout * SECONDS_TO_TICK > GetTickCount64());
+	} while (timeout == INFINITE || static_cast<DWORD>(GetTickCount() - begin_tick) / SECONDS_TO_TICK > timeout);
 
 	return SYNC_STATE::FULL_LOCK;
 }
 
 SYNC_STATE RWLock::WriteSpinLock(DWORD timeout)
 {
+	ULONGLONG begin_tick = GetTickCount64();
+
+	do
+	{
+		auto ret = MultiLock::Lock(WAIT_TIME_ZERO);
+		if (ret == SYNC_STATE::FULL_LOCK)
+		{
+			assert(MultiLock::Release());
+			continue;
+		}
+
+		switch (SingleLock::Lock(WAIT_TIME_ZERO))
+		{
+		case SYNC_STATE::FULL_LOCK:
+			continue;
+		}
+
+		assert(MultiLock::Release());
+		return ret;
+
+	} while (timeout == INFINITE || static_cast<DWORD>(GetTickCount() - begin_tick) / SECONDS_TO_TICK > timeout);
+
 	return SYNC_STATE::FULL_LOCK;
 }
