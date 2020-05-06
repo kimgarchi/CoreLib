@@ -22,6 +22,8 @@ bool ODBC::Cleanup()
 			assert(false);
 			return false;
 		}
+
+		statement_ = nullptr;
 	}
 
 	if (connect_ != nullptr)
@@ -39,6 +41,8 @@ bool ODBC::Cleanup()
 			assert(false);
 			return false;
 		}
+
+		connect_ = nullptr;
 	}
 
 	if (environment_ != nullptr)
@@ -49,6 +53,8 @@ bool ODBC::Cleanup()
 			assert(false);
 			return false;
 		}
+
+		environment_ = nullptr;
 	}
 
 	return true;

@@ -17,6 +17,20 @@ private:
 	using ObjectPoolByTid = std::unordered_map<TypeID, ObjectPoolBase*>;
 
 public:
+	ObjectStation()
+	{
+		ULONG HeapInformationValue = 2;
+
+		if (HeapSetInformation(GetProcessHeap(), 
+				HeapCompatibilityInformation, 
+				&HeapInformationValue, 
+				sizeof(HeapInformationValue)) == false)
+		{
+			assert(false);
+			throw std::invalid_argument("heap set information failed");
+		}
+	}
+
 	~ObjectStation()
 	{
 		try

@@ -11,6 +11,8 @@
 #define INVALID_ALLOC_ID 0
 #define INIT_ALLOC_ID 1
 
+#define MEGA_BYTE_TO_BYTE 1048576
+
 class ObjectPoolBase abstract
 {
 protected:
@@ -33,9 +35,11 @@ private:
 
 	public:
 		SegmentPool(size_t obj_cnt)
-			: obj_cnt_(obj_cnt), m_ptr_(nullptr)
+			: obj_cnt_(obj_cnt), m_ptr_(nullptr), alloc_size_(sizeof(_Ty)* obj_cnt)
 		{
-			m_ptr_ = std::malloc(sizeof(_Ty) * obj_cnt_);
+			m_ptr_ = alloc_size_ >= MEGA_BYTE_TO_BYTE ?
+				HeapAlloc(GetProcessHeap(), HEAP_GENERATE_EXCEPTIONS, alloc_size_) : std::malloc(alloc_size_);
+
 			if (m_ptr_ == nullptr)
 				throw std::runtime_error("malloc failed");
 
@@ -53,7 +57,11 @@ private:
 			while (!mem_que_.empty()) mem_que_.pop();
 
 			alloc_mems_.clear();
-			std::free(m_ptr_);
+
+			if (alloc_size_ >= MEGA_BYTE_TO_BYTE)
+				HeapFree(GetProcessHeap(), NULL, m_ptr_);
+			else
+				std::free(m_ptr_);
 			m_ptr_ = nullptr;
 		}
 
@@ -92,6 +100,7 @@ private:
 
 	private:
 		size_t obj_cnt_;
+		size_t alloc_size_;
 		void* m_ptr_;
 
 		AllocMems alloc_mems_;

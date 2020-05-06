@@ -27,9 +27,6 @@
     <Filter Include="source\Socket">
       <UniqueIdentifier>{2f6217aa-ad8b-435f-8855-350eb1ef794a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\Thread">
-      <UniqueIdentifier>{85fc7525-a870-4eea-a8d1-f5069007cc45}</UniqueIdentifier>
-    </Filter>
     <Filter Include="source\CallBack">
       <UniqueIdentifier>{c2ae354b-4eb9-45a6-a9af-71706f281938}</UniqueIdentifier>
     </Filter>
@@ -62,6 +59,9 @@
     </Filter>
     <Filter Include="source\DB\Query">
       <UniqueIdentifier>{1e7e3eb3-f45f-42a6-8911-b0d59e1e24aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\Thread">
+      <UniqueIdentifier>{85fc7525-a870-4eea-a8d1-f5069007cc45}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
