@@ -21,7 +21,9 @@ protected:
 	friend class InnerLock;
 	friend class SingleLock;
 	friend class MultiLock;
-	friend class RWLock;	
+	friend class RWLock;
+
+	friend class SyncStation;
 
 	inline const HANDLE handle() { return handle_; }
 	DWORD Lock(DWORD timeout = INFINITE);
@@ -71,7 +73,7 @@ class SyncEvent : public SyncHandle
 public:
 	SyncEvent(BOOL is_menual_reset = false, BOOL init_state = false);
 	SyncEvent(const SyncEvent& event);
-
+	
 	virtual ~SyncEvent();
 	
 	inline bool Release() { return is_menual_reset_ == false ? SetEvent(handle()) : ResetEvent(handle()); }

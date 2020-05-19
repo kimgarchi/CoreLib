@@ -20,35 +20,9 @@ enum class JOB_TYPE
 class SyncStation : public Singleton<SyncStation>
 {
 private:
-	class RWHandle
-	{
-	public:
-		RWHandle(size_t array_idx, LONG read_job_max_count);
-		decltype(auto) state();		
-		inline decltype(auto) WriteHandle() { return mutex_.get(); }
-		inline decltype(auto) Readhandle() { return semaphore_.get(); }
-
-	private:
-		SyncMutexHub mutex_;
-		SyncSemaphoreHub semaphore_;
-		size_t array_idx_;
-	};
-
-	using HandleByType = std::unordered_map<TypeID, RWHandle>;
+	using HandleByType = std::unordered_map<TypeID, SyncSemaphoreHub>;
 	using Handles = std::vector<HANDLE>;
 	
-	class DistributeJob : public JobBase
-	{
-	public:
-		DistributeJob(SyncStation& sync_station);
-
-		virtual bool Work() override;
-
-	private:
-		size_t ShiftQue();
-		SyncStation& sync_station_;
-	};
-
 	class ReservePackage
 	{
 	public:
@@ -65,7 +39,27 @@ private:
 		JobBaseHub job_hub_;
 	};
 
-	using JobQueue = std::queue<ReservePackage>;
+	using JobQueue = std::deque<ReservePackage>;
+
+	class DistributeJob : public JobBase
+	{
+	public:
+		DistributeJob(Handles& handles, JobQueue& reserve_job_que, SyncMutexNode mutex_node, SyncEventNode event_node);
+		virtual bool Work() override;
+
+	private:
+		using HandleWait = std::vector<bool>;
+		
+		size_t ShiftQue();
+		
+		HandleWait handle_wait_;
+
+		Handles& handles_;
+		JobQueue& reserve_job_que_;
+		JobQueue wait_job_que_;
+		SyncMutexNode mutex_node_;
+		SyncEventNode event_node_;
+	};
 
 public:
 	SyncStation();
@@ -81,9 +75,6 @@ private:
 	SYNC_STATE handle_state(TypeID tid);
 	bool IsRecordType(TypeID tid);
 
-	inline decltype(auto) ReadHandles() { return read_handles_.data(); }
-	inline decltype(auto) WriteHandles() { return write_handles_.data(); }
-
 	JobQueue& reserve_job_que() { return reserve_job_que_; }
 	JobQueue& wait_job_que() { return wait_job_que_; }
 
@@ -92,14 +83,15 @@ private:
 	bool RegistJob(TypeIds tids, JobBaseHub job);
 
 	HandleByType handle_by_type_;
-	Handles read_handles_;
-	Handles write_handles_;
+	Handles handles_;
 
 	JobQueue reserve_job_que_;
 	JobQueue wait_job_que_;
 
 	SyncMutexHub mutex_hub_;
-	TaskID task_id_;
+	SyncEventHub event_hub_;
+	TaskID distribute_task_id_;
+	TaskIDs worker_task_ids_;
 };
 
 template<typename ..._Tys>
