@@ -9,7 +9,7 @@ Thread::Thread(JobBaseNode job, std::atomic_bool& task_runable)
     {
         try
         {
-            while (is_runable() && job_->RepeatWork());
+            while (is_runable() && job_->Work());
         }
         catch (...)
         {

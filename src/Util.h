@@ -5,7 +5,7 @@
 #pragma warning (push)
 #pragma warning (disable : 26444)
 
-using Types = std::set<size_t>;
+using TypeIds = std::set<size_t>;
 class TypeHarvest : public Singleton<TypeHarvest>
 {
 public:
@@ -17,10 +17,10 @@ public:
 
 private:
 	template <typename _Ty>
-	void harvect_type(Types& tids) { tids.emplace(typeid(_Ty).hash_code()); }
+	void harvect_type(TypeIds& tids) { tids.emplace(typeid(_Ty).hash_code()); }
 
 	template<typename _fTy, typename _sTy, typename ..._Tys>
-	void harvect_type(Types& tids)
+	void harvect_type(TypeIds& tids)
 	{
 		tids.emplace(typeid(_fTy).hash_code());
 		harvect_type<_sTy, _Tys...>(tids);
@@ -29,7 +29,7 @@ private:
 	template<typename _fTy, typename _sTy, typename ..._Tys>
 	decltype(auto) harvect_type()
 	{
-		Types tids{ typeid(_fTy).hash_code() };
+		TypeIds tids{ typeid(_fTy).hash_code() };
 		harvect_type<_sTy, _Tys...>(tids);
 		return tids;
 	}

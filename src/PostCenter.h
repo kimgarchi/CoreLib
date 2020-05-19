@@ -49,7 +49,7 @@ private:
 		SockAcceptJob(CompletionPort& compe_port __in);
 		virtual ~SockAcceptJob();
 
-		virtual bool RepeatWork() override;
+		virtual bool Work() override;
 
 	private:
 		CompletionPort& compe_port_;

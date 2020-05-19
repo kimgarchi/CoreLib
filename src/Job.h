@@ -5,7 +5,7 @@
 class JobBase abstract : public object
 {
 public:
-	virtual bool RepeatWork() abstract;
+	virtual bool Work() abstract;
 };
 
 template<typename _Ty>

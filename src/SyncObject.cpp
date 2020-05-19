@@ -44,13 +44,18 @@ SYNC_STATE SyncMutex::state()
 }
 
 SyncSemaphore::SyncSemaphore(LONG max_count)
-	: SyncHandle(::CreateSemaphore(nullptr, max_count, max_count, nullptr)), current_count_(max_count), max_count_(max_count)
+	: SyncHandle(::CreateSemaphore(nullptr, max_count, max_count, nullptr)), current_count_(max_count), init_count_(max_count), max_count_(max_count)
 {}
 
 SyncSemaphore::SyncSemaphore(LONG init_count, LONG max_count)
-	: SyncHandle(::CreateSemaphore(nullptr, init_count, max_count, nullptr)), current_count_(init_count), max_count_(max_count)
+	: SyncHandle(::CreateSemaphore(nullptr, init_count, max_count, nullptr)), current_count_(init_count), init_count_(init_count), max_count_(max_count)
 {
 	assert(init_count <= max_count);
+}
+
+SyncSemaphore::SyncSemaphore(const SyncSemaphore& semaphore)
+	: SyncHandle(const_cast<SyncSemaphore&>(semaphore).handle()), current_count_(semaphore.init_count_), init_count_(semaphore.init_count_), max_count_(semaphore.max_count_)
+{
 }
 
 SyncSemaphore::~SyncSemaphore()
@@ -103,6 +108,12 @@ SyncEvent::SyncEvent(BOOL is_menual_reset, BOOL init_state)
 	is_menual_reset_(is_menual_reset), init_state_(init_state)
 {}
 
+SyncEvent::SyncEvent(const SyncEvent& event)
+	: SyncHandle(const_cast<SyncEvent&>(event).handle()), 
+	is_menual_reset_(event.is_menual_reset_), init_state_(event.init_state_)
+{
+}
+
 SyncEvent::~SyncEvent()
 {
 	assert(state() == SYNC_STATE::UNLOCK);
@@ -120,13 +131,23 @@ SYNC_STATE SyncEvent::state()
 	return SYNC_STATE::FULL_LOCK;
 }
 
-SingleLock::SingleLock(SyncMutexHub& hub)
+SingleLock::SingleLock(SyncMutexHub& hub, bool immediate_lock)
 	: mutex_node_(hub.make_node())
-{}
+{
+	if (immediate_lock == false)
+		return;
 
-SingleLock::SingleLock(SyncMutexNode& node)
+	assert(Lock() == SYNC_STATE::UNLOCK);
+}
+
+SingleLock::SingleLock(SyncMutexNode& node, bool immediate_lock)
 	: mutex_node_(node)
-{}
+{
+	if (immediate_lock == false)
+		return;
+
+	assert(Lock() == SYNC_STATE::UNLOCK);
+}
 
 SingleLock::~SingleLock()
 {
@@ -177,13 +198,23 @@ bool SingleLock::_Release()
 	return true;
 }
 
-MultiLock::MultiLock(SyncSemaphoreHub& hub)
+MultiLock::MultiLock(SyncSemaphoreHub& hub, bool immediate_lock)
 	: semaphore_node_(hub.make_node())
-{}
+{
+	if (immediate_lock == false)
+		return;
 
-MultiLock::MultiLock(SyncSemaphoreNode& node)
+	assert(Lock() != SYNC_STATE::FULL_LOCK);
+}
+
+MultiLock::MultiLock(SyncSemaphoreNode& node, bool immediate_lock)
 	: semaphore_node_(node)
-{}
+{
+	if (immediate_lock == false)
+		return;
+
+	assert(Lock() != SYNC_STATE::FULL_LOCK);
+}
 
 MultiLock::~MultiLock()
 {
@@ -241,19 +272,19 @@ bool MultiLock::_Release()
 }
 
 RWLock::RWLock(SyncMutexHub& mutex_hub, SyncSemaphoreHub& semaphore_hub)
-	: SingleLock(mutex_hub), MultiLock(semaphore_hub)
+	: SingleLock(mutex_hub, false), MultiLock(semaphore_hub, false)
 {}
 
 RWLock::RWLock(SyncMutexNode& mutex_node, SyncSemaphoreHub& semaphore_hub)
-	: SingleLock(mutex_node), MultiLock(semaphore_hub)
+	: SingleLock(mutex_node, false), MultiLock(semaphore_hub, false)
 {}
 
 RWLock::RWLock(SyncMutexHub& mutex_hub, SyncSemaphoreNode& semaphore_node)
-	: SingleLock(mutex_hub), MultiLock(semaphore_node)
+	: SingleLock(mutex_hub, false), MultiLock(semaphore_node, false)
 {}
 
 RWLock::RWLock(SyncMutexNode& mutex_node, SyncSemaphoreNode& semaphore_node)
-	: SingleLock(mutex_node), MultiLock(semaphore_node)
+	: SingleLock(mutex_node, false), MultiLock(semaphore_node, false)
 {}
 
 SYNC_STATE RWLock::state()

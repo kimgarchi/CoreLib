@@ -48,6 +48,8 @@ class SyncSemaphore : public SyncHandle
 public:
 	SyncSemaphore(LONG max_count);
 	SyncSemaphore(LONG init_count, LONG max_count);
+	SyncSemaphore(const SyncSemaphore& semaphore);
+
 	virtual ~SyncSemaphore();
 
 	virtual bool Release() override { return _Release(); }
@@ -60,6 +62,7 @@ private:
 	bool _Release(LONG release_count = 1);
 
 	std::atomic<LONG> current_count_;
+	const LONG init_count_;
 	const LONG max_count_;
 };
 
@@ -67,6 +70,8 @@ class SyncEvent : public SyncHandle
 {
 public:
 	SyncEvent(BOOL is_menual_reset = false, BOOL init_state = false);
+	SyncEvent(const SyncEvent& event);
+
 	virtual ~SyncEvent();
 	
 	inline bool Release() { return is_menual_reset_ == false ? SetEvent(handle()) : ResetEvent(handle()); }
@@ -107,8 +112,8 @@ protected:
 class SingleLock : protected LockBase
 {
 public:
-	SingleLock(SyncMutexHub& hub);
-	SingleLock(SyncMutexNode& node);
+	SingleLock(SyncMutexHub& hub, bool immediate_lock = true);
+	SingleLock(SyncMutexNode& node, bool immediate_lock = true);
 
 	virtual ~SingleLock();
 
@@ -125,8 +130,8 @@ protected:
 class MultiLock : public LockBase
 {
 public:
-	MultiLock(SyncSemaphoreHub& hub);
-	MultiLock(SyncSemaphoreNode& node);
+	MultiLock(SyncSemaphoreHub& hub, bool immediate_lock = true);
+	MultiLock(SyncSemaphoreNode& node, bool immediate_lock = true);
 
 	virtual ~MultiLock();
 	

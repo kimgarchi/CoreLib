@@ -16,3 +16,5 @@ using ThreadID = size_t;
 #define WAIT_TIME_ZERO 0
 
 #define SECONDS_TO_TICK 1000
+
+#define MSG_BUF_SIZE 4096

@@ -2,8 +2,6 @@
 #include "stdafx.h"
 #include "Sock.h"
 
-#define BUF_SIZE 256
-
 class SocketBase abstract : public object
 {
 public:
@@ -31,7 +29,7 @@ public:
 		: SocketBase(sock, sock_addr)
 	{
 		memset(&overlapped_, 0x00, sizeof(OVERLAPPED));
-		memset(buffer, 0x00, BUF_SIZE);
+		memset(buffer, 0x00, MSG_BUF_SIZE);
 		wsa_buf_.len = sizeof(buffer);
 		wsa_buf_.buf = buffer;
 	}
@@ -46,7 +44,7 @@ public:
 private:
 	OVERLAPPED overlapped_;
 	WSABUF wsa_buf_;
-	char buffer[BUF_SIZE];
+	char buffer[MSG_BUF_SIZE];
 };
 
 using IocpSockHub = wrapper_hub<IocpSock>;

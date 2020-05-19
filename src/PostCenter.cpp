@@ -69,7 +69,7 @@ PostCenter::SockAcceptJob::~SockAcceptJob()
 {
 }
 
-bool PostCenter::SockAcceptJob::RepeatWork()
+bool PostCenter::SockAcceptJob::Work()
 {
 	
 	return false;
