@@ -15,7 +15,9 @@ public:
 	virtual ~SyncHandle();
 	
 	virtual SYNC_STATE state() abstract;
-	
+	DWORD Lock(DWORD timeout = INFINITE);
+	virtual bool Release() abstract;
+
 protected:
 	friend class LockBase;
 	friend class InnerLock;
@@ -25,9 +27,7 @@ protected:
 
 	friend class SyncStation;
 
-	inline const HANDLE handle() { return handle_; }
-	DWORD Lock(DWORD timeout = INFINITE);
-	virtual bool Release() abstract;
+	inline const HANDLE handle() { return handle_; }		
 
 private:
 	HANDLE handle_;
@@ -56,14 +56,12 @@ public:
 
 	virtual bool Release() override { return _Release(); }
 	virtual SYNC_STATE state() override;	
-	LONG lock_count() { return current_count_.load(); }
 	LONG max_count() { return max_count_; }
 
 private:
 	bool _Release(LONG& prev_count __out, LONG release_count = 1);
 	bool _Release(LONG release_count = 1);
 
-	std::atomic<LONG> current_count_;
 	const LONG init_count_;
 	const LONG max_count_;
 };

@@ -44,17 +44,17 @@ SYNC_STATE SyncMutex::state()
 }
 
 SyncSemaphore::SyncSemaphore(LONG max_count)
-	: SyncHandle(::CreateSemaphore(nullptr, max_count, max_count, nullptr)), current_count_(max_count), init_count_(max_count), max_count_(max_count)
+	: SyncHandle(::CreateSemaphore(nullptr, max_count, max_count, nullptr)), init_count_(max_count), max_count_(max_count)
 {}
 
 SyncSemaphore::SyncSemaphore(LONG init_count, LONG max_count)
-	: SyncHandle(::CreateSemaphore(nullptr, init_count, max_count, nullptr)), current_count_(init_count), init_count_(init_count), max_count_(max_count)
+	: SyncHandle(::CreateSemaphore(nullptr, init_count, max_count, nullptr)), init_count_(init_count), max_count_(max_count)
 {
 	assert(init_count <= max_count);
 }
 
 SyncSemaphore::SyncSemaphore(const SyncSemaphore& semaphore)
-	: SyncHandle(const_cast<SyncSemaphore&>(semaphore).handle()), current_count_(semaphore.init_count_), init_count_(semaphore.init_count_), max_count_(semaphore.max_count_)
+	: SyncHandle(const_cast<SyncSemaphore&>(semaphore).handle()), init_count_(semaphore.init_count_), max_count_(semaphore.max_count_)
 {
 }
 
@@ -65,12 +65,6 @@ SyncSemaphore::~SyncSemaphore()
 
 bool SyncSemaphore::_Release(LONG& prev_count, LONG release_count)
 {
-	if (current_count_ + release_count > max_count_)
-	{
-		assert(false);
-		return false;
-	}
-
 	if (ReleaseSemaphore(handle(), release_count, &prev_count) == false)
 	{
 		assert(false);
@@ -78,7 +72,6 @@ bool SyncSemaphore::_Release(LONG& prev_count, LONG release_count)
 	}
 
 	prev_count += release_count;
-	current_count_.store(prev_count);
 
 	return true;
 }
