@@ -174,10 +174,7 @@ public:
 
 	virtual ~wrapper() 
 	{
-		if (_use_count() > 0 || _node_count() > 0)
-			return;
-
-		ObjectProvider::GetInstance().Refund<_Ty>(data_, type_id_);
+		try_cleanup();
 	}
 
 	_Ty* get() { return _data(); }
@@ -200,8 +197,21 @@ protected:
 	void _decrease_node_count() { _node_count().fetch_sub(1); }
 
 	inline _Ty* _data() { return data_; }
+
+	void try_cleanup()
+	{
+		if (_use_count() > 0 || _node_count() > 0)
+			return;
+
+		ObjectProvider::GetInstance().Refund<_Ty>(data_, type_id_);
+	}
 	
-private:	
+	void object_change(const wrapper<_Ty>& wrap)
+	{
+		data_ = wrap.data_;
+		type_id_ = wrap.type_id_;
+	}
+
 	_Ty* data_;
 	TypeID type_id_;
 };
@@ -210,8 +220,6 @@ template<typename _Ty>
 class wrapper_hub final : public wrapper<_Ty>
 {
 public:
-	void operator=(const wrapper_hub<_Ty>&) = delete;
-	
 	template<typename _rTy>
 	wrapper_hub(wrapper_hub<_rTy> hub)
 		: wrapper<_Ty>(hub.get(), hub.tid())
@@ -231,6 +239,15 @@ public:
 	}
 
 	_NODISCARD wrapper_node<_Ty> make_node() { return wrapper_node<_Ty>(wrapper<_Ty>::get(), this->tid()); }
+	
+	void operator=(const wrapper_hub<_Ty>& hub)
+	{
+		wrapper<_Ty>::_decrease_use_count();
+		wrapper<_Ty>::try_cleanup();
+
+		wrapper<_Ty>::object_change(hub);
+		wrapper<_Ty>::_increase_use_count();
+	}
 
 private:
 	template <typename _Ty, typename ..._Tys>
@@ -247,9 +264,6 @@ template<typename _Ty>
 class wrapper_node : public wrapper<_Ty>
 {
 public:
-	void operator=(const wrapper_hub<_Ty>&) = delete;
-	void operator=(const wrapper_node<_Ty>&) = delete;
-	
 	wrapper_node(wrapper_hub<_Ty>& hub)
 		: wrapper<_Ty>(hub.get(), hub.tid())
 	{
@@ -267,6 +281,24 @@ public:
 		wrapper<_Ty>::_decrease_node_count();
 	}
 
+	void operator=(const wrapper_hub<_Ty>& hub)
+	{
+		wrapper<_Ty>::_decrease_node_count();
+		wrapper<_Ty>::try_cleanup();
+
+		wrapper<_Ty>::object_change(hub);
+		wrapper<_Ty>::_increase_node_count();
+	}
+
+	void operator=(const wrapper_node<_Ty>& node)
+	{
+		wrapper<_Ty>::_decrease_node_count();
+		wrapper<_Ty>::try_cleanup();
+
+		wrapper<_Ty>::object_change(node);
+		wrapper<_Ty>::_increase_node_count();
+	}
+
 private:
 	friend class wrapper_hub<_Ty>;
 	wrapper_node(_Ty* data, TypeID type_id)
@@ -275,5 +307,29 @@ private:
 		wrapper<_Ty>::_increase_node_count();
 	}
 };
+
+template <typename _Ty>
+_NODISCARD bool operator>(const wrapper<_Ty>& left, const wrapper<_Ty>& right)
+{
+	return const_cast<wrapper<_Ty>&>(left).get() > const_cast<wrapper<_Ty>&>(right).get();
+}
+
+template <typename _Ty>
+_NODISCARD bool operator>=(const wrapper<_Ty>& left, const wrapper<_Ty>& right)
+{
+	return const_cast<wrapper<_Ty>&>(left).get() >= const_cast<wrapper<_Ty>&>(right).get();
+}
+
+template <typename _Ty>
+_NODISCARD bool operator<(const wrapper<_Ty>& left, const wrapper<_Ty>& right)
+{
+	return const_cast<wrapper<_Ty>&>(left).get() < const_cast<wrapper<_Ty>&>(right).get();
+}
+
+template <typename _Ty>
+_NODISCARD bool operator<=(const wrapper<_Ty>& left, const wrapper<_Ty>& right)
+{
+	return const_cast<wrapper<_Ty>&>(left).get() <= const_cast<wrapper<_Ty>&>(right).get();
+}
 
 #pragma warning (pop)

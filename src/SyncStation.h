@@ -20,31 +20,61 @@ enum class JOB_TYPE
 class SyncStation : public Singleton<SyncStation>
 {
 private:
-	using HandleByType = std::unordered_map<TypeID, SyncSemaphoreHub>;
-	using Handles = std::vector<HANDLE>;
-	
-	class ReservePackage
+	class RWHandle : public object
 	{
 	public:
-		ReservePackage(JOB_TYPE&& type, TypeIds&& tids, JobBaseHub&& job_hub)
-			: type_(type), tids_(tids), job_hub_(job_hub)
-		{}
+		RWHandle(LONG read_job_max_count);
+		decltype(auto) state();
+		inline decltype(auto) WriteHandle() { return mutex_.get(); }
+		inline decltype(auto) Readhandle() { return semaphore_.get(); }
+
+	private:
+		SyncMutexHub mutex_;
+		SyncSemaphoreHub semaphore_;
+	};
+
+	DEFINE_WRAPPER_HUB(RWHandle);
+	DEFINE_WRAPPER_NODE(RWHandle);
+
+	using HandleByType = std::unordered_map<TypeID, RWHandleHub>;
+	using RWHandleNodes = std::vector<RWHandleNode>;
+	using Handles = std::vector<HANDLE>;
+
+	class ReservePackage : public object
+	{
+	public:
+		ReservePackage(JOB_TYPE&& type, RWHandleNodes&& rw_handle_nodes, JobBaseHub&& job_hub);
+		virtual ~ReservePackage();
+		
+		bool Aquire();
+
+		inline bool operator <(const ReservePackage& rhs) { return this->try_count_ < rhs.try_count_; }
+		inline bool operator >(const ReservePackage& rhs) { return this->try_count_ > rhs.try_count_; }
 
 	private:
 		friend class SyncStation;
 		friend class DistributeJob;
 
+		void increase_try_count() { try_count_ += 1; }
+
 		JOB_TYPE type_;
-		TypeIds tids_;
+		RWHandleNodes rw_handle_nodes_;
+		Handles read_handles_;
+		Handles write_handles_;
 		JobBaseHub job_hub_;
+		ULONGLONG try_count_;
 	};
 
-	using JobQueue = std::deque<ReservePackage>;
+	DEFINE_WRAPPER_HUB(ReservePackage);
+	DEFINE_WRAPPER_NODE(ReservePackage);
+
+	using ReserveJobQue = std::queue<ReservePackageHub>;
+	using WaitJobPriorityQueue = std::priority_queue<ReservePackageHub, std::vector<ReservePackageHub>, std::less<ReservePackageHub>>;
 
 	class DistributeJob : public JobBase
 	{
 	public:
-		DistributeJob(Handles& handles, JobQueue& reserve_job_que, SyncMutexNode mutex_node, SyncEventNode event_node);
+		DistributeJob(HandleByType& handle_by_type, ReserveJobQue& reserve_job_que, SyncMutexNode mutex_node, SyncEventNode event_node);
 		virtual bool Work() override;
 
 	private:
@@ -54,9 +84,9 @@ private:
 		
 		HandleWait handle_wait_;
 
-		Handles& handles_;
-		JobQueue& reserve_job_que_;
-		JobQueue wait_job_que_;
+		HandleByType& handle_by_type_;
+		ReserveJobQue& reserve_job_que_;
+		WaitJobPriorityQueue wait_job_priority_que_;
 		SyncMutexNode mutex_node_;
 		SyncEventNode event_node_;
 	};
@@ -75,18 +105,13 @@ private:
 	SYNC_STATE handle_state(TypeID tid);
 	bool IsRecordType(TypeID tid);
 
-	JobQueue& reserve_job_que() { return reserve_job_que_; }
-	JobQueue& wait_job_que() { return wait_job_que_; }
-
 	_NODISCARD SyncMutexNode mutex_node() { return mutex_hub_.make_node(); }
 
 	bool RegistJob(TypeIds tids, JobBaseHub job);
 
 	HandleByType handle_by_type_;
-	Handles handles_;
 
-	JobQueue reserve_job_que_;
-	JobQueue wait_job_que_;
+	ReserveJobQue reserve_job_que_;
 
 	SyncMutexHub mutex_hub_;
 	SyncEventHub event_hub_;
@@ -100,7 +125,7 @@ bool SyncStation::RegistJob(JOB_TYPE type, JobBaseHub job)
 	auto tids = TypeHarvest::GetInstance().harvest<_Tys...>();
 	SingleLock single_lock(mutex_hub_);
 
-	reserve_job_que_.emplace(type, tids, job);
+	reserve_job_que_.emplace(make_wrapper_hub<ReservePackage>(type, tids, job));
 	
 	return true;
 }

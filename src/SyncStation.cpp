@@ -3,11 +3,24 @@
 #include "SyncStation.h"
 #include "ThreadManager.h"
 
+SyncStation::RWHandle::RWHandle(LONG read_job_max_count)
+	: mutex_(make_wrapper_hub<SyncMutex>()), semaphore_(make_wrapper_hub<SyncSemaphore>(read_job_max_count))
+{}
+
+decltype(auto) SyncStation::RWHandle::state()
+{
+	auto state = mutex_->state();
+	if (state == SYNC_STATE::FULL_LOCK)
+		return state;
+
+	return semaphore_->state();
+}
+
 SyncStation::SyncStation()
 	: mutex_hub_(make_wrapper_hub<SyncMutex>()), event_hub_(make_wrapper_hub<SyncEvent>()), distribute_task_id_(INVALID_ALLOC_ID)
 {
 	const size_t single_count = 1;
-	distribute_task_id_ = ThreadManager::GetInstance().AttachTask<DistributeJob>(single_count, std::ref(handles_), std::ref(reserve_job_que_), mutex_hub_.make_node(), event_hub_.make_node());
+	distribute_task_id_ = ThreadManager::GetInstance().AttachTask<DistributeJob>(single_count, std::ref(handle_by_type_), std::ref(reserve_job_que_), mutex_hub_.make_node(), event_hub_.make_node());
 	if (distribute_task_id_ == INVALID_ALLOC_ID)
 	{
 		assert(false);
@@ -29,15 +42,13 @@ bool SyncStation::RecordHandle(TypeID tid, LONG read_job_max_count)
 	}
 	
 	auto array_idx = handle_by_type_.size() + 1;
-	auto ret = handle_by_type_.emplace(tid, make_wrapper_hub<SyncSemaphore>(read_job_max_count));
+	auto ret = handle_by_type_.emplace(tid, make_wrapper_hub<RWHandle>(read_job_max_count));
 	
 	if (ret.second == false)
 	{
 		assert(false);
 		return false;
 	}
-
-	handles_.emplace_back(ret.first->second->handle());
 
 	return true;
 }
@@ -67,45 +78,98 @@ bool SyncStation::RegistJob(TypeIds tids, JobBaseHub job)
 	return false;
 }
 
-SyncStation::DistributeJob::DistributeJob(Handles& handles, JobQueue& reserve_job_que, SyncMutexNode mutex_node, SyncEventNode event_node)
-	: handles_(handles), reserve_job_que_(reserve_job_que), mutex_node_(mutex_node), event_node_(event_node)
+SyncStation::DistributeJob::DistributeJob(HandleByType& handle_by_type, ReserveJobQue& reserve_job_que, SyncMutexNode mutex_node, SyncEventNode event_node)
+	: handle_by_type_(handle_by_type), reserve_job_que_(reserve_job_que), mutex_node_(mutex_node), event_node_(event_node)
 {
 }
 
 bool SyncStation::DistributeJob::Work()
 {
-	SingleLock single_lock(mutex_node_);
-
-	std::vector<bool> signal_check(handles_.size(), { false, });
-	auto ret = WaitForMultipleObjects(static_cast<DWORD>(handles_.size()), handles_.data(), false, INFINITE);
-	//... check multiple handle signal state
-	
-
-
-	auto shift_size = ShiftQue();
-	for (size_t i = 0; i < wait_job_que_.size(); ++i)
+	ReserveJobQue try_delay_job_que;
+	for (size_t i = 0; i < wait_job_priority_que_.size(); ++i)
 	{
-		/*
-		wait job que add new typeids
-		and vector is realloc
-		*/
-		
+		ReservePackageHub wait_job = wait_job_priority_que_.top();
+		wait_job_priority_que_.pop();
+
+		if (wait_job->Aquire() == false)
+			try_delay_job_que.push(wait_job);
 	}
 
+	SingleLock single_lock(mutex_node_);
+	auto shift_size = ShiftQue();
 
 	return true;
 }
 
 size_t SyncStation::DistributeJob::ShiftQue()
 {
-	auto& reserve_que = reserve_job_que_;
-	auto shift_size = reserve_que.size();
-
-	while (reserve_que.empty() == false)
+	auto shift_size = reserve_job_que_.size();
+	while (reserve_job_que_.empty() == false)
 	{
-		wait_job_que_.emplace_back(reserve_que.front());
-		reserve_que.pop_front();
+		wait_job_priority_que_.emplace(reserve_job_que_.front());
+		reserve_job_que_.pop();
 	}
 
 	return shift_size;
+}
+
+SyncStation::ReservePackage::ReservePackage(JOB_TYPE&& type, RWHandleNodes&& rw_handle_nodes, JobBaseHub&& job_hub)
+	: type_(type), rw_handle_nodes_(std::move(rw_handle_nodes)), job_hub_(job_hub), try_count_(0)
+{
+	read_handles_.resize(rw_handle_nodes_.size());
+	write_handles_.resize(rw_handle_nodes_.size());
+
+	for (size_t i = 0; i < rw_handle_nodes_.size(); ++i)
+	{
+		read_handles_.at(i) = rw_handle_nodes_.at(i)->Readhandle();
+		write_handles_.at(i) = rw_handle_nodes_.at(i)->WriteHandle();
+	}		
+}
+
+SyncStation::ReservePackage::~ReservePackage()
+{
+	// Release
+}
+
+bool SyncStation::ReservePackage::Aquire()
+{
+	increase_try_count();
+
+	DWORD handle_count = 0;
+	HANDLE* phandle = nullptr;
+	
+	switch (type_)
+	{
+	case JOB_TYPE::READ:
+		handle_count = static_cast<DWORD>(read_handles_.size());
+		phandle = read_handles_.data();
+		break;
+	case JOB_TYPE::WRITE:
+		handle_count = static_cast<DWORD>(write_handles_.size());
+		phandle = write_handles_.data();
+		break;
+	}
+
+	auto ret = WaitForMultipleObjects(handle_count, phandle, true, WAIT_TIME_ZERO);
+	
+	switch (ret)
+	{
+	case WAIT_TIMEOUT:
+	case WAIT_FAILED:
+		assert(false);
+		return false;
+	}
+
+	if (ret != WAIT_OBJECT_0 + (handle_count - 1))
+	{
+		/*
+		WAIT_OBJECT_ABANDONED
+		handle invalid...
+		*/	
+		assert(false);
+		// temp
+		return false;
+	}
+
+	return true;
 }

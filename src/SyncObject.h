@@ -164,8 +164,8 @@ public:
 	SYNC_STATE ReadSpinLock(DWORD timeout = INFINITE);
 	
 private:
-	virtual SYNC_STATE Lock(DWORD timeout) override { throw std::bad_function_call{}; }
-	virtual SYNC_STATE SpinLock(DWORD timeout) override { throw std::bad_function_call{}; }
+	virtual SYNC_STATE Lock(DWORD timeout) override { throw std::runtime_error("bad_function_call"); }
+	virtual SYNC_STATE SpinLock(DWORD timeout) override { throw std::runtime_error("bad_function_call"); }
 	virtual bool Release() { throw std::bad_function_call{}; }
 };
 
