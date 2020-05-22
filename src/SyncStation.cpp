@@ -113,7 +113,7 @@ size_t SyncStation::DistributeJob::ShiftQue()
 	return shift_size;
 }
 
-SyncStation::ReservePackage::ReservePackage(JOB_TYPE&& type, RWHandleNodes&& rw_handle_nodes, JobBaseHub&& job_hub)
+SyncStation::ReservePackage::ReservePackage(JOB_TYPE&& type, RWHandleNodes&& rw_handle_nodes, DisposableJobHub&& job_hub)
 	: type_(type), rw_handle_nodes_(std::move(rw_handle_nodes)), job_hub_(job_hub), try_count_(0)
 {
 	read_handles_.resize(rw_handle_nodes_.size());
@@ -160,7 +160,7 @@ bool SyncStation::ReservePackage::Aquire()
 		return false;
 	}
 
-	if (ret != WAIT_OBJECT_0 + (handle_count - 1))
+	if (ret != WAIT_OBJECT_0 + (handle_count))
 	{
 		/*
 		WAIT_OBJECT_ABANDONED

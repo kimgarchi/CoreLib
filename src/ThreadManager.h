@@ -34,7 +34,7 @@ private:
 		std::atomic_bool is_runable_;
 	};
 
-	DEFINE_WRAPPER_HUB(Task)
+	DEFINE_WRAPPER_HUB(Task);
 	using AllocTaskID = std::atomic<TaskID>;
 	using Tasks = std::map<TaskID, TaskHub>;
 

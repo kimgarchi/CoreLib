@@ -13,13 +13,8 @@ SyncHandle::~SyncHandle()
 	CloseHandle(handle_);
 }
 
-DWORD SyncHandle::Lock(DWORD timeout)
-{
-	return WaitForSingleObject(handle(), timeout);
-}
-
-SyncMutex::SyncMutex()
-	: SyncHandle(::CreateMutex(nullptr, false, nullptr))
+SyncMutex::SyncMutex(BOOL b_init)
+	: SyncHandle(::CreateMutex(NULL, b_init, NULL))
 {}
 
 SyncMutex::SyncMutex(const SyncMutex& mutex)
@@ -88,9 +83,9 @@ SYNC_STATE SyncSemaphore::state()
 	if (ret >= WAIT_OBJECT_0 && ret <= WAIT_OBJECT_0 + max_count())
 	{
 		LONG key_count = 0;
-		assert(ReleaseSemaphore(handle(), 1, &key_count));
+		assert(_Release(std::ref(key_count), 1));
 
-		return (key_count < max_count_) ? SYNC_STATE::UNLOCK : SYNC_STATE::SEGMENT_LOCK;
+		return (key_count == max_count_) ? SYNC_STATE::UNLOCK : SYNC_STATE::SEGMENT_LOCK;
 	}
 
 	return SYNC_STATE::FULL_LOCK;
@@ -150,7 +145,7 @@ SingleLock::~SingleLock()
 
 SYNC_STATE SingleLock::_Lock(DWORD timeout)
 {
-	auto ret = mutex_node_->Lock(timeout);
+	DWORD ret = mutex_node_->Lock(timeout);
 	switch (ret)
 	{
 	case WAIT_OBJECT_0:
@@ -165,7 +160,7 @@ SYNC_STATE SingleLock::_SpinLock(DWORD timeout)
 	ULONGLONG begin_tick = GetTickCount64();
 	do
 	{
-		auto ret = mutex_node_->Lock(WAIT_TIME_ZERO);
+		DWORD ret = mutex_node_->Lock(WAIT_TIME_ZERO);
 		if (ret == WAIT_OBJECT_0)
 			return SYNC_STATE::UNLOCK;
 
@@ -220,7 +215,7 @@ MultiLock::~MultiLock()
 
 SYNC_STATE MultiLock::_Lock(DWORD timeout)
 {
-	auto ret = semaphore_node_->Lock(timeout);
+	DWORD ret = semaphore_node_->Lock(timeout);
 	if (ret == WAIT_OBJECT_0)
 		return SYNC_STATE::UNLOCK;
 	else if (ret > WAIT_OBJECT_0 && ret <= WAIT_OBJECT_0 + semaphore_node_->max_count())
@@ -235,7 +230,7 @@ SYNC_STATE MultiLock::_SpinLock(DWORD timeout)
 	
 	do
 	{
-		auto ret = semaphore_node_->Lock(WAIT_TIME_ZERO);
+		DWORD ret = semaphore_node_->Lock(WAIT_TIME_ZERO);
 		if (ret == WAIT_OBJECT_0)
 			return SYNC_STATE::UNLOCK;
 		else if (ret > WAIT_OBJECT_0 && ret <= WAIT_OBJECT_0 + semaphore_node_->max_count())
@@ -265,63 +260,45 @@ bool MultiLock::_Release()
 }
 
 RWLock::RWLock(SyncMutexHub& mutex_hub, SyncSemaphoreHub& semaphore_hub)
-	: SingleLock(mutex_hub, false), MultiLock(semaphore_hub, false)
+	: single_lock_(mutex_hub, false), multi_lock_(semaphore_hub, false)
 {}
 
 RWLock::RWLock(SyncMutexNode& mutex_node, SyncSemaphoreHub& semaphore_hub)
-	: SingleLock(mutex_node, false), MultiLock(semaphore_hub, false)
+	: single_lock_(mutex_node, false), multi_lock_(semaphore_hub, false)
 {}
 
 RWLock::RWLock(SyncMutexHub& mutex_hub, SyncSemaphoreNode& semaphore_node)
-	: SingleLock(mutex_hub, false), MultiLock(semaphore_node, false)
+	: single_lock_(mutex_hub, false), multi_lock_(semaphore_node, false)
 {}
 
 RWLock::RWLock(SyncMutexNode& mutex_node, SyncSemaphoreNode& semaphore_node)
-	: SingleLock(mutex_node, false), MultiLock(semaphore_node, false)
+	: single_lock_(mutex_node, false), multi_lock_(semaphore_node, false)
 {}
 
 SYNC_STATE RWLock::state()
 {
-	{
-		auto ret = WaitForSingleObject(mutex_node_->handle(), WAIT_TIME_ZERO);
-		if (ret != WAIT_OBJECT_0)
-		{
-			mutex_node_->Release();
-			return SYNC_STATE::FULL_LOCK;
-		}
-	}
+	auto state = single_lock_.state();
+	if (state == SYNC_STATE::FULL_LOCK)
+		return state;
 	
-	SYNC_STATE state = SYNC_STATE::FULL_LOCK;
-
-	{
-		auto ret = WaitForSingleObject(semaphore_node_->handle(), WAIT_TIME_ZERO);
-		if (ret == WAIT_OBJECT_0)
-			state = SYNC_STATE::UNLOCK;
-		else if (ret > WAIT_OBJECT_0 && ret <= WAIT_OBJECT_0 + semaphore_node_->max_count())
-			state = SYNC_STATE::SEGMENT_LOCK;
-	}
-
-	assert(mutex_node_->Release());
-	assert(semaphore_node_->Release());
-
-	return state;
+	return multi_lock_.state();
 }
 
 SYNC_STATE RWLock::ReadLock(DWORD timeout)
 {
 	const ULONGLONG begin_tick = GetTickCount64();
 
-	switch (SingleLock::Lock(timeout))
+	switch (single_lock_.Lock(timeout))
 	{
 	case SYNC_STATE::UNLOCK:
 		break;
 	default:
-		assert(SingleLock::Release());
+		assert(single_lock_.Release());
 		return SYNC_STATE::FULL_LOCK;
 	}
 
-	auto ret = MultiLock::Lock((timeout == INFINITE) ? INFINITE : static_cast<DWORD>((GetTickCount() - begin_tick) / SECONDS_TO_TICK));
-	assert(SingleLock::Release());
+	auto ret = multi_lock_.Lock((timeout == INFINITE) ? INFINITE : static_cast<DWORD>((GetTickCount() - begin_tick) / SECONDS_TO_TICK));
+	assert(single_lock_.Release());
 
 	return ret;
 }
@@ -330,17 +307,17 @@ SYNC_STATE RWLock::WriteLock(DWORD timeout)
 {
 	const ULONGLONG begin_tick = GetTickCount64();
 
-	auto ret = MultiLock::Lock(timeout);
+	auto ret = multi_lock_.Lock(timeout);
 	switch (ret)
 	{
 	case SYNC_STATE::SEGMENT_LOCK:
 	case SYNC_STATE::FULL_LOCK:
-		assert(MultiLock::Release());
+		assert(multi_lock_.Release());
 		return ret;
 	}
 
-	ret = SingleLock::Lock((timeout == INFINITE) ? INFINITE : static_cast<DWORD>((GetTickCount() - begin_tick) / SECONDS_TO_TICK));
-	assert(MultiLock::Release());
+	ret = single_lock_.Lock((timeout == INFINITE) ? INFINITE : static_cast<DWORD>((GetTickCount() - begin_tick) / SECONDS_TO_TICK));
+	assert(multi_lock_.Release());
 	
 	return ret;
 }
@@ -351,18 +328,18 @@ SYNC_STATE RWLock::ReadSpinLock(DWORD timeout)
 
 	do
 	{
-		switch (SingleLock::Lock(WAIT_TIME_ZERO))
+		switch (single_lock_.Lock(WAIT_TIME_ZERO))
 		{
 		case SYNC_STATE::FULL_LOCK:
-			assert(SingleLock::Release());
+			assert(single_lock_.Release());
 			continue;
 		}
 
-		auto ret = MultiLock::Lock(WAIT_TIME_ZERO);
+		auto ret = multi_lock_.Lock(WAIT_TIME_ZERO);
 		if (ret == SYNC_STATE::FULL_LOCK)
 			continue;
 		
-		assert(SingleLock::Release());		
+		assert(single_lock_.Release());		
 		return ret;
 
 	} while (timeout == INFINITE || static_cast<DWORD>(GetTickCount() - begin_tick) / SECONDS_TO_TICK > timeout);
@@ -376,20 +353,20 @@ SYNC_STATE RWLock::WriteSpinLock(DWORD timeout)
 
 	do
 	{
-		auto ret = MultiLock::Lock(WAIT_TIME_ZERO);
+		auto ret = multi_lock_.Lock(WAIT_TIME_ZERO);
 		if (ret == SYNC_STATE::FULL_LOCK)
 		{
-			assert(MultiLock::Release());
+			assert(multi_lock_.Release());
 			continue;
 		}
 
-		switch (SingleLock::Lock(WAIT_TIME_ZERO))
+		switch (single_lock_.Lock(WAIT_TIME_ZERO))
 		{
 		case SYNC_STATE::FULL_LOCK:
 			continue;
 		}
 
-		assert(MultiLock::Release());
+		assert(multi_lock_.Release());
 		return ret;
 
 	} while (timeout == INFINITE || static_cast<DWORD>(GetTickCount() - begin_tick) / SECONDS_TO_TICK > timeout);

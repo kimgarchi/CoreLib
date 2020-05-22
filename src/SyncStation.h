@@ -20,6 +20,32 @@ enum class JOB_TYPE
 class SyncStation : public Singleton<SyncStation>
 {
 private:
+	class RWHandle;
+	class ReservePackage;
+	class DistributeJob;
+	
+	DEFINE_WRAPPER_HUB(RWHandle);
+	DEFINE_WRAPPER_NODE(RWHandle);
+
+	DEFINE_WRAPPER_HUB(ReservePackage);
+	DEFINE_WRAPPER_NODE(ReservePackage);
+
+	using HandleByType = std::unordered_map<TypeID, RWHandleHub>;
+	using RWHandleNodes = std::vector<RWHandleNode>;
+	using Handles = std::vector<HANDLE>;
+	using ReserveJobQue = std::queue<ReservePackageHub>;
+	using WaitJobPriorityQueue = std::priority_queue<ReservePackageHub, std::vector<ReservePackageHub>, std::less<ReservePackageHub>>;
+
+public:
+	SyncStation();
+	virtual ~SyncStation();
+
+	template<typename ... _Tys>
+	bool RegistJob(JOB_TYPE type, JobBaseHub job);
+
+private:
+	friend class DistributeJob;
+
 	class RWHandle : public object
 	{
 	public:
@@ -33,19 +59,12 @@ private:
 		SyncSemaphoreHub semaphore_;
 	};
 
-	DEFINE_WRAPPER_HUB(RWHandle);
-	DEFINE_WRAPPER_NODE(RWHandle);
-
-	using HandleByType = std::unordered_map<TypeID, RWHandleHub>;
-	using RWHandleNodes = std::vector<RWHandleNode>;
-	using Handles = std::vector<HANDLE>;
-
 	class ReservePackage : public object
 	{
 	public:
-		ReservePackage(JOB_TYPE&& type, RWHandleNodes&& rw_handle_nodes, JobBaseHub&& job_hub);
+		ReservePackage(JOB_TYPE&& type, RWHandleNodes&& rw_handle_nodes, DisposableJobHub&& job_hub);
 		virtual ~ReservePackage();
-		
+
 		bool Aquire();
 
 		inline bool operator <(const ReservePackage& rhs) { return this->try_count_ < rhs.try_count_; }
@@ -61,15 +80,9 @@ private:
 		RWHandleNodes rw_handle_nodes_;
 		Handles read_handles_;
 		Handles write_handles_;
-		JobBaseHub job_hub_;
+		DisposableJobHub job_hub_;
 		ULONGLONG try_count_;
 	};
-
-	DEFINE_WRAPPER_HUB(ReservePackage);
-	DEFINE_WRAPPER_NODE(ReservePackage);
-
-	using ReserveJobQue = std::queue<ReservePackageHub>;
-	using WaitJobPriorityQueue = std::priority_queue<ReservePackageHub, std::vector<ReservePackageHub>, std::less<ReservePackageHub>>;
 
 	class DistributeJob : public JobBase
 	{
@@ -79,9 +92,9 @@ private:
 
 	private:
 		using HandleWait = std::vector<bool>;
-		
+
 		size_t ShiftQue();
-		
+
 		HandleWait handle_wait_;
 
 		HandleByType& handle_by_type_;
@@ -90,16 +103,6 @@ private:
 		SyncMutexNode mutex_node_;
 		SyncEventNode event_node_;
 	};
-
-public:
-	SyncStation();
-	virtual ~SyncStation();
-
-	template<typename ... _Tys>
-	bool RegistJob(JOB_TYPE type, JobBaseHub job);
-
-private:
-	friend class DistributeJob;
 
 	bool RecordHandle(TypeID tid, LONG read_job_max_count);
 	SYNC_STATE handle_state(TypeID tid);

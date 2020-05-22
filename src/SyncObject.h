@@ -15,12 +15,11 @@ public:
 	virtual ~SyncHandle();
 	
 	virtual SYNC_STATE state() abstract;
-	DWORD Lock(DWORD timeout = INFINITE);
+	inline DWORD Lock(DWORD timeout = INFINITE) { return WaitForSingleObject(handle_, timeout); }
 	virtual bool Release() abstract;
 
 protected:
 	friend class LockBase;
-	friend class InnerLock;
 	friend class SingleLock;
 	friend class MultiLock;
 	friend class RWLock;
@@ -36,7 +35,7 @@ private:
 class SyncMutex : public SyncHandle
 {
 public:
-	SyncMutex();
+	SyncMutex(BOOL b_init = FALSE);
 	SyncMutex(const SyncMutex& mutex);
 
 	virtual ~SyncMutex();
@@ -109,7 +108,7 @@ protected:
 	virtual bool _Release() abstract;
 };
 
-class SingleLock : protected LockBase
+class SingleLock : public LockBase
 {
 public:
 	SingleLock(SyncMutexHub& hub, bool immediate_lock = true);
@@ -120,9 +119,12 @@ public:
 	virtual SYNC_STATE state() override { return mutex_node_->state(); }
 
 protected:
+	friend class RWLock;
+
 	virtual SYNC_STATE _Lock(DWORD timeout) override;
 	virtual SYNC_STATE _SpinLock(DWORD timeout) override;
 	virtual bool _Release() override;
+	inline HANDLE handle() { return mutex_node_->handle(); }
 
 	SyncMutexNode mutex_node_;
 };
@@ -138,14 +140,17 @@ public:
 	virtual SYNC_STATE state() override { return semaphore_node_->state(); }
 
 protected:
+	friend class RWLock;
+
 	virtual SYNC_STATE _Lock(DWORD timeout) override;
 	virtual SYNC_STATE _SpinLock(DWORD timeout) override;
 	virtual bool _Release() override;
+	inline HANDLE handle() { return semaphore_node_->handle(); }
 
 	SyncSemaphoreNode semaphore_node_;
 };
 
-class RWLock : public SingleLock, MultiLock
+class RWLock : public LockBase
 {
 public:
 	RWLock(SyncMutexHub& mutex_hub, SyncSemaphoreHub& semaphore_hub);
@@ -161,10 +166,21 @@ public:
 	SYNC_STATE WriteSpinLock(DWORD timeout = INFINITE);
 	SYNC_STATE ReadSpinLock(DWORD timeout = INFINITE);
 	
+	inline bool WriteRelease() { return single_lock_.Release(); }
+	inline bool ReadRelease() { return multi_lock_.Release(); }
+
 private:
-	virtual SYNC_STATE Lock(DWORD timeout) override { throw std::runtime_error("bad_function_call"); }
-	virtual SYNC_STATE SpinLock(DWORD timeout) override { throw std::runtime_error("bad_function_call"); }
-	virtual bool Release() { throw std::bad_function_call{}; }
+	friend class SyncStation;
+
+	inline HANDLE write_handle() { return single_lock_.handle(); }
+	inline HANDLE read_handle() { return multi_lock_.handle(); }
+
+	virtual SYNC_STATE _Lock(DWORD timeout) override { return single_lock_.Lock(timeout); }
+	virtual SYNC_STATE _SpinLock(DWORD timeout) override { return single_lock_.SpinLock(timeout); }
+	virtual bool _Release() { return single_lock_.Release(); }
+
+	SingleLock single_lock_;
+	MultiLock multi_lock_;
 };
 
 DEFINE_WRAPPER_HUB(SingleLock);
