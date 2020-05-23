@@ -7,15 +7,6 @@ SyncStation::RWHandle::RWHandle(LONG read_job_max_count)
 	: mutex_(make_wrapper_hub<SyncMutex>()), semaphore_(make_wrapper_hub<SyncSemaphore>(read_job_max_count))
 {}
 
-decltype(auto) SyncStation::RWHandle::state()
-{
-	auto state = mutex_->state();
-	if (state == SYNC_STATE::FULL_LOCK)
-		return state;
-
-	return semaphore_->state();
-}
-
 SyncStation::SyncStation()
 	: mutex_hub_(make_wrapper_hub<SyncMutex>()), event_hub_(make_wrapper_hub<SyncEvent>()), distribute_task_id_(INVALID_ALLOC_ID)
 {
@@ -51,20 +42,6 @@ bool SyncStation::RecordHandle(TypeID tid, LONG read_job_max_count)
 	}
 
 	return true;
-}
-
-SYNC_STATE SyncStation::handle_state(TypeID tid)
-{
-	std::unique_lock<std::mutex>(distribute_mtx_);
-
-	auto itor = handle_by_type_.find(tid);
-	if (itor == handle_by_type_.end())
-	{
-		assert(false);
-		return SYNC_STATE::FULL_LOCK;
-	}
-
-	return itor->second->state();
 }
 
 bool SyncStation::IsRecordType(TypeID tid)

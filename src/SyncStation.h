@@ -50,7 +50,7 @@ private:
 	{
 	public:
 		RWHandle(LONG read_job_max_count);
-		decltype(auto) state();
+		//decltype(auto) state();
 		inline decltype(auto) WriteHandle() { return mutex_.get(); }
 		inline decltype(auto) Readhandle() { return semaphore_.get(); }
 
@@ -105,7 +105,7 @@ private:
 	};
 
 	bool RecordHandle(TypeID tid, LONG read_job_max_count);
-	SYNC_STATE handle_state(TypeID tid);
+	//SYNC_STATE handle_state(TypeID tid);
 	bool IsRecordType(TypeID tid);
 
 	_NODISCARD SyncMutexNode mutex_node() { return mutex_hub_.make_node(); }
