@@ -82,7 +82,11 @@ SyncEvent::SyncEvent(const SyncEvent& event)
 
 SyncEvent::~SyncEvent()
 {
-	//assert(state() == SYNC_STATE::UNLOCK);
+}
+
+LockBase::LockBase()
+	: signaled_(false)
+{
 }
 
 SingleLock::SingleLock(SyncMutexHub& hub, bool immediate_lock)
@@ -95,7 +99,7 @@ SingleLock::SingleLock(SyncMutexHub& hub, bool immediate_lock)
 }
 
 SingleLock::SingleLock(SyncMutexNode& node, bool immediate_lock)
-	: mutex_node_(node), signaled_(false)
+	: mutex_node_(node)
 {
 	if (immediate_lock == false)
 		return;
@@ -105,7 +109,7 @@ SingleLock::SingleLock(SyncMutexNode& node, bool immediate_lock)
 
 SingleLock::~SingleLock()
 {
-	if (signaled_.load())
+	if (signaled().load())
 		assert(_Release());
 }
 
@@ -117,7 +121,7 @@ bool SingleLock::_Lock(DWORD timeout)
 	case WAIT_ABANDONED:
 		assert(false);
 	case WAIT_OBJECT_0:
-		signaled_.store(true);
+		signaled().store(true);
 		return true;
 	}
 
@@ -131,7 +135,7 @@ bool SingleLock::_SpinLock(DWORD timeout)
 	{
 		if (_Lock(WAIT_TIME_ZERO))
 		{
-			signaled_.store(true);
+			signaled().store(true);
 			return true;
 		}
 
@@ -142,13 +146,13 @@ bool SingleLock::_SpinLock(DWORD timeout)
 
 bool SingleLock::_Release()
 {
-	if (signaled_.load())
+	if (signaled().load())
 	{
 		auto ret = mutex_node_->Release();
 		if (ret == false)
 			assert(ret);
 		else
-			signaled_.store(false);
+			signaled().store(false);
 		
 		return ret;
 	}
@@ -157,7 +161,7 @@ bool SingleLock::_Release()
 }
 
 MultiLock::MultiLock(SyncSemaphoreHub& hub, bool immediate_lock)
-	: semaphore_node_(hub.make_node()), signaled_(false)
+	: semaphore_node_(hub.make_node())
 {
 	if (immediate_lock == false)
 		return;
@@ -166,7 +170,7 @@ MultiLock::MultiLock(SyncSemaphoreHub& hub, bool immediate_lock)
 }
 
 MultiLock::MultiLock(SyncSemaphoreNode& node, bool immediate_lock)
-	: semaphore_node_(node), signaled_(false)
+	: semaphore_node_(node)
 {
 	if (immediate_lock == false)
 		return;
@@ -176,7 +180,7 @@ MultiLock::MultiLock(SyncSemaphoreNode& node, bool immediate_lock)
 
 MultiLock::~MultiLock()
 {
-	if (signaled_.load())
+	if (signaled().load())
 		assert(_Release());
 }
 
@@ -185,7 +189,7 @@ bool MultiLock::_Lock(DWORD timeout)
 	DWORD ret = semaphore_node_->Lock(timeout);
 	if (ret == WAIT_OBJECT_0)
 	{
-		signaled_.store(true);
+		signaled().store(true);
 		return true;
 	}
 
@@ -208,13 +212,13 @@ bool MultiLock::_SpinLock(DWORD timeout)
 
 bool MultiLock::_Release()
 {
-	if (signaled_.load())
+	if (signaled().load())
 	{
 		auto ret = semaphore_node_->Release();
 		if (ret == false)
 			assert(false);
 		else
-			signaled_.store(false);
+			signaled().store(false);
 	
 		return ret;
 	}
@@ -276,14 +280,14 @@ bool RWLock::ReadSpinLock(DWORD timeout)
 
 	do
 	{
-		if (single_lock_.Lock(WAIT_TIME_ZERO) == false)
+		if (single_lock_._Lock(WAIT_TIME_ZERO) == false)
+			continue;
+	
+		if (multi_lock_._Lock(WAIT_TIME_ZERO) == false)
 		{
-			assert(single_lock_.Release());
+			single_lock_._Release();
 			continue;
 		}
-
-		if (multi_lock_.Lock(WAIT_TIME_ZERO) == false)
-			continue;
 		
 		assert(single_lock_.Release());
 		return true;
@@ -299,16 +303,14 @@ bool RWLock::WriteSpinLock(DWORD timeout)
 
 	do
 	{
-		if (multi_lock_.Lock(WAIT_TIME_ZERO) == false)
-		{
-			assert(multi_lock_.Release());
+		if (multi_lock_._Lock(WAIT_TIME_ZERO) == false)
 			continue;
-		}
+
+
 
 		if (single_lock_.Lock(WAIT_TIME_ZERO) == false)
 			continue;
 		
-		assert(multi_lock_.Release());
 		return true;
 
 	} while (timeout == INFINITE || static_cast<DWORD>(GetTickCount() - begin_tick) / SECONDS_TO_TICK > timeout);

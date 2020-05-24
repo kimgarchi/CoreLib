@@ -88,6 +88,8 @@ DEFINE_WRAPPER_NODE(SyncEvent);
 class LockBase abstract : public object
 {
 public:
+	LockBase();
+
 	virtual bool Lock(DWORD timeout = INFINITE) { return _Lock(timeout); }
 	virtual bool SpinLock(DWORD timeout = INFINITE) { return _SpinLock(timeout); }
 	virtual bool Release() { return _Release(); }
@@ -96,6 +98,11 @@ protected:
 	virtual bool _Lock(DWORD timeout) abstract;
 	virtual bool _SpinLock(DWORD timeout) abstract;
 	virtual bool _Release() abstract;
+
+	std::atomic<bool> signaled() { return signaled_; }
+
+private:
+	std::atomic<bool> signaled_;
 };
 
 class SingleLock : public LockBase
@@ -117,7 +124,6 @@ private:
 	inline HANDLE handle() { return mutex_node_->handle(); }
 
 	SyncMutexNode mutex_node_;
-	std::atomic<bool> signaled_;
 };
 
 class MultiLock : public LockBase
@@ -139,10 +145,9 @@ private:
 	inline HANDLE handle() { return semaphore_node_->handle(); }
 
 	SyncSemaphoreNode semaphore_node_;
-	std::atomic<bool> signaled_;
 };
 
-class RWLock : public LockBase
+class RWLock : public object
 {
 public:
 	RWLock(SyncMutexHub& mutex_hub, SyncSemaphoreHub& semaphore_hub);
@@ -164,10 +169,6 @@ private:
 
 	inline HANDLE write_handle() { return single_lock_.handle(); }
 	inline HANDLE read_handle() { return multi_lock_.handle(); }
-
-	virtual bool _Lock(DWORD timeout) override { return single_lock_.Lock(timeout); }
-	virtual bool _SpinLock(DWORD timeout) override { return single_lock_.SpinLock(timeout); }
-	virtual bool _Release() { return single_lock_.Release(); }
 
 	SingleLock single_lock_;
 	MultiLock multi_lock_;
