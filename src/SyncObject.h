@@ -51,6 +51,9 @@ public:
 	LONG max_count() { return max_count_; }
 
 private:
+	friend class MultiLock;
+	friend class RWLock;
+
 	bool _Release(LONG& prev_count __out, LONG release_count = 1);
 	bool _Release(LONG release_count = 1);
 
@@ -99,7 +102,7 @@ protected:
 	virtual bool _SpinLock(DWORD timeout) abstract;
 	virtual bool _Release() abstract;
 
-	std::atomic<bool> signaled() { return signaled_; }
+	std::atomic<bool>& signaled() { return signaled_; }
 
 private:
 	std::atomic<bool> signaled_;
@@ -116,7 +119,6 @@ public:
 	virtual ~SingleLock();
 
 private:
-	friend class RWLock;
 
 	virtual bool _Lock(DWORD timeout) override;
 	virtual bool _SpinLock(DWORD timeout) override;
@@ -137,12 +139,12 @@ public:
 	virtual ~MultiLock();
 
 private:
-	friend class RWLock;
-
 	virtual bool _Lock(DWORD timeout) override;
 	virtual bool _SpinLock(DWORD timeout) override;
 	virtual bool _Release() override;
 	inline HANDLE handle() { return semaphore_node_->handle(); }
+
+	bool _Release(LONG& prev_count __out, LONG release_count = 1);
 
 	SyncSemaphoreNode semaphore_node_;
 };
@@ -155,23 +157,24 @@ public:
 	RWLock(SyncMutexHub& mutex_hub, SyncSemaphoreNode& semaphore_node);
 	RWLock(SyncMutexNode& mutex_node, SyncSemaphoreNode& semaphore_node);
 
+	virtual ~RWLock();
+
 	bool WriteLock(DWORD timeout = INFINITE);
 	bool ReadLock(DWORD timeout = INFINITE);
 	
-	bool WriteSpinLock(DWORD timeout = INFINITE);
-	bool ReadSpinLock(DWORD timeout = INFINITE);
-	
-	inline bool WriteRelease() { return single_lock_.Release(); }
-	inline bool ReadRelease() { return multi_lock_.Release(); }
+	bool WriteRelease();
+	bool ReadRelease();
 
 private:
 	friend class SyncStation;
 
-	inline HANDLE write_handle() { return single_lock_.handle(); }
-	inline HANDLE read_handle() { return multi_lock_.handle(); }
+	inline HANDLE write_handle() { return mutex_node_->handle(); }
+	inline HANDLE read_handle() { return semaphore_node_->handle(); }
 
-	SingleLock single_lock_;
-	MultiLock multi_lock_;
+	SyncMutexNode mutex_node_;
+	SyncSemaphoreNode semaphore_node_;
+
+	std::atomic<LONG> signaled_count_;
 };
 
 DEFINE_WRAPPER_HUB(SingleLock);

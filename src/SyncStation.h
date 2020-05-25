@@ -50,7 +50,7 @@ private:
 	{
 	public:
 		RWHandle(LONG read_job_max_count);
-		//decltype(auto) state();
+		
 		inline decltype(auto) WriteHandle() { return mutex_.get(); }
 		inline decltype(auto) Readhandle() { return semaphore_.get(); }
 
