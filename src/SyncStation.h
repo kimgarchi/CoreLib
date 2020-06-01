@@ -11,12 +11,6 @@ const static size_t _default_read_count_ = 20;
 const static size_t _default_read_count_ = 100;
 #endif
 
-enum class JOB_TYPE
-{
-	READ,
-	WRITE
-};
-
 class SyncStation : public Singleton<SyncStation>
 {
 private:
@@ -105,7 +99,6 @@ private:
 	};
 
 	bool RecordHandle(TypeID tid, LONG read_job_max_count);
-	//SYNC_STATE handle_state(TypeID tid);
 	bool IsRecordType(TypeID tid);
 
 	_NODISCARD SyncMutexNode mutex_node() { return mutex_hub_.make_node(); }
@@ -129,6 +122,7 @@ bool SyncStation::RegistJob(JOB_TYPE type, JobBaseHub job)
 	SingleLock single_lock(mutex_hub_);
 
 	reserve_job_que_.emplace(make_wrapper_hub<ReservePackage>(type, tids, job));
-	
+	assert(event_hub_->Release());
+
 	return true;
 }

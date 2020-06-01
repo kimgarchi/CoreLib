@@ -14,7 +14,7 @@ public:
 	SyncHandle(HANDLE handle);
 	virtual ~SyncHandle();
 	
-	inline decltype(auto) Lock(DWORD timeout = INFINITE) { return WaitForSingleObject(handle_, timeout); }
+	virtual DWORD Lock(DWORD timeout = INFINITE) { return WaitForSingleObject(handle_, timeout); }
 	virtual bool Release() abstract;
 
 protected:
@@ -69,7 +69,8 @@ public:
 	
 	virtual ~SyncEvent();
 	
-	inline bool Release() { return is_menual_reset_ == false ? SetEvent(handle()) : ResetEvent(handle()); }
+	virtual DWORD Lock(DWORD timeout = INFINITE) override;
+	virtual bool Release() override { return SetEvent(handle()); }
 	
 private:
 	BOOL is_menual_reset_;

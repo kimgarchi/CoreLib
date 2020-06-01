@@ -2,6 +2,12 @@
 #include "stdafx.h"
 #include "SyncObject.h"
 
+enum class JOB_TYPE
+{
+	READ,
+	WRITE
+};
+
 class JobBase abstract : public object
 {
 public:

@@ -62,18 +62,29 @@ SyncStation::DistributeJob::DistributeJob(HandleByType& handle_by_type, ReserveJ
 
 bool SyncStation::DistributeJob::Work()
 {
-	ReserveJobQue try_delay_job_que;
+	if (event_node_->Lock() == false)
+	{
+		assert(false);
+		return false;
+	}
+
+	{
+		SingleLock single_lock(mutex_node_);
+		auto shift_size = ShiftQue();
+		if (shift_size == 0)
+			return true;	
+	}
+
 	for (size_t i = 0; i < wait_job_priority_que_.size(); ++i)
 	{
 		ReservePackageHub wait_job = wait_job_priority_que_.top();
 		wait_job_priority_que_.pop();
 
 		if (wait_job->Aquire() == false)
-			try_delay_job_que.push(wait_job);
+			wait_job_priority_que_.push(wait_job);
 	}
 
-	SingleLock single_lock(mutex_node_);
-	auto shift_size = ShiftQue();
+	assert(event_node_->Release());
 
 	return true;
 }

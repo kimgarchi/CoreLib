@@ -70,6 +70,18 @@ SyncEvent::~SyncEvent()
 {
 }
 
+DWORD SyncEvent::Lock(DWORD timeout)
+{
+	/*
+	assert(is_menual_reset_ == false ? true : ResetEvent(handle()));
+
+	event menual... dif?
+
+	*/
+	
+	return SyncHandle::Lock(timeout);
+}
+
 LockBase::LockBase()
 	: signaled_(false)
 {
