@@ -168,6 +168,7 @@
     <ClInclude Include="src\PostCenter.h" />
     <ClInclude Include="src\DBColumn.h" />
     <ClInclude Include="src\Query.h" />
+    <ClInclude Include="src\HandlePool.h" />
     <ClInclude Include="src\singleton.h" />
     <ClInclude Include="src\Sock.h" />
     <ClInclude Include="src\SocketBase.h" />
@@ -185,6 +186,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\DBTable.cpp" />
+    <ClCompile Include="src\HandlePool.cpp" />
     <ClCompile Include="src\JobStation.cpp" />
     <ClCompile Include="src\ODBC.cpp" />
     <ClCompile Include="src\PostCenter.cpp" />

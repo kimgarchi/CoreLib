@@ -8,7 +8,7 @@
 #ifdef _DEBUG
 const static size_t _default_read_count_ = 20;
 #else
-const static size_t _default_read_count_ = 100;
+const static size_t _default_read_count_ = 50;
 #endif
 
 class SyncStation : public Singleton<SyncStation>
@@ -56,7 +56,7 @@ private:
 	class ReservePackage : public object
 	{
 	public:
-		ReservePackage(JOB_TYPE&& type, RWHandleNodes&& rw_handle_nodes, DisposableJobHub&& job_hub);
+		ReservePackage(JOB_TYPE&& type, TypeIds&& tids, JobBaseNode&& job_hub);
 		virtual ~ReservePackage();
 
 		bool Aquire();
@@ -71,10 +71,10 @@ private:
 		void increase_try_count() { try_count_ += 1; }
 
 		JOB_TYPE type_;
-		RWHandleNodes rw_handle_nodes_;
+		TypeIds tids_;
 		Handles read_handles_;
 		Handles write_handles_;
-		DisposableJobHub job_hub_;
+		JobBaseNode job_node_;
 		ULONGLONG try_count_;
 	};
 
@@ -98,7 +98,7 @@ private:
 		SyncEventNode event_node_;
 	};
 
-	bool RecordHandle(TypeID tid, LONG read_job_max_count);
+	bool RecordHandle(TypeID tid, LONG read_job_max_count = _default_read_count_);
 	bool IsRecordType(TypeID tid);
 
 	_NODISCARD SyncMutexNode mutex_node() { return mutex_hub_.make_node(); }
@@ -118,10 +118,10 @@ private:
 template<typename ..._Tys>
 bool SyncStation::RegistJob(JOB_TYPE type, JobBaseHub job)
 {
-	auto tids = TypeHarvest::GetInstance().harvest<_Tys...>();
+	TypeIds tids = TypeHarvest::GetInstance().harvest<_Tys...>();
 	SingleLock single_lock(mutex_hub_);
 
-	reserve_job_que_.emplace(make_wrapper_hub<ReservePackage>(type, tids, job));
+	reserve_job_que_.emplace(make_wrapper_hub<ReservePackage>(type, tids, job.make_node()));
 	assert(event_hub_->Release());
 
 	return true;

@@ -160,6 +160,9 @@
     <ClInclude Include="src\Query.h">
       <Filter>source\DB\Query</Filter>
     </ClInclude>
+    <ClInclude Include="src\HandlePool.h">
+      <Filter>source\Object\Pool</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\SyncStation.cpp">
@@ -194,6 +197,9 @@
     </ClCompile>
     <ClCompile Include="src\Query.cpp">
       <Filter>source\DB\Query</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HandlePool.cpp">
+      <Filter>source\Object\Pool</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

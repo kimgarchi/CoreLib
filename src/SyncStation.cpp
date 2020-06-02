@@ -72,7 +72,7 @@ bool SyncStation::DistributeJob::Work()
 		SingleLock single_lock(mutex_node_);
 		auto shift_size = ShiftQue();
 		if (shift_size == 0)
-			return true;	
+			return true;
 	}
 
 	for (size_t i = 0; i < wait_job_priority_que_.size(); ++i)
@@ -94,24 +94,26 @@ size_t SyncStation::DistributeJob::ShiftQue()
 	auto shift_size = reserve_job_que_.size();
 	while (reserve_job_que_.empty() == false)
 	{
-		wait_job_priority_que_.emplace(reserve_job_que_.front());
+		auto reserve_job = reserve_job_que_.front();
+
+		for (auto itor = reserve_job->tids_.cbegin(); itor != reserve_job->tids_.cend(); ++itor)
+		{
+			if (handle_by_type_.find(*itor) != handle_by_type_.cend())
+				continue;
+
+			assert(SyncStation::GetInstance().RecordHandle(*itor));
+		}
+
+		wait_job_priority_que_.emplace(reserve_job);
 		reserve_job_que_.pop();
 	}
 
 	return shift_size;
 }
 
-SyncStation::ReservePackage::ReservePackage(JOB_TYPE&& type, RWHandleNodes&& rw_handle_nodes, DisposableJobHub&& job_hub)
-	: type_(type), rw_handle_nodes_(std::move(rw_handle_nodes)), job_hub_(job_hub), try_count_(0)
-{
-	read_handles_.resize(rw_handle_nodes_.size());
-	write_handles_.resize(rw_handle_nodes_.size());
-
-	for (size_t i = 0; i < rw_handle_nodes_.size(); ++i)
-	{
-		read_handles_.at(i) = rw_handle_nodes_.at(i)->Readhandle();
-		write_handles_.at(i) = rw_handle_nodes_.at(i)->WriteHandle();
-	}		
+SyncStation::ReservePackage::ReservePackage(JOB_TYPE&& type, TypeIds&& tids, JobBaseNode&& job_node)
+	: type_(type), job_node_(job_node), try_count_(0)
+{		
 }
 
 SyncStation::ReservePackage::~ReservePackage()
