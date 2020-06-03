@@ -69,7 +69,6 @@ public:
 		if (vptr_node_.find(ptr) == vptr_node_.end())
 		{
 			//...
-			throw std::runtime_error("");
 			return false;
 		}
 

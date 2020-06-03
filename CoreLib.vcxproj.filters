@@ -63,9 +63,6 @@
     <Filter Include="source\Thread">
       <UniqueIdentifier>{85fc7525-a870-4eea-a8d1-f5069007cc45}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\Sync\Comport">
-      <UniqueIdentifier>{18d13636-5316-4ce8-9deb-671180dd4693}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CoreLib.rc">
@@ -163,12 +160,6 @@
     <ClInclude Include="src\Query.h">
       <Filter>source\DB\Query</Filter>
     </ClInclude>
-    <ClInclude Include="src\CompletionPort.h">
-      <Filter>source\Sync\Comport</Filter>
-    </ClInclude>
-    <ClInclude Include="src\HandleManager.h">
-      <Filter>source\Sync\Comport</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\SyncStation.cpp">
@@ -203,12 +194,6 @@
     </ClCompile>
     <ClCompile Include="src\Query.cpp">
       <Filter>source\DB\Query</Filter>
-    </ClCompile>
-    <ClCompile Include="src\CompletionPort.cpp">
-      <Filter>source\Sync\Comport</Filter>
-    </ClCompile>
-    <ClCompile Include="src\HandleManager.cpp">
-      <Filter>source\Sync\Comport</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
