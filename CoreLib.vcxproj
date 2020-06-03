@@ -154,9 +154,11 @@
   <ItemGroup>
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\CallBack.h" />
+    <ClInclude Include="src\CompletionPort.h" />
     <ClInclude Include="src\DataStream.h" />
     <ClInclude Include="src\DBTable.h" />
     <ClInclude Include="src\Define.h" />
+    <ClInclude Include="src\HandleManager.h" />
     <ClInclude Include="src\Job.h" />
     <ClInclude Include="src\JobStation.h" />
     <ClInclude Include="src\Logger.h" />
@@ -184,7 +186,9 @@
     <ClInclude Include="src\SyncStation.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\CompletionPort.cpp" />
     <ClCompile Include="src\DBTable.cpp" />
+    <ClCompile Include="src\HandleManager.cpp" />
     <ClCompile Include="src\JobStation.cpp" />
     <ClCompile Include="src\ODBC.cpp" />
     <ClCompile Include="src\PostCenter.cpp" />

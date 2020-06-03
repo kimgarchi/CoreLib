@@ -47,6 +47,8 @@ public:
 
 	template<typename _Job, typename ..._Tys, is_job<_Job> = nullptr>
 	TaskID AttachTask(size_t thread_count, _Tys&&... Args);
+	TaskID AttachTask(size_t thread_count, JobBaseHub job);
+
 	bool DeattachTask(TaskID task_id, DWORD timeout = _default_thread_stop_timeout_);
 	bool change_thread_count(TaskID task_id, size_t thread_count);
 	

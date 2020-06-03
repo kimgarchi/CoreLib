@@ -82,6 +82,11 @@ bool SyncStation::DistributeJob::Work()
 
 		if (wait_job->Aquire() == false)
 			wait_job_priority_que_.push(wait_job);
+
+
+		// push job thread
+		//postqueuedcompletionstatus
+		PostQueuedCompletionStatus(, sizeof(), );
 	}
 
 	assert(event_node_->Release());
