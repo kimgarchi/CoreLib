@@ -154,6 +154,7 @@
   <ItemGroup>
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\CallBack.h" />
+    <ClInclude Include="src\CompletionPort.h" />
     <ClInclude Include="src\DataStream.h" />
     <ClInclude Include="src\DBTable.h" />
     <ClInclude Include="src\Define.h" />
@@ -168,7 +169,6 @@
     <ClInclude Include="src\PostCenter.h" />
     <ClInclude Include="src\DBColumn.h" />
     <ClInclude Include="src\Query.h" />
-    <ClInclude Include="src\HandlePool.h" />
     <ClInclude Include="src\singleton.h" />
     <ClInclude Include="src\Sock.h" />
     <ClInclude Include="src\SocketBase.h" />
@@ -185,8 +185,8 @@
     <ClInclude Include="src\SyncStation.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\CompletionPort.cpp" />
     <ClCompile Include="src\DBTable.cpp" />
-    <ClCompile Include="src\HandlePool.cpp" />
     <ClCompile Include="src\JobStation.cpp" />
     <ClCompile Include="src\ODBC.cpp" />
     <ClCompile Include="src\PostCenter.cpp" />

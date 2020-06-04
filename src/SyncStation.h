@@ -87,8 +87,6 @@ private:
 	private:
 		using HandleWait = std::vector<bool>;
 
-		size_t ShiftQue();
-
 		HandleWait handle_wait_;
 
 		HandleByType& handle_by_type_;

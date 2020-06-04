@@ -70,9 +70,21 @@ bool SyncStation::DistributeJob::Work()
 
 	{
 		SingleLock single_lock(mutex_node_);
-		auto shift_size = ShiftQue();
-		if (shift_size == 0)
-			return true;
+		while (reserve_job_que_.empty() == false)
+		{
+			auto reserve_job = reserve_job_que_.front();
+
+			for (auto itor = reserve_job->tids_.cbegin(); itor != reserve_job->tids_.cend(); ++itor)
+			{
+				if (handle_by_type_.find(*itor) != handle_by_type_.cend())
+					continue;
+
+				assert(SyncStation::GetInstance().RecordHandle(*itor));
+			}
+
+			wait_job_priority_que_.emplace(reserve_job);
+			reserve_job_que_.pop();
+		}
 	}
 
 	for (size_t i = 0; i < wait_job_priority_que_.size(); ++i)
@@ -81,34 +93,16 @@ bool SyncStation::DistributeJob::Work()
 		wait_job_priority_que_.pop();
 
 		if (wait_job->Aquire() == false)
+		{
 			wait_job_priority_que_.push(wait_job);
+			continue;
+		}
+		
 	}
 
 	assert(event_node_->Release());
 
 	return true;
-}
-
-size_t SyncStation::DistributeJob::ShiftQue()
-{
-	auto shift_size = reserve_job_que_.size();
-	while (reserve_job_que_.empty() == false)
-	{
-		auto reserve_job = reserve_job_que_.front();
-
-		for (auto itor = reserve_job->tids_.cbegin(); itor != reserve_job->tids_.cend(); ++itor)
-		{
-			if (handle_by_type_.find(*itor) != handle_by_type_.cend())
-				continue;
-
-			assert(SyncStation::GetInstance().RecordHandle(*itor));
-		}
-
-		wait_job_priority_que_.emplace(reserve_job);
-		reserve_job_que_.pop();
-	}
-
-	return shift_size;
 }
 
 SyncStation::ReservePackage::ReservePackage(JOB_TYPE&& type, TypeIds&& tids, JobBaseNode&& job_node)

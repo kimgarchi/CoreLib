@@ -33,9 +33,7 @@ PostCenter::CompletionPort::CompletionPort(TaskID task_id, SOCKET sock, USHORT p
 	}
 }
 
-PostCenter::CompletionPort::~CompletionPort()
-{
-}
+
 
 bool PostCenter::CompletionPort::AttachSock(SOCKET sock)
 {

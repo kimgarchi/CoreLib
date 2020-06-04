@@ -55,6 +55,17 @@ bool ThreadManager::Task::Deattach(size_t count, DWORD timeout)
 	return true;
 }
 
+TaskID ThreadManager::AttachTask(size_t thread_count, JobBaseHub job)
+{
+	std::unique_lock<std::mutex> lock(mtx_);
+
+	auto task_id = alloc_task_id_.fetch_add(1);
+	if (tasks_.emplace(task_id, make_wrapper_hub<Task>(job, thread_count)).second == false)
+		return INVALID_ALLOC_ID;
+
+	return task_id;
+}
+
 bool ThreadManager::DeattachTask(TaskID task_id, DWORD timeout)
 {
 	std::unique_lock<std::mutex> lock(mtx_);
