@@ -21,7 +21,8 @@ public:
 	{}
 
 	void* operator new (size_t) = delete;
-	
+	virtual const size_t priority_value() const { return 0; }	
+
 private:
 	template<typename _Ty>
 	friend class wrapper;

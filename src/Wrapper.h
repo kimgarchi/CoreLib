@@ -115,7 +115,7 @@ public:
 		Stacks stacks(default_stack_depth_);
 		CaptureStackBackTrace(0, static_cast<DWORD>(default_stack_depth_), stacks.data(), &hash);
 		
-		assert(AttackCallStack<_Ty>(hash, stacks, object));
+		assert(AttachCallStack<_Ty>(hash, stacks, object));
 #endif
 		return object;
 	}
@@ -133,7 +133,7 @@ public:
 #ifdef _DEBUG
 private:
 	template<typename _Ty>
-	bool AttackCallStack(const Hash& hash, const Stacks& stacks, vPtr ptr)
+	bool AttachCallStack(const Hash& hash, const Stacks& stacks, vPtr ptr)
 	{
 		TypeID tid = typeid(_Ty).hash_code();
 		auto name = std::string(typeid(_Ty).name());
@@ -186,16 +186,21 @@ public:
 
 	inline TypeID tid() const { return type_id_; }
 
+	void operator=(const wrapper<_Ty>& wrap)
+	{
+		_decrease_count();
+		try_cleanup();
+		object_change(wrap);
+		_increase_count();
+	}
+
 protected:
 	inline Count& _use_count() { return get()->use_count(); }
 	inline Count& _node_count() { return get()->node_count(); }	
 
-	void _increase_use_count() { _use_count().fetch_add(1); }
-	void _decrease_use_count() { _use_count().fetch_sub(1); }
-
-	void _increase_node_count() { _node_count().fetch_add(1); }
-	void _decrease_node_count() { _node_count().fetch_sub(1); }
-
+	virtual void _increase_count() abstract;
+	virtual void _decrease_count() abstract;
+	
 	inline _Ty* _data() { return data_; }
 
 	void try_cleanup()
@@ -224,31 +229,22 @@ public:
 	wrapper_hub(wrapper_hub<_rTy> hub)
 		: wrapper<_Ty>(hub.get(), hub.tid())
 	{
-		wrapper<_Ty>::_increase_use_count();
+		_increase_count();
 	}
 	
 	wrapper_hub(const wrapper_hub<_Ty>& hub)
 		: wrapper<_Ty>(const_cast<wrapper_hub<_Ty>&>(hub).get(), hub.tid())
 	{
-		wrapper<_Ty>::_increase_use_count();
+		_increase_count();
 	}
 
 	virtual ~wrapper_hub()
 	{
-		wrapper<_Ty>::_decrease_use_count();
+		_decrease_count();
 	}
 
 	_NODISCARD wrapper_node<_Ty> make_node() { return wrapper_node<_Ty>(wrapper<_Ty>::get(), this->tid()); }
 	
-	void operator=(const wrapper_hub<_Ty>& hub)
-	{
-		wrapper<_Ty>::_decrease_use_count();
-		wrapper<_Ty>::try_cleanup();
-
-		wrapper<_Ty>::object_change(hub);
-		wrapper<_Ty>::_increase_use_count();
-	}
-
 private:
 	template <typename _Ty, typename ..._Tys>
 	friend wrapper_hub<_Ty> make_wrapper_hub(_Tys&&...);
@@ -256,8 +252,11 @@ private:
 	wrapper_hub(_Ty* data)
 		: wrapper<_Ty>(data, typeid(_Ty).hash_code())
 	{
-		wrapper<_Ty>::_increase_use_count();
+		_increase_count();
 	}
+
+	virtual void _increase_count() override { wrapper<_Ty>::_use_count().fetch_add(1); }
+	virtual void _decrease_count() override { wrapper<_Ty>::_use_count().fetch_sub(1); }
 };
 
 template<typename _Ty>
@@ -267,36 +266,18 @@ public:
 	wrapper_node(wrapper_hub<_Ty>& hub)
 		: wrapper<_Ty>(hub.get(), hub.tid())
 	{
-		wrapper<_Ty>::_increase_node_count();
+		_increase_count();
 	}
 
 	wrapper_node(const wrapper_node<_Ty>& node)
 		: wrapper<_Ty>(const_cast<wrapper_node<_Ty>&>(node).get(), node.tid())
 	{
-		wrapper<_Ty>::_increase_node_count();
+		_increase_count();
 	}
 
 	virtual ~wrapper_node()
 	{
-		wrapper<_Ty>::_decrease_node_count();
-	}
-
-	void operator=(const wrapper_hub<_Ty>& hub)
-	{
-		wrapper<_Ty>::_decrease_node_count();
-		wrapper<_Ty>::try_cleanup();
-
-		wrapper<_Ty>::object_change(hub);
-		wrapper<_Ty>::_increase_node_count();
-	}
-
-	void operator=(const wrapper_node<_Ty>& node)
-	{
-		wrapper<_Ty>::_decrease_node_count();
-		wrapper<_Ty>::try_cleanup();
-
-		wrapper<_Ty>::object_change(node);
-		wrapper<_Ty>::_increase_node_count();
+		_decrease_count();
 	}
 
 private:
@@ -304,32 +285,35 @@ private:
 	wrapper_node(_Ty* data, TypeID type_id)
 		: wrapper<_Ty>(data, type_id)
 	{
-		wrapper<_Ty>::_increase_node_count();
+		_increase_count();
 	}
+
+	virtual void _increase_count() override { wrapper<_Ty>::_node_count().fetch_add(1); }
+	virtual void _decrease_count() override { wrapper<_Ty>::_node_count().fetch_sub(1); }
 };
 
 template <typename _Ty>
 _NODISCARD bool operator>(const wrapper<_Ty>& left, const wrapper<_Ty>& right)
 {
-	return const_cast<wrapper<_Ty>&>(left).get() > const_cast<wrapper<_Ty>&>(right).get();
+	return const_cast<wrapper<_Ty>&>(left).get()->priority_value() > const_cast<wrapper<_Ty>&>(right).get()->priority_value();
 }
 
 template <typename _Ty>
 _NODISCARD bool operator>=(const wrapper<_Ty>& left, const wrapper<_Ty>& right)
 {
-	return const_cast<wrapper<_Ty>&>(left).get() >= const_cast<wrapper<_Ty>&>(right).get();
+	return const_cast<wrapper<_Ty>&>(left).get()->priority_value() >= const_cast<wrapper<_Ty>&>(right).get()->priority_value();
 }
 
 template <typename _Ty>
 _NODISCARD bool operator<(const wrapper<_Ty>& left, const wrapper<_Ty>& right)
 {
-	return const_cast<wrapper<_Ty>&>(left).get() < const_cast<wrapper<_Ty>&>(right).get();
+	return const_cast<wrapper<_Ty>&>(left).get()->priority_value() < const_cast<wrapper<_Ty>&>(right).get()->priority_value();
 }
 
 template <typename _Ty>
 _NODISCARD bool operator<=(const wrapper<_Ty>& left, const wrapper<_Ty>& right)
 {
-	return const_cast<wrapper<_Ty>&>(left).get() <= const_cast<wrapper<_Ty>&>(right).get();
+	return const_cast<wrapper<_Ty>&>(left).get()->priority_value() <= const_cast<wrapper<_Ty>&>(right).get()->priority_value();
 }
 
 #pragma warning (pop)

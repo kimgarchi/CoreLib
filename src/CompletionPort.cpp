@@ -4,7 +4,7 @@
 #include "Job.h"
 
 CompletionPort::CompletionPort(DWORD thread_count, CompletionJobHub job)
-	: handle_(CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, thread_count)),
+	: completion_port_handle_(CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, thread_count)),
 	task_id_(INVALID_ALLOC_ID)
 {
 	task_id_ = ThreadManager::GetInstance().AttachTask(thread_count, job);
@@ -14,13 +14,13 @@ CompletionPort::CompletionPort(DWORD thread_count, CompletionJobHub job)
 
 CompletionPort::~CompletionPort()
 {
-	assert(CloseHandle(handle_));
+	assert(CloseHandle(completion_port_handle_));
 }
 
 bool CompletionPort::AttachHandle(HANDLE handle, PVOID key)
 {
-	auto ret = CreateIoCompletionPort(handle, handle_, (ULONG_PTR)(key), 0);
-	if (ret == nullptr || ret != handle_)
+	auto ret = CreateIoCompletionPort(handle, completion_port_handle_, (ULONG_PTR)(key), 0);
+	if (ret == nullptr || ret != completion_port_handle_)
 		return false;
 
 	return true;

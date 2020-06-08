@@ -27,7 +27,7 @@ public:
 	bool AttachHandle(HANDLE handle, PVOID key);
 
 private:
-	HANDLE handle_;
+	HANDLE completion_port_handle_;
 	TaskID task_id_;
 };
 
