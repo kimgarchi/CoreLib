@@ -17,15 +17,14 @@ public:
 	virtual DWORD Lock(DWORD timeout = INFINITE) { return WaitForSingleObject(handle_, timeout); }
 	virtual bool Release() abstract;
 
+	inline const HANDLE handle() { return handle_; }
+
 protected:
 	friend class LockBase;
 	friend class SingleLock;
 	friend class MultiLock;
 	friend class RWLock;
-
 	friend class SyncStation;
-
-	inline const HANDLE& handle() { return handle_; }
 
 private:
 	HANDLE handle_;
@@ -92,21 +91,22 @@ DEFINE_WRAPPER_NODE(SyncEvent);
 class LockBase abstract : public object
 {
 public:
+	LockBase(const LockBase&) = delete;
 	LockBase();
+	virtual ~LockBase();
 
-	virtual bool Lock(DWORD timeout = INFINITE) { return _Lock(timeout); }
+	virtual bool Lock(DWORD timeout = INFINITE);
 	virtual bool SpinLock(DWORD timeout = INFINITE) { return _SpinLock(timeout); }
-	virtual bool Release() { return _Release(); }
+	virtual bool Release();
 
 protected:
 	virtual bool _Lock(DWORD timeout) abstract;
 	virtual bool _SpinLock(DWORD timeout) abstract;
 	virtual bool _Release() abstract;
+	virtual bool _Destory() abstract;
+	virtual HANDLE handle() abstract;
 
-	std::atomic<bool>& signaled() { return signaled_; }
-
-private:
-	std::atomic<bool> signaled_;
+	LONG signaled_count_;
 };
 
 class SingleLock : public LockBase
@@ -119,13 +119,15 @@ public:
 
 	virtual ~SingleLock();
 
-private:
-
+protected:
 	virtual bool _Lock(DWORD timeout) override;
 	virtual bool _SpinLock(DWORD timeout) override;
 	virtual bool _Release() override;
-	inline HANDLE handle() { return mutex_node_->handle(); }
+	virtual bool _Destory() override;
 
+	virtual HANDLE handle() override { return mutex_node_->handle(); }
+	
+private:
 	SyncMutexNode mutex_node_;
 };
 
@@ -139,24 +141,26 @@ public:
 
 	virtual ~MultiLock();
 
-private:
+protected:
 	virtual bool _Lock(DWORD timeout) override;
 	virtual bool _SpinLock(DWORD timeout) override;
 	virtual bool _Release() override;
-	inline HANDLE handle() { return semaphore_node_->handle(); }
+	virtual bool _Destory() override;
+
+	virtual HANDLE handle() override { return semaphore_node_->handle(); }
 
 	bool _Release(LONG& prev_count __out, LONG release_count = 1);
+	LONG max_count() { return semaphore_node_->max_count(); }
 
+private:
 	SyncSemaphoreNode semaphore_node_;
 };
 
-class RWLock : public object
+class RWLock : public MultiLock
 {
 public:
-	RWLock(SyncMutexHub& mutex_hub, SyncSemaphoreHub& semaphore_hub);
-	RWLock(SyncMutexNode& mutex_node, SyncSemaphoreHub& semaphore_hub);
-	RWLock(SyncMutexHub& mutex_hub, SyncSemaphoreNode& semaphore_node);
-	RWLock(SyncMutexNode& mutex_node, SyncSemaphoreNode& semaphore_node);
+	RWLock(SyncSemaphoreHub& semaphore_hub);
+	RWLock(SyncSemaphoreNode& semaphore_node);
 
 	virtual ~RWLock();
 
@@ -168,14 +172,6 @@ public:
 
 private:
 	friend class SyncStation;
-
-	inline HANDLE write_handle() { return mutex_node_->handle(); }
-	inline HANDLE read_handle() { return semaphore_node_->handle(); }
-
-	SyncMutexNode mutex_node_;
-	SyncSemaphoreNode semaphore_node_;
-
-	std::atomic<LONG> signaled_count_;
 };
 
 DEFINE_WRAPPER_HUB(SingleLock);

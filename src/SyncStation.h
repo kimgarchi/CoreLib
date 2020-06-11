@@ -14,18 +14,13 @@ const static size_t _default_read_count_ = 50;
 class SyncStation : public Singleton<SyncStation>
 {
 private:
-	class RWHandle;
 	class ReservePackage;
 	class DistributeJob;
 	
-	DEFINE_WRAPPER_HUB(RWHandle);
-	DEFINE_WRAPPER_NODE(RWHandle);
-
 	DEFINE_WRAPPER_HUB(ReservePackage);
 	DEFINE_WRAPPER_NODE(ReservePackage);
 
-	using HandleByType = std::unordered_map<TypeID, RWHandleHub>;
-	using RWHandleNodes = std::vector<RWHandleNode>;
+	using HandleByType = std::unordered_map<TypeID, SyncSemaphoreHub>;
 	using Handles = std::vector<HANDLE>;
 	using ReserveJobQue = std::queue<ReservePackageHub>;
 	using WaitJobPriorityQueue = std::priority_queue<ReservePackageHub, std::vector<ReservePackageHub>, std::less<ReservePackageHub>>;
@@ -40,19 +35,6 @@ public:
 private:
 	friend class DistributeJob;
 
-	class RWHandle : public object
-	{
-	public:
-		RWHandle(LONG read_job_max_count);
-		
-		inline decltype(auto) WriteHandle() { return mutex_.get(); }
-		inline decltype(auto) Readhandle() { return semaphore_.get(); }
-
-	private:
-		SyncMutexHub mutex_;
-		SyncSemaphoreHub semaphore_;
-	};
-
 	class ReservePackage : public object
 	{
 	public:
@@ -60,20 +42,17 @@ private:
 		virtual ~ReservePackage();
 
 		bool Aquire();
-
-		inline bool operator <(const ReservePackage& rhs) { return this->try_count_ < rhs.try_count_; }
-		inline bool operator >(const ReservePackage& rhs) { return this->try_count_ > rhs.try_count_; }
+		virtual const size_t priority_value() const override { return try_count_; }
 
 	private:
 		friend class SyncStation;
 		friend class DistributeJob;
 
 		void increase_try_count() { try_count_ += 1; }
-
+		
 		JOB_TYPE type_;
 		TypeIds tids_;
-		Handles read_handles_;
-		Handles write_handles_;
+		Handles handles_;
 		JobBaseNode job_node_;
 		ULONGLONG try_count_;
 	};
@@ -87,6 +66,8 @@ private:
 	private:
 		using HandleWait = std::vector<bool>;
 
+		bool Prepare(ReservePackageHub& package __inout);
+
 		HandleWait handle_wait_;
 
 		HandleByType& handle_by_type_;
@@ -96,17 +77,11 @@ private:
 		SyncEventNode event_node_;
 	};
 
-	bool RecordHandle(TypeID tid, LONG read_job_max_count = _default_read_count_);
-	bool IsRecordType(TypeID tid);
-
-	_NODISCARD SyncMutexNode mutex_node() { return mutex_hub_.make_node(); }
-
-	bool RegistJob(TypeIds tids, JobBaseHub job);
+	HANDLE RecordHandle(TypeID tid, LONG read_job_max_count = _default_read_count_);
+	bool IsRecordType(TypeID tid) { return (handle_by_type_.find(tid) != handle_by_type_.end()); }
 
 	HandleByType handle_by_type_;
-
 	ReserveJobQue reserve_job_que_;
-
 	SyncMutexHub mutex_hub_;
 	SyncEventHub event_hub_;
 	TaskID distribute_task_id_;
