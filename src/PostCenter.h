@@ -80,7 +80,7 @@ PostID PostCenter::RecordCompletionPort(SOCK_TYPE type, USHORT port, int wait_qu
 	if (task_id == INVALID_ALLOC_ID)
 		return INVALID_ALLOC_ID;
 	
-	PostID post_id = alloc_post_id_.fetch_add(1);
+	alloc_post_id_.fetch_add(1);
 	SOCKET sock = INVALID_SOCKET;
 
 	switch (type)
@@ -97,7 +97,7 @@ PostID PostCenter::RecordCompletionPort(SOCK_TYPE type, USHORT port, int wait_qu
 	break;
 	}
 	
-	completion_ports_.emplace(post_id, task_id, sock, port, wait_que_size, thread_count);
+	completion_ports_.emplace(alloc_post_id_, task_id, sock, port, wait_que_size, thread_count);
 
-	return post_id;
+	return alloc_post_id_;
 }

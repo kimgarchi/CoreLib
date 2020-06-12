@@ -109,7 +109,7 @@ bool LockBase::Release()
 		return false;
 	}
 
-	return _Release();;
+	return _Release();
 }
 
 SingleLock::SingleLock(SyncMutexHub& hub, bool immediate_lock)

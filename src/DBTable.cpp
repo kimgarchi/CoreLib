@@ -37,5 +37,5 @@ bool DBTable::AttachIndex(std::wstring name, TABLE_INDEX_TYPE type, Columns& col
 	if (name_itor != indexes.end())
 		return false;
 
-	return indexes.emplace(name, columns).second;;
+	return indexes.emplace(name, columns).second;
 }

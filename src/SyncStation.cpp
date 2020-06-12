@@ -78,11 +78,8 @@ bool SyncStation::DistributeJob::Work()
 		wait_job_priority_que_.pop();
 
 		if (Prepare(std::ref(wait_job)) == false)
-		{
-			std::runtime_error("reserve package prepare failed");
-			return false;
-		}
-
+			throw std::runtime_error("reserve package prepare failed");
+		
 		if (wait_job->Aquire() == false)
 		{
 			wait_job_priority_que_.push(wait_job);

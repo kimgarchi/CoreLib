@@ -9,7 +9,7 @@ ThreadManager::Task::Task(JobBaseHub job, size_t thread_count)
 
 ThreadManager::Task::~Task()
 {
-	assert(Stop(_default_thread_stop_timeout_));
+	assert(Stop());
 	thread_que_.clear();
 }
 
@@ -18,7 +18,6 @@ bool ThreadManager::Task::Stop(DWORD timeout)
 	if (is_runable_ == false)
 		return true;
 
-	is_runable_ = false;
 	size_t ret_val = 0;
 	for (size_t idx = 0; idx < thread_que_.size(); ++idx)
 		ret_val += thread_que_.at(idx).Stop(timeout);
@@ -28,6 +27,8 @@ bool ThreadManager::Task::Stop(DWORD timeout)
 		assert(false);
 		return false;
 	}
+
+	is_runable_ = false;
 	
 	return true;
 }
@@ -59,11 +60,11 @@ TaskID ThreadManager::AttachTask(size_t thread_count, JobBaseHub job)
 {
 	std::unique_lock<std::mutex> lock(mtx_);
 
-	auto task_id = alloc_task_id_.fetch_add(1);
-	if (tasks_.emplace(task_id, make_wrapper_hub<Task>(job, thread_count)).second == false)
+	alloc_task_id_.fetch_add(1);
+	if (tasks_.emplace(alloc_task_id_, make_wrapper_hub<Task>(job, thread_count)).second == false)
 		return INVALID_ALLOC_ID;
 
-	return task_id;
+	return alloc_task_id_;
 }
 
 bool ThreadManager::DeattachTask(TaskID task_id, DWORD timeout)

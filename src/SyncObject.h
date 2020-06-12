@@ -112,8 +112,6 @@ protected:
 class SingleLock : public LockBase
 {
 public:
-	SingleLock(const SingleLock&) = delete;
-
 	SingleLock(SyncMutexHub& hub, bool immediate_lock = true);
 	SingleLock(SyncMutexNode& node, bool immediate_lock = true);
 
@@ -134,8 +132,6 @@ private:
 class MultiLock : public LockBase
 {
 public:
-	MultiLock(const MultiLock&) = delete;
-
 	MultiLock(SyncSemaphoreHub& hub, bool immediate_lock = true);
 	MultiLock(SyncSemaphoreNode& node, bool immediate_lock = true);
 

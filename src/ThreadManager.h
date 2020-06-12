@@ -3,12 +3,6 @@
 #include "Thread.h"
 #include "singleton.h"
 
-#ifdef _DEBUG
-const static DWORD _default_thread_stop_timeout_ = 1000;
-#else
-const static DWORD _default_thread_stop_timeout_ = 0;
-#endif
-
 class ThreadManager : public Singleton<ThreadManager>
 {
 private:
@@ -21,10 +15,10 @@ private:
 		Task(JobBaseHub job, size_t thread_count);
 		virtual ~Task();
 
-		bool Stop(DWORD timeout);
+		bool Stop(DWORD timeout = INFINITE);
 		inline bool is_runable() const { return is_runable_.load(); }
 		void Attach(size_t count);
-		bool Deattach(size_t count, DWORD timeout = _default_thread_stop_timeout_);
+		bool Deattach(size_t count, DWORD timeout = INFINITE);
 
 		size_t thread_count() { return thread_que_.size(); }
 
@@ -48,10 +42,10 @@ public:
 	template<typename _Job, typename ..._Tys, is_job<_Job> = nullptr>
 	TaskID AttachTask(size_t thread_count, _Tys&&... Args);
 	TaskID AttachTask(size_t thread_count, JobBaseHub job);
-	bool DeattachTask(TaskID task_id, DWORD timeout = _default_thread_stop_timeout_);
+	bool DeattachTask(TaskID task_id, DWORD timeout = INFINITE);
 	bool change_thread_count(TaskID task_id, size_t thread_count);
 	
-	bool Stop(TaskID task_id, DWORD timeout = _default_thread_stop_timeout_);
+	bool Stop(TaskID task_id, DWORD timeout = INFINITE);
 	
 private:
 	size_t thread_count(TaskID task_id);
@@ -66,11 +60,11 @@ TaskID ThreadManager::AttachTask(size_t thread_count, _Tys&&... Args)
 {
 	std::unique_lock<std::mutex> lock(mtx_);
 
-	auto task_id = alloc_task_id_.fetch_add(1);
+	alloc_task_id_.fetch_add(1);
 	JobBaseHub job = make_wrapper_hub<_Job>(Args...);
 
-	if (tasks_.emplace(task_id, make_wrapper_hub<Task>(job, thread_count)).second == false)
+	if (tasks_.emplace(alloc_task_id_, make_wrapper_hub<Task>(job, thread_count)).second == false)
 		return INVALID_ALLOC_ID;
 
-	return task_id;
+	return alloc_task_id_;
 }
