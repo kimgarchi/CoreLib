@@ -94,7 +94,7 @@ bool SyncStation::DistributeJob::Work()
 
 bool SyncStation::DistributeJob::Prepare(ReservePackageHub& package)
 {
-	auto& tids = package->tids_;
+	const auto& tids = package->tids_;
 	package->handles_.resize(tids.size(), { INVALID_HANDLE_VALUE, } );
 
 	size_t idx = 0;
@@ -133,29 +133,29 @@ bool SyncStation::ReservePackage::Aquire()
 {
 	increase_try_count();
 
-	DWORD handle_count = 0;
-	PHANDLE phandle = nullptr;
-	
-	auto ret = WaitForMultipleObjects(handle_count, phandle, true, WAIT_TIME_ZERO);
-	
-	switch (ret)
-	{
-	case WAIT_TIMEOUT:
-	case WAIT_FAILED:
-		assert(false);
-		return false;
-	}
+	DWORD ret = WAIT_OBJECT_0;
+	const DWORD handle_count = static_cast<DWORD>(handles_.size());
+	PHANDLE phandle = handles_.data();
 
-	if (ret != WAIT_OBJECT_0 + (handle_count))
+	switch (type_)
 	{
-		/*
-		WAIT_OBJECT_ABANDONED
-		handle invalid...
-		*/	
-		assert(false);
-		// temp
-		return false;
-	}
+	case JOB_TYPE::READ:
+		ret = WaitForMultipleObjects(handle_count, phandle, true, WAIT_TIME_ZERO);
+		switch (ret)
+		{
+		case WAIT_OBJECT_0:
+			return job_node_->Work();
+		case WAIT_FAILED:
+			assert(false);
+		case WAIT_TIMEOUT:
+		case WAIT_ABANDONED:
+		default:
+			return false;
+		}
 
-	return true;
+		break;
+	case JOB_TYPE::WRITE:
+		//...
+		break;
+	}
 }

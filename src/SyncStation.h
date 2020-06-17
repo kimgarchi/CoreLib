@@ -48,9 +48,9 @@ private:
 		friend class SyncStation;
 		friend class DistributeJob;
 
-		void increase_try_count() { try_count_ += 1; }
+		inline void increase_try_count() { ++try_count_; }
 		
-		JOB_TYPE type_;
+		const JOB_TYPE type_;
 		TypeIds tids_;
 		Handles handles_;
 		JobBaseNode job_node_;
