@@ -64,11 +64,7 @@ private:
 		virtual bool Work() override;
 
 	private:
-		using HandleWait = std::vector<bool>;
-
 		bool Prepare(ReservePackageHub& package __inout);
-
-		HandleWait handle_wait_;
 
 		HandleByType& handle_by_type_;
 		ReserveJobQue& reserve_job_que_;

@@ -158,4 +158,6 @@ bool SyncStation::ReservePackage::Aquire()
 		//...
 		break;
 	}
+
+	return true;
 }
