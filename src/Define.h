@@ -11,8 +11,12 @@ using TaskID = size_t;
 using TaskIDs = std::vector<TaskID>;
 using ThreadID = HANDLE;
 
-#define DEFINE_WRAPPER_HUB(Type) using Type##Hub = wrapper_hub<Type>
-#define DEFINE_WRAPPER_NODE(Type) using Type##Node = wrapper_node<Type>
+#define DEFINE_WRAPPER_HUB(Type) using Type##Hub = wrapper_hub<Type>;
+#define DEFINE_WRAPPER_NODE(Type) using Type##Node = wrapper_node<Type>;
+
+#define DEFINE_WRAPPER(Type)	\
+	DEFINE_WRAPPER_HUB(Type)	\
+	DEFINE_WRAPPER_NODE(Type)
 
 #define WAIT_TIME_ZERO 0
 

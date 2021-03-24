@@ -1,41 +1,28 @@
 #pragma once
 #include "stdafx.h"
-#include "Job.h"
-
-class CompletionJob;
-class CompletionPort;
-
-DEFINE_WRAPPER_HUB(CompletionJob);
-DEFINE_WRAPPER_NODE(CompletionJob);
-
-DEFINE_WRAPPER_HUB(CompletionPort);
-DEFINE_WRAPPER_NODE(CompletionPort);
-
-class CompletionJob : public JobBase
-{
-public:
-	CompletionJob();
-
-	virtual bool Work(PVOID key, OVERLAPPED& overlapped) abstract;
-
-private:
-	friend class CompletionPort;
-
-	virtual bool Work() override;
-	HANDLE completion_handle_;
-};
+#include "Sock.h"
 
 class CompletionPort : public object
 {
 public:
-	CompletionPort(DWORD thread_count, CompletionJobHub& job_hub);	
+	CompletionPort(SOCKET sock, USHORT port, int wait_que_size, DWORD thread_count);
 	virtual ~CompletionPort();
 
-	inline HANDLE handle() { return completion_port_handle_; }
+	inline const SOCKET sock() { return sock_; }
+	inline const HANDLE comp_port() { return comp_port_; }
+
+	bool AttachSock(IocpSockHub sock_hub);
+	void DeattachSock(SOCKET sock);
+
+	IocpSock* GetIocpSock(SOCKET sock);
 
 private:
-	bool AttachHandle(HANDLE handle, PVOID key);
+	using BindSocks = std::map<SOCKET, IocpSockHub>;
 
-	HANDLE completion_port_handle_;
-	TaskID task_id_;
+	HANDLE comp_port_;
+	SOCKET sock_;
+	SOCKADDR_IN sock_addr_;
+	BindSocks bind_socks_;
 };
+
+DEFINE_WRAPPER(CompletionPort);

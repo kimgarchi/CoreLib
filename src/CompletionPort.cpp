@@ -1,60 +1,52 @@
 #pragma once
 #include "stdafx.h"
 #include "CompletionPort.h"
-#include "ThreadManager.h"
 
-CompletionJob::CompletionJob()
-	: completion_handle_(INVALID_HANDLE_VALUE)
+CompletionPort::CompletionPort(SOCKET sock, USHORT port, int wait_que_size, DWORD thread_count)
+	: sock_(sock), comp_port_(CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, thread_count))
 {
-}
+	sock_addr_.sin_family = AF_INET;
+	sock_addr_.sin_addr.s_addr = htonl(INADDR_ANY);
+	sock_addr_.sin_port = htons(port);
 
-bool CompletionJob::Work()
-{
-	if (completion_handle_ == INVALID_HANDLE_VALUE)
+	if (bind(sock_, (SOCKADDR*)&sock_addr_, sizeof(sock_addr_)) != 0)
 	{
+		//...
 		assert(false);
-		return false;
 	}
 
-	PVOID key = NULL;
-	LPOVERLAPPED overlapped = nullptr;
-	DWORD completion_size = 0;
-
-	auto ret = GetQueuedCompletionStatus(completion_handle_, &completion_size, (PULONG_PTR)&key, &overlapped, INFINITE);
-	if (ret == false)
+	if (listen(sock_, wait_que_size) != 0)
 	{
-		DWORD error_code = GetLastError();
-		// ... show error code
-		return false;
+		//...
+		assert(false);
 	}
-
-	return Work(key, *overlapped);
-}
-
-CompletionPort::CompletionPort(DWORD thread_count, CompletionJobHub& job_hub)
-	: completion_port_handle_(CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, thread_count)), task_id_(INVALID_ALLOC_ID)
-{
-	if (completion_port_handle_ == INVALID_HANDLE_VALUE)
-		throw std::runtime_error("CreateIoCompletionPort Failed");
-
-	job_hub->completion_handle_ = this->completion_port_handle_;
-
-	task_id_ = ThreadManager::GetInstance().AttachTask(thread_count, job_hub);
-	if (task_id_ == INVALID_ALLOC_ID)
-		throw std::runtime_error("CompletionPort Task Attach Failed");
 }
 
 CompletionPort::~CompletionPort()
 {
-	assert(CloseHandle(completion_port_handle_));
-	assert(ThreadManager::GetInstance().DeattachTask(task_id_));	
+	assert(CloseHandle(comp_port_));
 }
 
-bool CompletionPort::AttachHandle(HANDLE handle, PVOID key)
+bool CompletionPort::AttachSock(IocpSockHub sock_hub)
 {
-	auto ret = CreateIoCompletionPort(handle, completion_port_handle_, (ULONG_PTR)(key), 0);
-	if (ret == nullptr || ret != completion_port_handle_)
+	SOCKET sock = sock_hub->sock();
+	HANDLE ret = CreateIoCompletionPort((HANDLE)sock, comp_port_, (ULONG_PTR)(sock), 0);
+	if (ret == INVALID_HANDLE_VALUE)
 		return false;
 
-	return true;
+	return bind_socks_.emplace(sock_hub->sock(), sock_hub).second;
+}
+
+void CompletionPort::DeattachSock(SOCKET sock)
+{
+	bind_socks_.erase(sock);
+}
+
+IocpSock* CompletionPort::GetIocpSock(SOCKET sock)
+{
+	auto itor = bind_socks_.find(sock);
+	if (itor == bind_socks_.end())
+		return nullptr;
+
+	return itor->second.get();
 }

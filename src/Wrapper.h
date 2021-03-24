@@ -316,4 +316,10 @@ _NODISCARD bool operator<=(const wrapper<_Ty>& left, const wrapper<_Ty>& right)
 	return const_cast<wrapper<_Ty>&>(left).get()->priority_value() <= const_cast<wrapper<_Ty>&>(right).get()->priority_value();
 }
 
+template <typename _Ty>
+_NODISCARD bool operator==(const wrapper<_Ty>& left, const wrapper<_Ty>& right)
+{
+	return const_cast<wrapper<_Ty>&>(left).get() == const_cast<wrapper<_Ty>&>(right).get();
+}
+
 #pragma warning (pop)

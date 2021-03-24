@@ -63,6 +63,12 @@
     <Filter Include="source\Thread">
       <UniqueIdentifier>{85fc7525-a870-4eea-a8d1-f5069007cc45}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\Util">
+      <UniqueIdentifier>{212c8ad6-a5ba-4732-8508-3c9b4256f3d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\Socket\ComplePort">
+      <UniqueIdentifier>{f87d7b3d-ced0-47d8-967b-39b194eec223}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CoreLib.rc">
@@ -161,7 +167,16 @@
       <Filter>source\DB\Query</Filter>
     </ClInclude>
     <ClInclude Include="src\CompletionPort.h">
-      <Filter>source\Sync</Filter>
+      <Filter>source\Socket\ComplePort</Filter>
+    </ClInclude>
+    <ClInclude Include="CompletionJob.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DateTime.h">
+      <Filter>source\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Log.h">
+      <Filter>source\Util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -199,7 +214,10 @@
       <Filter>source\DB\Query</Filter>
     </ClCompile>
     <ClCompile Include="src\CompletionPort.cpp">
-      <Filter>source\Sync</Filter>
+      <Filter>source\Socket\ComplePort</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DateTime.cpp">
+      <Filter>source\Util</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

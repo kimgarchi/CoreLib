@@ -13,10 +13,10 @@ Thread::Thread(JobBaseNode job, std::atomic_bool& task_runable)
         }
         catch (...)
         {
-            std::cout << "bad except" << std::endl;
+            assert(false);            
             return false;
         }
-
+        
         return true;
     });
 

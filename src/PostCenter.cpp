@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "PostCenter.h"
 #include "JobStation.h"
+#include "CompletionPort.h"
 
 PostCenter::PostCenter()
 {
@@ -13,38 +14,29 @@ PostCenter::~PostCenter()
 {
 }
 
-PostCenter::CompletionPort::CompletionPort(TaskID task_id, SOCKET sock, USHORT port, int wait_que_size, DWORD thread_count)
-	: task_id_(task_id), sock_(sock), comp_port_(CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, thread_count))
+PostID PostCenter::RecordCompletionPort(SOCK_TYPE type, USHORT port, int wait_que_size, DWORD thread_count)
 {
-	sock_addr_.sin_family = AF_INET;
-	sock_addr_.sin_addr.s_addr = htonl(INADDR_ANY);
-	sock_addr_.sin_port = htons(port);
+	std::unique_lock<std::mutex> lock(mtx_);
+	const auto post_id = alloc_post_id_.fetch_add(1);
+	SOCKET sock = INVALID_SOCKET;
 
-	if (bind(sock_, (SOCKADDR*)&sock_addr_, sizeof(sock_addr_)) != 0)
+	switch (type)
 	{
-		//...
-		assert(false);
+	case SOCK_TYPE::TCP:
+		sock = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+		break;
+	case SOCK_TYPE::UDP:
+		sock = WSASocket(AF_INET, SOCK_DGRAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+		break;
 	}
 
-	if (listen(sock_, wait_que_size) != 0)
-	{
-		//...
-		assert(false);
-	}
-}
+	auto ret = completion_ports_.try_emplace(post_id, sock, port, wait_que_size, thread_count);
+	if (ret.second == false)
+		return INVALID_ALLOC_ID;
 
+	auto& compe_itor = ret.first;
 
-
-bool PostCenter::CompletionPort::AttachSock(SOCKET sock)
-{
-
-	return false;
-}
-
-bool PostCenter::CompletionPort::DeattachSock(SOCKET sock)
-{
-
-	return false;
+	return compe_itor->first;
 }
 
 bool PostCenter::BindSocket(PostID post_id, SOCKET sock)
@@ -55,20 +47,8 @@ bool PostCenter::BindSocket(PostID post_id, SOCKET sock)
 	if (bind_all_socks_.find(sock) != bind_all_socks_.end())
 		return false;
 
-	return false;
-}
+	if (bind_all_socks_.emplace(sock).second == false)
+		return false;
 
-PostCenter::SockAcceptJob::SockAcceptJob(CompletionPort& compe_port)
-	: compe_port_(compe_port)
-{
-}
-
-PostCenter::SockAcceptJob::~SockAcceptJob()
-{
-}
-
-bool PostCenter::SockAcceptJob::Work()
-{
-	
-	return false;
+	return true;
 }

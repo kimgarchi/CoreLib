@@ -1,6 +1,68 @@
 #pragma once
 
+namespace DB_DATA
+{
+	enum class DATA_TYPE
+	{
+		CHAR = 1,
+		NUMERIC,
+		DECIMAL,
+		INTEGER,
+		SMALLINT,
+		FLOAT,
+		REAL,
+		DOUBLE,
+		DATETIME,
+		VARCHAR = 12,
+		DATE = 91,
+		TIME,
+		TIMESTAMP,
+	};
 
+	enum class USAGE_TYPE
+	{
+		DATA_IN,
+		DATA_OUT,
+		DATA_INOUT,
+	};
+
+	struct ColumnOption
+	{
+		ColumnOption(DATA_TYPE data_type, USAGE_TYPE usage_type)
+			: _data_type(data_type), _usage_type(usage_type)
+		{}
+
+		ColumnOption(const ColumnOption& option)
+			: _data_type(option._data_type), _usage_type(option._usage_type)
+		{}
+
+		const DATA_TYPE _data_type;
+		const USAGE_TYPE _usage_type;
+	};
+	/*
+	template<typename _Ty>
+	using column_type_restrict =  typename std::enable_if_t
+		<
+			std::is_same<float, _Ty>::value ||
+			std::is_same<double, _Ty>::value ||
+			std::is_same<BYTE, _Ty>::value ||
+			std::is_same<WORD, _Ty>::value ||
+			std::is_same<std::string, _Ty>::value ||
+			std::is_same<std::wstring, _Ty>::value
+		>*;
+
+	template<typename _Ty, column_type_restrict<_Ty>>
+	struct ColumnData
+	{
+		Column(DB_DATA::ColumnOption option)
+			: _option(option)
+		{}
+
+		DB_DATA::ColumnOption _option;
+
+	};
+	*/
+}
 
 class QueryBase abstract
 {
@@ -18,13 +80,27 @@ private:
 class DynamicQuery : public QueryBase
 {
 public:
-	DynamicQuery() {}
-	virtual ~DynamicQuery() {}
+	struct Column;
+	enum class QUERY_TYPE
+	{
+		QUERY_TYPE_SELECT,
+		QUERY_TYPE_INSERT,
+		QUERY_TYPE_DELETE,
+		QUERY_TYPE_UPDATE
+	};
 
-	virtual bool Execute(bool timeout) override { return true; }
+	DynamicQuery(QUERY_TYPE type, std::wstring table_name);
+	virtual ~DynamicQuery();
 
+	bool RecordColumn(std::wstring column_name, DB_DATA::ColumnOption option);
+
+	virtual bool Execute(bool timeout) override;
 
 private:
+	
+
+	const QUERY_TYPE _type;
+	const std::wstring _table_name;
 };
 
 //SQLExecDirect(sqlStmtHandle, (SQLWCHAR*)L"SELECT seq, id, name, cal FROM SUSA_DT.dbo.TB_USER", SQL_NTS))

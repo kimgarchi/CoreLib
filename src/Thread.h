@@ -11,9 +11,10 @@ public:
 
     bool Stop(DWORD timeout);
 
-private:
+protected:
     bool is_runable() { return task_runable_.load() && local_runable_.load(); }
 
+private:
     JobBaseNode job_;
     std::future<bool> future_;
     std::thread thread_;

@@ -10,12 +10,8 @@ class SocketPool final : public Singleton<SocketPool>
 public:
 	SocketPool()
 	{
-		auto ret = WSAStartup(MAKEWORD(2, 2), &wsa_data_);
-		if (ret != 0)
-		{
-			assert(false);
-			std::exception{};
-		}
+		if (WSAStartup(MAKEWORD(2, 2), &wsa_data_))
+			throw std::runtime_error("WSAStartup Failed");
 	}
 
 	~SocketPool()
