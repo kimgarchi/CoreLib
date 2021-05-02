@@ -16,7 +16,6 @@ PostCenter::~PostCenter()
 
 PostID PostCenter::RecordCompletionPort(SOCK_TYPE type, USHORT port, int wait_que_size, DWORD thread_count)
 {
-	std::unique_lock<std::mutex> lock(mtx_);
 	const auto post_id = alloc_post_id_.fetch_add(1);
 	SOCKET sock = INVALID_SOCKET;
 

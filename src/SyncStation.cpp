@@ -4,20 +4,12 @@
 #include "ThreadManager.h"
 
 SyncStation::SyncStation()
-	: mutex_hub_(make_wrapper_hub<SyncMutex>()), event_hub_(make_wrapper_hub<SyncEvent>()), distribute_task_id_(INVALID_ALLOC_ID)
+	: mutex_hub_(make_wrapper_hub<SyncMutex>()), event_hub_(make_wrapper_hub<SyncEvent>())
 {
-	const size_t single_count = 1;
-	distribute_task_id_ = ThreadManager::GetInstance().AttachTask<DistributeJob>(single_count, std::ref(handle_by_type_), std::ref(reserve_job_que_), mutex_hub_.make_node(), event_hub_.make_node());
-	if (distribute_task_id_ == INVALID_ALLOC_ID)
-	{
-		assert(false);
-		throw std::runtime_error("sync station thread bind failed");
-	}
 }
 
 SyncStation::~SyncStation()
 {
-	assert(ThreadManager::GetInstance().DeattachTask(distribute_task_id_));
 }
 
 HANDLE SyncStation::RecordHandle(TypeID tid, LONG read_job_max_count)
@@ -39,125 +31,4 @@ HANDLE SyncStation::RecordHandle(TypeID tid, LONG read_job_max_count)
 	}
 
 	return sema_hub->handle();
-}
-
-SyncStation::DistributeJob::DistributeJob(HandleByType& handle_by_type, ReserveJobQue& reserve_job_que, SyncMutexNode mutex_node, SyncEventNode event_node)
-	: handle_by_type_(handle_by_type), reserve_job_que_(reserve_job_que), mutex_node_(mutex_node), event_node_(event_node)
-{}
-
-bool SyncStation::DistributeJob::Work()
-{
-	if (event_node_->Lock() == false)
-	{
-		assert(false);
-		return false;
-	}
-
-	{
-		SingleLock single_lock(mutex_node_);
-		while (reserve_job_que_.empty() == false)
-		{
-			auto reserve_job = reserve_job_que_.front();
-
-			for (auto itor = reserve_job->tids_.cbegin(); itor != reserve_job->tids_.cend(); ++itor)
-			{
-				if (handle_by_type_.find(*itor) != handle_by_type_.cend())
-					continue;
-
-				assert(SyncStation::GetInstance().RecordHandle(*itor));
-			}
-
-			wait_job_priority_que_.emplace(reserve_job);
-			reserve_job_que_.pop();
-		}
-	}
-
-	for (size_t i = 0; i < wait_job_priority_que_.size(); ++i)
-	{
-		ReservePackageHub wait_job = wait_job_priority_que_.top();
-		wait_job_priority_que_.pop();
-
-		if (Prepare(std::ref(wait_job)) == false)
-			throw std::runtime_error("reserve package prepare failed");
-		
-		if (wait_job->Aquire() == false)
-		{
-			wait_job_priority_que_.push(wait_job);
-			continue;
-		}
-	}
-
-	assert(event_node_->Release());
-
-	return true;
-}
-
-bool SyncStation::DistributeJob::Prepare(ReservePackageHub& package)
-{
-	const auto& tids = package->tids_;
-	package->handles_.resize(tids.size(), { INVALID_HANDLE_VALUE, } );
-
-	size_t idx = 0;
-	for (auto itor = tids.cbegin(); itor != tids.cend(); ++itor, ++idx)
-	{
-		const auto& tid = *itor;
-		HANDLE handle = INVALID_HANDLE_VALUE;
-		
-		auto type_itor = handle_by_type_.find(tid);
-		if (type_itor == handle_by_type_.end())
-			handle = SyncStation::GetInstance().RecordHandle(tid);
-		
-		if (handle == INVALID_HANDLE_VALUE)
-		{
-			assert(false);
-			return false;
-		}
-
-		package->handles_.at(idx) = handle;
-	}
-
-	return true;
-}
-
-SyncStation::ReservePackage::ReservePackage(JOB_TYPE&& type, TypeIds&& tids, JobBaseNode&& job_node)
-	: type_(type), job_node_(job_node), try_count_(0)
-{		
-}
-
-SyncStation::ReservePackage::~ReservePackage()
-{
-	// Release
-}
-
-bool SyncStation::ReservePackage::Aquire()
-{
-	increase_try_count();
-
-	DWORD ret = WAIT_OBJECT_0;
-	const DWORD handle_count = static_cast<DWORD>(handles_.size());
-	PHANDLE phandle = handles_.data();
-
-	switch (type_)
-	{
-	case JOB_TYPE::READ:
-		ret = WaitForMultipleObjects(handle_count, phandle, true, WAIT_TIME_ZERO);
-		switch (ret)
-		{
-		case WAIT_OBJECT_0:
-			return job_node_->Work();
-		case WAIT_FAILED:
-			assert(false);
-		case WAIT_TIMEOUT:
-		case WAIT_ABANDONED:
-		default:
-			return false;
-		}
-
-		break;
-	case JOB_TYPE::WRITE:
-		//...
-		break;
-	}
-
-	return true;
 }

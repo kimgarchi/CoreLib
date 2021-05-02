@@ -69,6 +69,9 @@
     <Filter Include="source\Socket\ComplePort">
       <UniqueIdentifier>{f87d7b3d-ced0-47d8-967b-39b194eec223}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\Sync\Overlapped">
+      <UniqueIdentifier>{9c48f555-4ec0-4290-bf33-6bc060096b8d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CoreLib.rc">
@@ -169,14 +172,14 @@
     <ClInclude Include="src\CompletionPort.h">
       <Filter>source\Socket\ComplePort</Filter>
     </ClInclude>
-    <ClInclude Include="CompletionJob.h">
-      <Filter>Header</Filter>
-    </ClInclude>
     <ClInclude Include="src\DateTime.h">
       <Filter>source\Util</Filter>
     </ClInclude>
     <ClInclude Include="src\Log.h">
       <Filter>source\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Overlapped.h">
+      <Filter>source\Sync\Overlapped</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

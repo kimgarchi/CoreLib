@@ -2,6 +2,11 @@
 #include "stdafx.h"
 #include "Sock.h"
 
+
+#define ATTACH_TYPE_ACCEPT	0
+#define ATTACH_TYPE_INOUT	1
+
+
 class CompletionPort : public object
 {
 public:
@@ -13,6 +18,8 @@ public:
 
 	bool AttachSock(IocpSockHub sock_hub);
 	void DeattachSock(SOCKET sock);
+
+	bool AttachKey(BYTE type, PVOID key);
 
 	IocpSock* GetIocpSock(SOCKET sock);
 

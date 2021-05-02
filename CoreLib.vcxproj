@@ -75,6 +75,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>..\..\cppConsole\cppConsole\x64\Debug\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -154,7 +155,6 @@
     <ResourceCompile Include="CoreLib.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CompletionJob.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\CallBack.h" />
     <ClInclude Include="src\CompletionPort.h" />
@@ -171,6 +171,7 @@
     <ClInclude Include="src\ObjectPool.h" />
     <ClInclude Include="src\ObjectStation.h" />
     <ClInclude Include="src\ODBC.h" />
+    <ClInclude Include="src\Overlapped.h" />
     <ClInclude Include="src\PostCenter.h" />
     <ClInclude Include="src\DBColumn.h" />
     <ClInclude Include="src\Query.h" />

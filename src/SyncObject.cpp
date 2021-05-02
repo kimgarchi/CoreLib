@@ -70,15 +70,9 @@ SyncEvent::~SyncEvent()
 {
 }
 
+
 DWORD SyncEvent::Lock(DWORD timeout)
 {
-	/*
-	assert(is_menual_reset_ == false ? true : ResetEvent(handle()));
-
-	event menual... dif?
-
-	*/
-	
 	return SyncHandle::Lock(timeout);
 }
 
@@ -112,17 +106,8 @@ bool LockBase::Release()
 	return _Release();
 }
 
-SingleLock::SingleLock(SyncMutexHub& hub, bool immediate_lock)
-	: mutex_node_(hub.make_node())
-{
-	if (immediate_lock == false)
-		return;
-
-	assert(Lock());
-}
-
-SingleLock::SingleLock(SyncMutexNode& node, bool immediate_lock)
-	: mutex_node_(node)
+SingleLock::SingleLock(SyncMutex& sync_mutex, bool immediate_lock)
+	: sync_mutex_(sync_mutex)
 {
 	if (immediate_lock == false)
 		return;
@@ -138,7 +123,7 @@ SingleLock::~SingleLock()
 bool SingleLock::_Lock(DWORD timeout)
 {
 	assert(signaled_count_ == 0);
-	DWORD ret = mutex_node_->Lock(timeout);
+	DWORD ret = sync_mutex_.Lock(timeout);
 	switch (ret)
 	{	
 	case WAIT_ABANDONED:
@@ -166,7 +151,7 @@ bool SingleLock::_SpinLock(DWORD timeout)
 
 bool SingleLock::_Release()
 {
-	auto ret = mutex_node_->Release();
+	auto ret = sync_mutex_.Release();
 	if (ret == false)
 		assert(ret);
 	else
@@ -183,17 +168,8 @@ bool SingleLock::_Destory()
 	return true;
 }
 
-MultiLock::MultiLock(SyncSemaphoreHub& hub, bool immediate_lock)
-	: semaphore_node_(hub.make_node())
-{
-	if (immediate_lock == false)
-		return;
-
-	assert(Lock());
-}
-
-MultiLock::MultiLock(SyncSemaphoreNode& node, bool immediate_lock)
-	: semaphore_node_(node)
+MultiLock::MultiLock(SyncSemaphore& sync_semaphore, bool immediate_lock)
+	: sync_semaphore_(sync_semaphore)
 {
 	if (immediate_lock == false)
 		return;
@@ -208,7 +184,7 @@ MultiLock::~MultiLock()
 
 bool MultiLock::_Lock(DWORD timeout)
 {
-	DWORD ret = semaphore_node_->Lock(timeout);
+	DWORD ret = sync_semaphore_.Lock(timeout);
 	if (ret == WAIT_OBJECT_0)
 		return true;
 	
@@ -231,7 +207,7 @@ bool MultiLock::_SpinLock(DWORD timeout)
 
 bool MultiLock::_Release()
 {
-	auto ret = semaphore_node_->Release();
+	auto ret = sync_semaphore_.Release();
 	if (ret == false)
 		assert(false);
 	else
@@ -254,7 +230,7 @@ bool MultiLock::_Destory()
 
 bool MultiLock::_Release(LONG& prev_count, LONG release_count)
 {
-	auto ret = semaphore_node_->_Release(std::ref(prev_count), release_count);
+	auto ret = sync_semaphore_._Release(std::ref(prev_count), release_count);
 	if (ret == false)
 		assert(false);
 	else
@@ -263,12 +239,8 @@ bool MultiLock::_Release(LONG& prev_count, LONG release_count)
 	return ret;
 }
 
-RWLock::RWLock(SyncSemaphoreHub& semaphore_hub)
-	: MultiLock(semaphore_hub)
-{}
-
-RWLock::RWLock(SyncSemaphoreNode& semaphore_node)
-	: MultiLock(semaphore_node)
+RWLock::RWLock(SyncSemaphore& sync_semaphore)
+	: MultiLock(sync_semaphore)
 {}
 
 RWLock::~RWLock()

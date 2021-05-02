@@ -104,7 +104,6 @@ protected:
 	virtual bool _SpinLock(DWORD timeout) abstract;
 	virtual bool _Release() abstract;
 	virtual bool _Destory() abstract;
-	virtual HANDLE handle() abstract;
 
 	LONG signaled_count_;
 };
@@ -112,9 +111,7 @@ protected:
 class SingleLock : public LockBase
 {
 public:
-	SingleLock(SyncMutexHub& hub, bool immediate_lock = true);
-	SingleLock(SyncMutexNode& node, bool immediate_lock = true);
-
+	SingleLock(SyncMutex& sync_mutex, bool immediate_lock = true);
 	virtual ~SingleLock();
 
 protected:
@@ -122,19 +119,16 @@ protected:
 	virtual bool _SpinLock(DWORD timeout) override;
 	virtual bool _Release() override;
 	virtual bool _Destory() override;
-
-	virtual HANDLE handle() override { return mutex_node_->handle(); }
 	
 private:
-	SyncMutexNode mutex_node_;
+	SyncMutex& sync_mutex_;
 };
 
 class MultiLock : public LockBase
 {
 public:
-	MultiLock(SyncSemaphoreHub& hub, bool immediate_lock = true);
-	MultiLock(SyncSemaphoreNode& node, bool immediate_lock = true);
-
+	MultiLock(SyncSemaphore& sync_semaphore, bool immediate_lock = true);
+	MultiLock(const MultiLock&) = delete;
 	virtual ~MultiLock();
 
 protected:
@@ -143,20 +137,18 @@ protected:
 	virtual bool _Release() override;
 	virtual bool _Destory() override;
 
-	virtual HANDLE handle() override { return semaphore_node_->handle(); }
-
 	bool _Release(LONG& prev_count __out, LONG release_count = 1);
-	LONG max_count() { return semaphore_node_->max_count(); }
+	LONG max_count() { return sync_semaphore_.max_count(); }
 
 private:
-	SyncSemaphoreNode semaphore_node_;
+	SyncSemaphore& sync_semaphore_;
 };
 
 class RWLock : public MultiLock
 {
 public:
-	RWLock(SyncSemaphoreHub& semaphore_hub);
-	RWLock(SyncSemaphoreNode& semaphore_node);
+	RWLock(SyncSemaphore& sync_semaphore);
+	RWLock(const RWLock&) = delete;
 
 	virtual ~RWLock();
 
@@ -169,12 +161,3 @@ public:
 private:
 	friend class SyncStation;
 };
-
-DEFINE_WRAPPER_HUB(SingleLock);
-DEFINE_WRAPPER_NODE(SingleLock);
-
-DEFINE_WRAPPER_HUB(MultiLock);
-DEFINE_WRAPPER_NODE(MultiLock);
-
-DEFINE_WRAPPER_HUB(RWLock);
-DEFINE_WRAPPER_NODE(RWLock);

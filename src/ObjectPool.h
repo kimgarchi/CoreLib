@@ -108,8 +108,8 @@ private:
 	};
 	
 	using ObjectCount = std::atomic_size_t;
-	using Chunks = std::map<AllocID, SegmentPool>;
-	using Objects = std::map<void*, AllocID>;
+	using Chunks = std::unordered_map<AllocID, SegmentPool>;
+	using Objects = std::map<PVOID, AllocID>;
 
 public:
 	ObjectPool(const ObjectPool<_Ty>&) = delete;
@@ -153,16 +153,17 @@ public:
 		if (alloc_id == INVALID_ALLOC_ID || object == nullptr)
 			return nullptr;
 
-		if (object != nullptr)
-			alloc_objects_.emplace(object, alloc_id);
-		else
-			assert(false);
-
 		sub_object_count(1);
+
+		if (object != nullptr)
+		{
+			assert(alloc_objects_.emplace(object, alloc_id).second);
+			return object;
+		}
 		
 		TryExtend();
 
-		return object;		
+		return Pop(Args...);
 	}
 
 private:

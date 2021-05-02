@@ -42,5 +42,4 @@ private:
 	AttachJobs attach_jobs_;
 
 	std::atomic<PostID> alloc_post_id_;
-	std::mutex mtx_;
 };
