@@ -6,6 +6,7 @@
 #define ATTACH_TYPE_ACCEPT	0
 #define ATTACH_TYPE_INOUT	1
 
+#define ACCEPT_RECV_SIZE 16
 
 class CompletionPort : public object
 {
@@ -23,6 +24,9 @@ public:
 
 	IocpSock* GetIocpSock(SOCKET sock);
 
+	void InitFunc();
+	void ExtendSocketPool(size_t count);
+
 private:
 	using BindSocks = std::map<SOCKET, IocpSockHub>;
 
@@ -30,6 +34,9 @@ private:
 	SOCKET sock_;
 	SOCKADDR_IN sock_addr_;
 	BindSocks bind_socks_;
+
+	LPFN_ACCEPTEX pfn_acceptex_;
+	LPFN_DISCONNECTEX pfn_disconnectex_;
 };
 
 DEFINE_WRAPPER(CompletionPort);

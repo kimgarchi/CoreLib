@@ -36,9 +36,6 @@
     <Filter Include="source\DesignPattern">
       <UniqueIdentifier>{5c4d300b-bd49-4290-a40a-429c27656c9a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\Msg">
-      <UniqueIdentifier>{351469e2-65e3-420a-8ccc-421956706d22}</UniqueIdentifier>
-    </Filter>
     <Filter Include="source\Job">
       <UniqueIdentifier>{59580497-2a79-42be-96a4-b8a206785ce3}</UniqueIdentifier>
     </Filter>
@@ -72,6 +69,12 @@
     <Filter Include="source\Sync\Overlapped">
       <UniqueIdentifier>{9c48f555-4ec0-4290-bf33-6bc060096b8d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\Socket\SockJob">
+      <UniqueIdentifier>{7faa03a1-3c89-4ff7-96ce-220a223fc690}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\Message">
+      <UniqueIdentifier>{351469e2-65e3-420a-8ccc-421956706d22}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CoreLib.rc">
@@ -91,8 +94,8 @@
     <ClInclude Include="src\Job.h">
       <Filter>source\Job</Filter>
     </ClInclude>
-    <ClInclude Include="src\Msg.h">
-      <Filter>source\Msg</Filter>
+    <ClInclude Include="src\Message.h">
+      <Filter>source\Message</Filter>
     </ClInclude>
     <ClInclude Include="src\stdafx.h">
       <Filter>Header</Filter>
@@ -181,6 +184,9 @@
     <ClInclude Include="src\Overlapped.h">
       <Filter>source\Sync\Overlapped</Filter>
     </ClInclude>
+    <ClInclude Include="src\MessageQueue.h">
+      <Filter>Header</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\SyncStation.cpp">
@@ -221,6 +227,10 @@
     </ClCompile>
     <ClCompile Include="src\DateTime.cpp">
       <Filter>source\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MessageQueue.cpp" />
+    <ClCompile Include="src\ObjectPool.hpp">
+      <Filter>source\Object\Pool</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

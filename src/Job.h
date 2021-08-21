@@ -1,21 +1,11 @@
 #pragma once
 #include "stdafx.h"
-#include "SyncObject.h"
-
-enum class JOB_TYPE
-{
-	READ,
-	WRITE
-};
+#include "Object.h"
 
 class JobBase abstract : public object
 {
 public:
 	virtual bool Execute() abstract;
-
-protected:
-	//virtual bool commit() abstract;
-	//virtual bool rollback() abstract;
 };
 
 template<typename _Ty>

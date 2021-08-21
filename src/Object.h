@@ -30,7 +30,7 @@ private:
 	template<typename _Ty>
 	friend class wrapper;
 
-	template<typename _Ty, is_object<_Ty> = nullptr>
+	template<typename _Ty, is_object<_Ty>>
 	friend class ObjectPool;
 
 	void* operator new (size_t size, void* ptr)

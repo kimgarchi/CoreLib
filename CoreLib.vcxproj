@@ -166,7 +166,8 @@
     <ClInclude Include="src\JobStation.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\Logger.h" />
-    <ClInclude Include="src\Msg.h" />
+    <ClInclude Include="src\Message.h" />
+    <ClInclude Include="src\MessageQueue.h" />
     <ClInclude Include="src\Object.h" />
     <ClInclude Include="src\ObjectPool.h" />
     <ClInclude Include="src\ObjectStation.h" />
@@ -195,6 +196,8 @@
     <ClCompile Include="src\DateTime.cpp" />
     <ClCompile Include="src\DBTable.cpp" />
     <ClCompile Include="src\JobStation.cpp" />
+    <ClCompile Include="src\MessageQueue.cpp" />
+    <ClCompile Include="src\ObjectPool.hpp" />
     <ClCompile Include="src\ODBC.cpp" />
     <ClCompile Include="src\PostCenter.cpp" />
     <ClCompile Include="src\DBColumn.cpp" />
