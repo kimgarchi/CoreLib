@@ -2,9 +2,6 @@
 #include "stdafx.h"
 #include "object.h"
 
-#ifndef CLASSA_H
-#define CLASSA_H
-
 #pragma warning (push)
 #pragma warning (disable : 4291)
 #pragma warning (disable : 4348)
@@ -25,7 +22,7 @@ protected:
 	virtual void Clear() abstract;
 };
 
-template<typename _Ty, is_object<_Ty>>
+template<typename _Ty, is_object_base<_Ty> = nullptr>
 class ObjectPool final : public ObjectPoolBase
 {
 private:	
@@ -269,7 +266,3 @@ private:
 	Chunks chunks_;
 	Objects alloc_objects_;
 };
-
-#include "ObjectPool.hpp"
-
-#endif

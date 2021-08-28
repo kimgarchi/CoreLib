@@ -197,7 +197,6 @@
     <ClCompile Include="src\DBTable.cpp" />
     <ClCompile Include="src\JobStation.cpp" />
     <ClCompile Include="src\MessageQueue.cpp" />
-    <ClCompile Include="src\ObjectPool.hpp" />
     <ClCompile Include="src\ODBC.cpp" />
     <ClCompile Include="src\PostCenter.cpp" />
     <ClCompile Include="src\DBColumn.cpp" />

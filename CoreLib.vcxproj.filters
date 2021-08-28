@@ -229,8 +229,5 @@
       <Filter>source\Util</Filter>
     </ClCompile>
     <ClCompile Include="src\MessageQueue.cpp" />
-    <ClCompile Include="src\ObjectPool.hpp">
-      <Filter>source\Object\Pool</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>

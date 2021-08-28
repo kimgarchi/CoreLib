@@ -83,7 +83,7 @@ public:
 		return object_pool->Pop(Args...);
 	}
 
-	template<typename _Ty, is_object<_Ty> = nullptr>
+	template<typename _Ty, is_object_base<_Ty> = nullptr>
 	bool Push(_Ty*& object, TypeID type_id)
 	{
 		

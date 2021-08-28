@@ -12,27 +12,21 @@
 
 const static size_t default_stack_depth_ = 32;
 using Hash = ULONG;
-using Stacks = std::vector<void*>;
-
-class CallStack;
-class CallStackGroup;
-using vPtr = void*;
-using vPtrNode = std::map<vPtr, Hash>;
-using vPtrs = std::set<vPtr>;
-using CallStackByHash = std::map<Hash, CallStack>;
-using StackTrace = std::map<TypeID, CallStackGroup>;
+using Stacks = std::vector<PVOID>;
+using vPtrNode = std::map<PVOID, Hash>;
+using vPtrs = std::set<PVOID>;
 
 class CallStack
 {
 public:
-	CallStack(const Stacks& stacks, vPtr ptr)
+	CallStack(const Stacks& stacks, PVOID ptr)
 		: stacks_(stacks)
 	{
 		assert(Attach(ptr));
 	}
 
-	inline bool Attach(vPtr ptr) { return vptrs_.emplace(ptr).second; }
-	inline bool Deattach(vPtr ptr) { return static_cast<bool>(vptrs_.erase(ptr)); }
+	inline bool Attach(PVOID ptr) { return vptrs_.emplace(ptr).second; }
+	inline bool Deattach(PVOID ptr) { return static_cast<bool>(vptrs_.erase(ptr)); }
 
 private:
 	const Stacks stacks_;
@@ -42,14 +36,14 @@ private:
 class CallStackGroup
 {
 public:
-	CallStackGroup(const std::wstring& type_name, const Hash& hash, const Stacks& stacks, vPtr ptr)
+	CallStackGroup(const std::wstring& type_name, const Hash& hash, const Stacks& stacks, PVOID ptr)
 		: type_name_(type_name)
 	{
 		assert(vptr_node_.emplace(ptr, hash).second);
 		assert(callstack_by_hash_.emplace(hash, CallStack(stacks, ptr)).second);
 	}
 
-	bool Attach(const Hash& hash, const Stacks& stacks, vPtr ptr)
+	bool Attach(const Hash& hash, const Stacks& stacks, PVOID ptr)
 	{
 		if (vptr_node_.emplace(ptr, hash).second == false)
 		{
@@ -64,7 +58,7 @@ public:
 		return itor->second.Attach(ptr);
 	}
 
-	bool Deattach(vPtr ptr)
+	bool Deattach(PVOID ptr)
 	{
 		if (vptr_node_.find(ptr) == vptr_node_.end())
 		{
@@ -84,7 +78,7 @@ public:
 
 private:
 	const std::wstring type_name_;
-	CallStackByHash callstack_by_hash_;
+	std::map<Hash, CallStack> callstack_by_hash_;
 	vPtrNode vptr_node_;
 };
 
@@ -102,7 +96,7 @@ class wrapper_node;
 class ObjectProvider : public Singleton<ObjectProvider>
 {
 public:
-	template <typename _Ty, typename ..._Tys, is_object<_Ty> = nullptr>
+	template <typename _Ty, typename ..._Tys, is_object_base<_Ty> = nullptr>
 	_Ty* Lend(_Tys&&... Args)
 	{
 		if (ObjectStation::GetInstance().IsBinding<_Ty>() == false)
@@ -120,11 +114,11 @@ public:
 		return object;
 	}
 
-	template<typename _Ty, is_object<_Ty> = nullptr>
+	template<typename _Ty, is_object_base<_Ty> = nullptr>
 	void Refund(_Ty*& data, TypeID type_id)
 	{
 #ifdef _DEBUG
-		assert(DeattachCallStack(static_cast<vPtr>(data), type_id));
+		assert(DeattachCallStack(static_cast<PVOID>(data), type_id));
 #endif
 		if (ObjectStation::GetInstance().Push<_Ty>(data, type_id) == false)
 			assert(false);
@@ -133,7 +127,7 @@ public:
 #ifdef _DEBUG
 private:
 	template<typename _Ty>
-	bool AttachCallStack(const Hash& hash, const Stacks& stacks, vPtr ptr)
+	bool AttachCallStack(const Hash& hash, const Stacks& stacks, PVOID ptr)
 	{
 		TypeID tid = typeid(_Ty).hash_code();
 		auto name = std::string(typeid(_Ty).name());
@@ -146,7 +140,7 @@ private:
 		return stack_trace_.at(tid).Attach(hash, stacks, ptr);
 	}
 
-	bool DeattachCallStack(const vPtr ptr, TypeID type_id)
+	bool DeattachCallStack(const PVOID ptr, TypeID type_id)
 	{
 		if (stack_trace_.find(type_id) == stack_trace_.end())
 			return false;
@@ -154,7 +148,7 @@ private:
 		return stack_trace_.at(type_id).Deattach(ptr);
 	}
 
-	StackTrace stack_trace_;
+	std::map<TypeID, CallStackGroup> stack_trace_;
 #endif
 };
 

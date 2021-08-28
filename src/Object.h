@@ -4,14 +4,10 @@
 class object;
 
 template<typename _Ty>
-using is_object = typename std::enable_if_t<std::is_base_of_v<object, _Ty>, _Ty>*;
+using is_object_base = typename std::enable_if_t<std::is_base_of_v<object, _Ty>, _Ty>*;
 
 template<typename _Ty>
 class wrapper;
-
-using Count = std::atomic_size_t;
-using AllocID = size_t;
-using TypeID = size_t;
 
 class object abstract
 {
@@ -30,7 +26,7 @@ private:
 	template<typename _Ty>
 	friend class wrapper;
 
-	template<typename _Ty, is_object<_Ty>>
+	template<typename _Ty, is_object_base<_Ty>>
 	friend class ObjectPool;
 
 	void* operator new (size_t size, void* ptr)

@@ -10,6 +10,10 @@ using CondVar = std::condition_variable;
 using TaskID = size_t;
 using TaskIDs = std::vector<TaskID>;
 using ThreadID = HANDLE;
+using AllocID = size_t;
+using TypeID = size_t;
+using Count = std::atomic_size_t;
+
 
 #define DEFINE_WRAPPER_HUB(Type) using Type##Hub = wrapper_hub<Type>;
 #define DEFINE_WRAPPER_NODE(Type) using Type##Node = wrapper_node<Type>;
