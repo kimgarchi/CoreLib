@@ -15,12 +15,6 @@
     <Filter Include="source\Object">
       <UniqueIdentifier>{245c77e2-250d-49b2-8c61-54904add3c55}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\Object\Wrapper">
-      <UniqueIdentifier>{0992d025-27a2-4c36-963c-1b8b982c04d2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="source\Object\Pool">
-      <UniqueIdentifier>{79764562-3479-45c7-bb3d-7648bf674267}</UniqueIdentifier>
-    </Filter>
     <Filter Include="source\Object\Station">
       <UniqueIdentifier>{463d4501-d86d-4cff-8e9b-85b4e17a4182}</UniqueIdentifier>
     </Filter>
@@ -75,6 +69,15 @@
     <Filter Include="source\Message">
       <UniqueIdentifier>{351469e2-65e3-420a-8ccc-421956706d22}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\Resource">
+      <UniqueIdentifier>{9c51b80f-ede1-4c27-bde5-afb614655eb7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\Resource\Memory">
+      <UniqueIdentifier>{79764562-3479-45c7-bb3d-7648bf674267}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\Resource\Allocator">
+      <UniqueIdentifier>{f68ca9a7-420d-4b30-9611-6051f982335d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CoreLib.rc">
@@ -84,12 +87,6 @@
   <ItemGroup>
     <ClInclude Include="resource.h">
       <Filter>Header</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Wrapper.h">
-      <Filter>source\Object\Wrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Object.h">
-      <Filter>source\Object\Wrapper</Filter>
     </ClInclude>
     <ClInclude Include="src\Job.h">
       <Filter>source\Job</Filter>
@@ -125,10 +122,7 @@
       <Filter>source\Logger</Filter>
     </ClInclude>
     <ClInclude Include="src\ObjectPool.h">
-      <Filter>source\Object\Pool</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ObjectStation.h">
-      <Filter>source\Object\Station</Filter>
+      <Filter>source\Resource\Memory</Filter>
     </ClInclude>
     <ClInclude Include="src\SocketBase.h">
       <Filter>source\Socket</Filter>
@@ -187,6 +181,15 @@
     <ClInclude Include="src\MessageQueue.h">
       <Filter>Header</Filter>
     </ClInclude>
+    <ClInclude Include="src\ObjectChunk.h">
+      <Filter>source\Resource\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MemoryManager.h">
+      <Filter>source\Resource\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MemAllocator.h">
+      <Filter>source\Resource\Allocator</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\SyncStation.cpp">
@@ -229,5 +232,6 @@
       <Filter>source\Util</Filter>
     </ClCompile>
     <ClCompile Include="src\MessageQueue.cpp" />
+    <ClCompile Include="AllocatorBase.cpp" />
   </ItemGroup>
 </Project>

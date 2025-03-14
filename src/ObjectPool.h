@@ -1,6 +1,6 @@
 #pragma once
 #include "stdafx.h"
-#include "object.h"
+#include "ObjectChunk.h"
 
 #pragma warning (push)
 #pragma warning (disable : 4291)
@@ -11,107 +11,29 @@
 #define INVALID_ALLOC_ID 0
 #define INIT_ALLOC_ID 1
 
-#define MEGA_BYTE_TO_BYTE 1048576
-
-class ObjectPoolBase abstract
+class MemoryPoolBase abstract
 {
 protected:
-	friend class ObjectStation;
+	friend class MemoryManager;
 
 	virtual bool Push(void* ptr) abstract;
 	virtual void Clear() abstract;
 };
 
-template<typename _Ty, is_object_base<_Ty> = nullptr>
-class ObjectPool final : public ObjectPoolBase
+template<typename _Ty>
+class ObjectPool final : public MemoryPoolBase
 {
-private:	
-	class SegmentPool final
-	{
-	private:
-		using Location = size_t;
-		using MemQue = std::queue<void*>;
-		using AllocMems = std::map<void*, Location>;
-
-	public:
-		SegmentPool(size_t obj_cnt)
-			: obj_cnt_(obj_cnt), m_ptr_(nullptr), alloc_size_(sizeof(_Ty)* obj_cnt)
-		{
-			m_ptr_ = alloc_size_ >= MEGA_BYTE_TO_BYTE ?
-				HeapAlloc(GetProcessHeap(), HEAP_GENERATE_EXCEPTIONS, alloc_size_) : std::malloc(alloc_size_);
-
-			if (m_ptr_ == nullptr)
-				throw std::runtime_error("malloc failed");
-
-			size_t forward_step = 0;
-			for (auto idx = 0; idx < obj_cnt_; ++idx)
-			{
-				auto ptr = static_cast<_Ty*>(m_ptr_) + idx;
-				alloc_mems_.emplace(ptr, idx);
-				mem_que_.emplace(ptr);
-			}
-		}
-
-		~SegmentPool()
-		{
-			while (!mem_que_.empty()) mem_que_.pop();
-
-			alloc_mems_.clear();
-
-			if (alloc_size_ >= MEGA_BYTE_TO_BYTE)
-				HeapFree(GetProcessHeap(), NULL, m_ptr_);
-			else
-				std::free(m_ptr_);
-			m_ptr_ = nullptr;
-		}
-
-		bool UnusedPool() { return (mem_que_.size() == obj_cnt_) ? true : false; }
-		bool Empty() { return mem_que_.empty(); }
-
-		template<typename ..._Tys>
-		_Ty* Pop(_Tys&&... Args)
-		{
-			if (mem_que_.empty())
-				return nullptr;
-
-			void* ptr = mem_que_.front();
-			if (ptr == nullptr)
-				throw std::runtime_error("mem que nullptr");
-
-			_Ty* object = new (ptr)_Ty(std::forward<_Tys>(Args)...);
-			if (object == nullptr)
-				throw std::runtime_error("new failed");
-
-			mem_que_.pop();
-
-			return object;
-		}
-
-		bool Push(void* ptr)
-		{
-			if (alloc_mems_.find(ptr) == alloc_mems_.end())
-				return false;
-
-			delete (_Ty*)ptr;
-			mem_que_.emplace(ptr);
-			
-			return true;
-		}
-
-	private:
-		size_t obj_cnt_;
-		size_t alloc_size_;
-		void* m_ptr_;
-
-		AllocMems alloc_mems_;
-		MemQue mem_que_;
-	};
-	
+public:
 	using ObjectCount = std::atomic_size_t;
-	using Chunks = std::unordered_map<AllocID, SegmentPool>;
+	using ObjectChunks = std::unordered_map<AllocID, ObjectChunk>;
 	using Objects = std::map<PVOID, AllocID>;
 
-public:
+	ObjectPool(size_t segment_object_cnt, float extend_remain_rate)
+		: assign_alloc_id_(INIT_ALLOC_ID), segment_object_cnt_(segment_object_cnt), extend_remain_rate_(extend_remain_rate)
+	{
+		AllocChunk();
+	}
+
 	ObjectPool(const ObjectPool<_Ty>&) = delete;
 	void operator=(const ObjectPool<_Ty>&) = delete;
 
@@ -142,12 +64,12 @@ public:
 
 		for (auto& chunk : chunks_)
 		{
-			SegmentPool& segment_pool = chunk.second;
-			if (segment_pool.Empty())
+			ObjectChunk& memory_chunk = chunk.second;
+			if (memory_chunk.Empty())
 				continue;
 
 			alloc_id = chunk.first;
-			object = segment_pool.Pop(Args...);
+			object = memory_chunk.Pop(Args...);
 		}
 
 		if (alloc_id == INVALID_ALLOC_ID || object == nullptr)
@@ -166,15 +88,7 @@ public:
 		return Pop(Args...);
 	}
 
-private:
-	friend class ObjectStation;
-
-	ObjectPool(size_t segment_object_cnt, float extend_remain_rate)
-		: assign_alloc_id_(INIT_ALLOC_ID), segment_object_cnt_(segment_object_cnt), extend_remain_rate_(extend_remain_rate)
-	{
-		AllocChunk();
-	}
-
+private:	
 	AllocID AssignAllocID() { return assign_alloc_id_++; }
 
 	virtual void Clear() override
@@ -223,7 +137,7 @@ private:
 		if (itor == chunks_.end())
 			return false;
 
-		SegmentPool& segment_pool = itor->second;
+		ObjectChunk& segment_pool = itor->second;
 		if (segment_pool.Push(ptr) == false)
 			return false;
 
@@ -263,6 +177,6 @@ private:
 	ObjectCount object_count_;
 
 	AllocID assign_alloc_id_;
-	Chunks chunks_;
+	ObjectChunks chunks_;
 	Objects alloc_objects_;
 };

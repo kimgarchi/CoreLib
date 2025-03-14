@@ -42,7 +42,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -166,11 +166,12 @@
     <ClInclude Include="src\JobStation.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\Logger.h" />
+    <ClInclude Include="src\MemAllocator.h" />
+    <ClInclude Include="src\ObjectChunk.h" />
     <ClInclude Include="src\Message.h" />
     <ClInclude Include="src\MessageQueue.h" />
-    <ClInclude Include="src\Object.h" />
     <ClInclude Include="src\ObjectPool.h" />
-    <ClInclude Include="src\ObjectStation.h" />
+    <ClInclude Include="src\MemoryManager.h" />
     <ClInclude Include="src\ODBC.h" />
     <ClInclude Include="src\Overlapped.h" />
     <ClInclude Include="src\PostCenter.h" />
@@ -188,10 +189,10 @@
     <ClInclude Include="src\ThreadManager.h" />
     <ClInclude Include="src\Util.h" />
     <ClInclude Include="src\Worker.h" />
-    <ClInclude Include="src\Wrapper.h" />
     <ClInclude Include="src\SyncStation.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AllocatorBase.cpp" />
     <ClCompile Include="src\CompletionPort.cpp" />
     <ClCompile Include="src\DateTime.cpp" />
     <ClCompile Include="src\DBTable.cpp" />
