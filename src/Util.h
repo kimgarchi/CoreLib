@@ -1,12 +1,11 @@
 #pragma once
 #include "stdafx.h"
-#include "singleton.h"
 
 #pragma warning (push)
 #pragma warning (disable : 26444)
 
 using TypeIds = std::set<size_t>;
-class TypeHarvest : public Singleton<TypeHarvest>
+class TypeHarvest
 {
 public:
 	template<typename ..._Tys>

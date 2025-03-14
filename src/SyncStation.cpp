@@ -4,25 +4,28 @@
 #include "ThreadManager.h"
 
 SyncStation::SyncStation()
-	: mutex_hub_(make_wrapper_hub<SyncMutex>()), event_hub_(make_wrapper_hub<SyncEvent>())
+	//: mutex_ptr_(allocate_shared<SyncMutex>()), event_ptr_(allocate_shared<SyncEvent>())
+	: mutex_ptr_(std::make_shared<SyncMutex>()), event_ptr_(std::make_shared<SyncEvent>())
 {
+	assert(mutex_ptr_);
+	assert(event_ptr_);
 }
 
 SyncStation::~SyncStation()
 {
 }
 
-HANDLE SyncStation::RecordHandle(TypeID tid, LONG read_job_max_count)
+HANDLE SyncStation::RecordHandle(std::type_index type_idx, LONG read_job_max_count)
 {
-	if (handle_by_type_.find(tid) != handle_by_type_.end())
+	if (handle_by_type_.find(type_idx) != handle_by_type_.end())
 	{
 		assert(false);
 		return INVALID_HANDLE_VALUE;
 	}
 	
 	auto array_idx = handle_by_type_.size() + 1;
-	auto sema_hub = make_wrapper_hub<SyncSemaphore>(read_job_max_count);
-	auto ret = handle_by_type_.emplace(tid, sema_hub);
+	auto semaphore_ptr = std::make_shared<SyncSemaphore>(read_job_max_count); //allocate_shared<SyncSemaphore>(read_job_max_count);
+	auto ret = handle_by_type_.emplace(type_idx, semaphore_ptr);
 	
 	if (ret.second == false)
 	{
@@ -30,5 +33,5 @@ HANDLE SyncStation::RecordHandle(TypeID tid, LONG read_job_max_count)
 		return INVALID_HANDLE_VALUE;
 	}
 
-	return sema_hub->handle();
+	return semaphore_ptr->handle();
 }

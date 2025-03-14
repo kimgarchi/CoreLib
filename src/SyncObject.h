@@ -8,7 +8,7 @@ enum class SYNC_STATE
 	FULL_LOCK,
 };
 
-class SyncHandle abstract : public object
+class SyncHandle abstract
 {
 public:
 	SyncHandle(HANDLE handle);
@@ -76,19 +76,7 @@ private:
 	BOOL init_state_;
 };
 
-DEFINE_WRAPPER_HUB(SyncHandle);
-DEFINE_WRAPPER_NODE(SyncHandle);
-
-DEFINE_WRAPPER_HUB(SyncMutex);
-DEFINE_WRAPPER_NODE(SyncMutex);
-
-DEFINE_WRAPPER_HUB(SyncSemaphore);
-DEFINE_WRAPPER_NODE(SyncSemaphore);
-
-DEFINE_WRAPPER_HUB(SyncEvent);
-DEFINE_WRAPPER_NODE(SyncEvent);
-
-class LockBase abstract : public object
+class LockBase abstract
 {
 public:
 	LockBase(const LockBase&) = delete;

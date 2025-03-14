@@ -1,11 +1,10 @@
 #pragma once
 #include "stdafx.h"
-#include "singleton.h"
 #include <WinSock2.h>
 
 #pragma comment(lib, "ws2_32.lib")
 
-class SocketPool final : public Singleton<SocketPool>
+class SocketPool final
 {
 public:
 	SocketPool()

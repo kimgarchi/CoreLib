@@ -8,7 +8,7 @@
 
 #define ACCEPT_RECV_SIZE 16
 
-class CompletionPort : public object
+class CompletionPort
 {
 public:
 	CompletionPort(SOCKET sock, USHORT port, int wait_que_size, DWORD thread_count);
@@ -17,7 +17,7 @@ public:
 	inline const SOCKET sock() { return sock_; }
 	inline const HANDLE comp_port() { return comp_port_; }
 
-	bool AttachSock(IocpSockHub sock_hub);
+	bool AttachSock(const std::shared_ptr<IocpSock>& sock_ptr);
 	void DeattachSock(SOCKET sock);
 
 	bool AttachKey(BYTE type, PVOID key);
@@ -28,7 +28,8 @@ public:
 	void ExtendSocketPool(size_t count);
 
 private:
-	using BindSocks = std::map<SOCKET, IocpSockHub>;
+	using BIndSockPair = std::pair<SOCKET, std::shared_ptr<IocpSock>>;
+	using BindSocks = std::map<SOCKET, std::shared_ptr<IocpSock>>;
 
 	HANDLE comp_port_;
 	SOCKET sock_;
@@ -38,5 +39,3 @@ private:
 	LPFN_ACCEPTEX pfn_acceptex_;
 	LPFN_DISCONNECTEX pfn_disconnectex_;
 };
-
-DEFINE_WRAPPER(CompletionPort);

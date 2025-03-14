@@ -1,6 +1,5 @@
 #pragma once
 #include "stdafx.h"
-#include "singleton.h"
 #include "Sock.h"
 #include "ThreadManager.h"
 
@@ -19,14 +18,14 @@ using BindAllSocks = std::set<SOCKET>;
 using PostID = size_t;
 using CompletionPorts = std::map<PostID, CompletionPort>;
 
-class PostCenter : public Singleton<PostCenter>
+class PostCenter
 {
 private:
 	using ReserveQue = std::queue<SOCKET>;
 	using BindPorts = std::map<PostID, USHORT>;
 	
 public:
-	using AttachJobs = std::map<TaskID, JobBaseHub>;
+	using AttachJobs = std::map<TaskID, std::shared_ptr<JobBase>>;
 
 	PostCenter();
 	~PostCenter();

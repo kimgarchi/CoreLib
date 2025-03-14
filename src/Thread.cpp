@@ -1,15 +1,16 @@
 #include "stdafx.h"
 #include "Thread.h"
+#include "Job.h"
 
-Thread::Thread(JobBaseNode job, std::atomic_bool& task_runable)
-    : job_(job), task_runable_(task_runable), local_runable_(true)
+Thread::Thread(std::shared_ptr<JobBase> job_ptr, std::atomic_bool& task_runable)
+    : job_ptr_(job_ptr), task_runable_(task_runable), local_runable_(true)
 {
     std::packaged_task<bool()> task = std::packaged_task<bool()>(
         [&]()
     {
         try
         {
-            while (is_runable() && job_->Execute());
+            while (is_runable() && job_ptr_->Execute());
         }
         catch (...)
         {
@@ -22,12 +23,6 @@ Thread::Thread(JobBaseNode job, std::atomic_bool& task_runable)
 
     future_ = task.get_future();
     thread_ = std::thread(std::move(task));
-}
-
-Thread::Thread(const Thread& thread)
-    : job_(const_cast<Thread&>(thread).job_), 
-        task_runable_(const_cast<Thread&>(thread).task_runable_), local_runable_(true)
-{
 }
 
 Thread::~Thread()

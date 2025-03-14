@@ -30,11 +30,11 @@ public:
 
 	void Init(size_t reset_size = 0)
 	{
-		hEvent = 0x00;
-		Internal = 0x00;
-		InternalHigh = 0x00;
-		Offset = 0x00;
-		OffsetHigh = 0x00;
+		hEvent			= 0x00;
+		Internal		= 0x00;
+		InternalHigh	= 0x00;
+		Offset			= 0x00;
+		OffsetHigh		= 0x00;
 
 		if (reset_size == 0 || reset_size >= buffer_.size())
 			std::fill(buffer_.begin(), buffer_.end(), 0x00);
@@ -47,6 +47,3 @@ public:
 private:
 	WSABUF wsa_buf_;
 };
-
-using IocpSockHub = wrapper_hub<IocpSock>;
-using IocpSockNode = wrapper_node<IocpSock>;

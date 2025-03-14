@@ -1,7 +1,6 @@
 #pragma once
-#include "Object.h"
 
-class Message abstract : public object
+class Message abstract
 {
 public:
 

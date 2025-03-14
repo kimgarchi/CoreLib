@@ -12,12 +12,6 @@
     <Filter Include="source">
       <UniqueIdentifier>{dfaa6620-bcc4-4811-8617-086bdb8f99be}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\Object">
-      <UniqueIdentifier>{245c77e2-250d-49b2-8c61-54904add3c55}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="source\Object\Station">
-      <UniqueIdentifier>{463d4501-d86d-4cff-8e9b-85b4e17a4182}</UniqueIdentifier>
-    </Filter>
     <Filter Include="source\Socket">
       <UniqueIdentifier>{2f6217aa-ad8b-435f-8855-350eb1ef794a}</UniqueIdentifier>
     </Filter>
@@ -75,9 +69,6 @@
     <Filter Include="source\Resource\Memory">
       <UniqueIdentifier>{79764562-3479-45c7-bb3d-7648bf674267}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\Resource\Allocator">
-      <UniqueIdentifier>{f68ca9a7-420d-4b30-9611-6051f982335d}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CoreLib.rc">
@@ -87,9 +78,6 @@
   <ItemGroup>
     <ClInclude Include="resource.h">
       <Filter>Header</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Job.h">
-      <Filter>source\Job</Filter>
     </ClInclude>
     <ClInclude Include="src\Message.h">
       <Filter>source\Message</Filter>
@@ -121,7 +109,7 @@
     <ClInclude Include="src\Logger.h">
       <Filter>source\Logger</Filter>
     </ClInclude>
-    <ClInclude Include="src\ObjectPool.h">
+    <ClInclude Include="src\MemoryPool.h">
       <Filter>source\Resource\Memory</Filter>
     </ClInclude>
     <ClInclude Include="src\SocketBase.h">
@@ -178,17 +166,23 @@
     <ClInclude Include="src\Overlapped.h">
       <Filter>source\Sync\Overlapped</Filter>
     </ClInclude>
-    <ClInclude Include="src\MessageQueue.h">
-      <Filter>Header</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ObjectChunk.h">
+    <ClInclude Include="src\MemoryChunk.h">
       <Filter>source\Resource\Memory</Filter>
     </ClInclude>
     <ClInclude Include="src\MemoryManager.h">
       <Filter>source\Resource\Memory</Filter>
     </ClInclude>
-    <ClInclude Include="src\MemAllocator.h">
-      <Filter>source\Resource\Allocator</Filter>
+    <ClInclude Include="src\MessageQueue.h">
+      <Filter>source\Message</Filter>
+    </ClInclude>
+    <ClInclude Include="src\BitSet.h">
+      <Filter>source\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Job.h">
+      <Filter>source\Job</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MemoryAllocator.h">
+      <Filter>source\Resource\Memory</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -232,6 +226,5 @@
       <Filter>source\Util</Filter>
     </ClCompile>
     <ClCompile Include="src\MessageQueue.cpp" />
-    <ClCompile Include="AllocatorBase.cpp" />
   </ItemGroup>
 </Project>

@@ -58,7 +58,7 @@ enum class TABLE_INDEX_TYPE
 	HEAP,
 };
 
-class DBRecord : public object
+class DBRecord
 {
 public:
 
@@ -66,7 +66,7 @@ private:
 
 };
 
-class DBTable : public object
+class DBTable
 {
 private:
 	using Columns = std::vector<Column>;

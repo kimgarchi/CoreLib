@@ -1,54 +1,50 @@
 #pragma once
 #include "stdafx.h"
 #include "Thread.h"
-#include "singleton.h"
+#include "Job.h"
 
-class ThreadManager : public Singleton<ThreadManager>
+using TaskID = std::size_t;
+using TaskIDs = std::vector<TaskID>;
+
+class Task
 {
-private:
-	class Task : public object
-	{
-	private:
-		using ThreadQue = std::deque<Thread>;
-
-	public:
-		Task(JobBaseHub job, size_t thread_count);
-		virtual ~Task();
-
-		bool Stop(DWORD timeout = INFINITE);
-		inline bool is_runable() const { return is_runable_.load(); }
-		void Attach(size_t count);
-		bool Deattach(size_t count, DWORD timeout = INFINITE);
-
-		size_t thread_count() { return thread_que_.size(); }
-
-	private:		
-		JobBaseHub job_;
-		ThreadQue thread_que_;
-		std::atomic_bool is_runable_;
-	};
-
-	DEFINE_WRAPPER_HUB(Task);
-	using AllocTaskID = std::atomic<TaskID>;
-	using Tasks = std::map<TaskID, TaskHub>;
-
 public:
-	ThreadManager()
-		: alloc_task_id_(0)
-	{}
+	Task(std::size_t thread_count, std::shared_ptr<JobBase> job_ptr);
+	~Task();
 
-	~ThreadManager() { tasks_.clear(); }
+	bool Stop(DWORD timeout = INFINITE);
+	inline bool is_runable() const { return is_runable_.load(); }
+	void Attach(std::size_t count);
+	bool Deattach(std::size_t count, DWORD timeout = INFINITE);
+
+	size_t thread_count() { return thread_que_.size(); }
+
+private:
+	const std::shared_ptr<JobBase> job_ptr_;
+	std::deque<std::shared_ptr<Thread>> thread_que_;
+	std::atomic_bool is_runable_;
+};
+
+using AllocTaskID = std::atomic<TaskID>;
+using Tasks = std::map<TaskID, std::shared_ptr<Task>>;
+
+class ThreadManager
+{
+public:
+	ThreadManager();
+	~ThreadManager();
 
 	template<typename _Job, typename ..._Tys, is_job<_Job> = nullptr>
-	TaskID AttachTask(size_t thread_count, _Tys&&... Args);
-	TaskID AttachTask(size_t thread_count, JobBaseHub job);
+	TaskID AttachTask(std::size_t thread_count, _Tys&&... Args);
+
+	TaskID AttachTask(std::size_t thread_count, std::shared_ptr<JobBase> job_ptr);
 	bool DeattachTask(TaskID task_id, DWORD timeout = INFINITE);
 	bool change_thread_count(TaskID task_id, size_t thread_count);
 	
 	bool Stop(TaskID task_id, DWORD timeout = INFINITE);
 	
 private:
-	size_t thread_count(TaskID task_id);
+	std::size_t thread_count(TaskID task_id);
 
 	std::mutex mtx_;
 	Tasks tasks_;
@@ -61,9 +57,9 @@ TaskID ThreadManager::AttachTask(size_t thread_count, _Tys&&... Args)
 	std::unique_lock<std::mutex> lock(mtx_);
 
 	alloc_task_id_.fetch_add(1);
-	JobBaseHub job = make_wrapper_hub<_Job>(Args...);
+	std::shared_ptr<JobBase> job = std::make_shared<_Job>(Args...); //allocate_shared<_Job>(Args...);
 
-	if (tasks_.emplace(alloc_task_id_, make_wrapper_hub<Task>(job, thread_count)).second == false)
+	if (tasks_.emplace(alloc_task_id_, std::make_shared<Task>(thread_count, job) /*allocate_shared<Task>(thread_count, job)*/ ).second == false)
 		return INVALID_ALLOC_ID;
 
 	return alloc_task_id_;

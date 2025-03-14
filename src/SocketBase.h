@@ -1,6 +1,5 @@
 #pragma once
 #include "stdafx.h"
-#include "Object.h"
 #include "SyncObject.h"
 
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
@@ -14,7 +13,7 @@
 
 #define DEFAULT_BUF_SIZE 512
 
-class SocketBase abstract : public object
+class SocketBase abstract
 {
 public:
 	SocketBase(DWORD buf_size)
