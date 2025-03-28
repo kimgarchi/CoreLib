@@ -1,11 +1,25 @@
 #pragma once
 #include "stdafx.h"
 
+const static DWORD _default_job_timeout_ = 3000;
+
 class JobBase abstract
 {
 public:
-	virtual bool Execute() abstract;
-};
+	void Execute()
+	{
+		if (Run() == true)
+		{
+			Commit();
+		}
+		else
+		{
+			Rollback();			
+		}
+	}
 
-template<typename _Ty>
-using is_job = typename std::enable_if_t<std::is_base_of_v<JobBase, _Ty>, _Ty>*;
+protected:
+	virtual bool Run() abstract;
+	virtual void Commit() abstract;
+	virtual void Rollback() abstract;
+};

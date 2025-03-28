@@ -1,151 +1,72 @@
 #pragma once
 #include "stdafx.h"
 
-enum class SYNC_STATE
-{
-	UNLOCK,
-	SEGMENT_LOCK,
-	FULL_LOCK,
-};
-
-class SyncHandle abstract
+class SyncObject abstract
 {
 public:
-	SyncHandle(HANDLE handle);
-	virtual ~SyncHandle();
-	
-	virtual DWORD Lock(DWORD timeout = INFINITE) { return WaitForSingleObject(handle_, timeout); }
-	virtual bool Release() abstract;
-
-	inline const HANDLE handle() { return handle_; }
+	SyncObject(HANDLE handle);
+	SyncObject& operator=(const SyncObject&) = delete;
+	virtual ~SyncObject() = default;
 
 protected:
-	friend class LockBase;
-	friend class SingleLock;
-	friend class MultiLock;
-	friend class RWLock;
-	friend class SyncStation;
-
-private:
 	HANDLE handle_;
 };
 
-class SyncMutex : public SyncHandle
+class SyncLock abstract : public SyncObject
+{
+public:	
+	SyncLock(HANDLE handle);
+	virtual ~SyncLock();
+
+	virtual DWORD lock(ULONG cnt, DWORD timeout) abstract;
+	virtual DWORD unlock(ULONG cnt) abstract;
+	virtual ULONG lock_count() abstract;
+	virtual ULONG max_lock_count() const abstract;
+
+	bool try_lock(ULONG cnt);
+	bool is_lock(ULONG cnt);
+};
+
+class SyncMutex : public SyncLock
 {
 public:
 	SyncMutex(BOOL b_init = FALSE);
-	SyncMutex(const SyncMutex& mutex);
+	virtual ~SyncMutex();
 
-	virtual bool Release() override { return ReleaseMutex(handle()); }
+	virtual DWORD lock(ULONG cnt = 1, DWORD timeout = INFINITE) override;
+	virtual DWORD unlock(ULONG cnt = 1) override;	
+	virtual ULONG lock_count() override;
+	virtual ULONG max_lock_count() const override;
 };
 
-class SyncSemaphore : public SyncHandle
+class SyncSemaphore : public SyncLock
 {
 public:
-	SyncSemaphore(LONG max_count);
-	SyncSemaphore(LONG init_count, LONG max_count);
-	SyncSemaphore(const SyncSemaphore& semaphore);
+	SyncSemaphore(LONG max_cnt);
+	SyncSemaphore(LONG init_cnt, LONG max_cnt);
+	virtual ~SyncSemaphore();
 
-	virtual bool Release() override { return _Release(); }
-	LONG max_count() { return max_count_; }
+	virtual DWORD lock(ULONG cnt = 1, DWORD timeout = INFINITE) override;
+	virtual DWORD unlock(ULONG cnt = 1) override;
+	
+	virtual ULONG lock_count() override;
+	virtual ULONG max_lock_count() const override;
 
 private:
-	friend class MultiLock;
-	friend class RWLock;
-
-	bool _Release(LONG& prev_count __out, LONG release_count = 1);
-	bool _Release(LONG release_count = 1);
-
-	const LONG init_count_;
-	const LONG max_count_;
+	const ULONG init_lock_cnt_;
+	const ULONG max_lock_cnt_;
 };
 
-class SyncEvent : public SyncHandle
+class SyncEvent : public SyncObject
 {
 public:
-	SyncEvent(BOOL is_menual_reset = false, BOOL init_state = false);
-	SyncEvent(const SyncEvent& event);
-	
+	SyncEvent(BOOL is_menual_reset = false, BOOL init_state = false, const std::wstring name = L"");
 	virtual ~SyncEvent();
 	
-	virtual DWORD Lock(DWORD timeout = INFINITE) override;
-	virtual bool Release() override { return SetEvent(handle()); }
-	
-private:
-	BOOL is_menual_reset_;
-	BOOL init_state_;
-};
-
-class LockBase abstract
-{
-public:
-	LockBase(const LockBase&) = delete;
-	LockBase();
-	virtual ~LockBase();
-
-	virtual bool Lock(DWORD timeout = INFINITE);
-	virtual bool SpinLock(DWORD timeout = INFINITE) { return _SpinLock(timeout); }
-	virtual bool Release();
-
-protected:
-	virtual bool _Lock(DWORD timeout) abstract;
-	virtual bool _SpinLock(DWORD timeout) abstract;
-	virtual bool _Release() abstract;
-	virtual bool _Destory() abstract;
-
-	LONG signaled_count_;
-};
-
-class SingleLock : public LockBase
-{
-public:
-	SingleLock(SyncMutex& sync_mutex, bool immediate_lock = true);
-	virtual ~SingleLock();
-
-protected:
-	virtual bool _Lock(DWORD timeout) override;
-	virtual bool _SpinLock(DWORD timeout) override;
-	virtual bool _Release() override;
-	virtual bool _Destory() override;
-	
-private:
-	SyncMutex& sync_mutex_;
-};
-
-class MultiLock : public LockBase
-{
-public:
-	MultiLock(SyncSemaphore& sync_semaphore, bool immediate_lock = true);
-	MultiLock(const MultiLock&) = delete;
-	virtual ~MultiLock();
-
-protected:
-	virtual bool _Lock(DWORD timeout) override;
-	virtual bool _SpinLock(DWORD timeout) override;
-	virtual bool _Release() override;
-	virtual bool _Destory() override;
-
-	bool _Release(LONG& prev_count __out, LONG release_count = 1);
-	LONG max_count() { return sync_semaphore_.max_count(); }
+	DWORD wait_signaled(DWORD timeout = INFINITE);
+	DWORD raise_signaled();
 
 private:
-	SyncSemaphore& sync_semaphore_;
-};
-
-class RWLock : public MultiLock
-{
-public:
-	RWLock(SyncSemaphore& sync_semaphore);
-	RWLock(const RWLock&) = delete;
-
-	virtual ~RWLock();
-
-	bool WriteLock(DWORD timeout = INFINITE);
-	bool ReadLock(DWORD timeout = INFINITE);
-	
-	bool WriteRelease();
-	bool ReadRelease();
-
-private:
-	friend class SyncStation;
+	const BOOL is_menual_reset_;
+	const BOOL init_state_;
 };

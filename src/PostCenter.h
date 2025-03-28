@@ -25,7 +25,7 @@ private:
 	using BindPorts = std::map<PostID, USHORT>;
 	
 public:
-	using AttachJobs = std::map<TaskID, std::shared_ptr<JobBase>>;
+	using AttachJobs = std::map<LONG, std::shared_ptr<JobBase>>;
 
 	PostCenter();
 	~PostCenter();

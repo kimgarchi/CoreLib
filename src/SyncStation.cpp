@@ -33,5 +33,6 @@ HANDLE SyncStation::RecordHandle(std::type_index type_idx, LONG read_job_max_cou
 		return INVALID_HANDLE_VALUE;
 	}
 
-	return semaphore_ptr->handle();
+	//return semaphore_ptr->handle();
+	return INVALID_HANDLE_VALUE;
 }

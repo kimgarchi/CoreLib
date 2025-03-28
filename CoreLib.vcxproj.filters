@@ -12,9 +12,6 @@
     <Filter Include="source">
       <UniqueIdentifier>{dfaa6620-bcc4-4811-8617-086bdb8f99be}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\Socket">
-      <UniqueIdentifier>{2f6217aa-ad8b-435f-8855-350eb1ef794a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="source\CallBack">
       <UniqueIdentifier>{c2ae354b-4eb9-45a6-a9af-71706f281938}</UniqueIdentifier>
     </Filter>
@@ -30,9 +27,6 @@
     <Filter Include="source\Logger">
       <UniqueIdentifier>{bb506e7a-613c-4183-be9f-5418bc4fc757}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\Sync">
-      <UniqueIdentifier>{c84c31bd-1293-4694-a822-0aafc3b5e27c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="source\DB">
       <UniqueIdentifier>{ec66ab8b-f3b8-4915-a61c-d3febba837b0}</UniqueIdentifier>
     </Filter>
@@ -45,20 +39,8 @@
     <Filter Include="source\DB\Query">
       <UniqueIdentifier>{1e7e3eb3-f45f-42a6-8911-b0d59e1e24aa}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\Thread">
-      <UniqueIdentifier>{85fc7525-a870-4eea-a8d1-f5069007cc45}</UniqueIdentifier>
-    </Filter>
     <Filter Include="source\Util">
       <UniqueIdentifier>{212c8ad6-a5ba-4732-8508-3c9b4256f3d4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="source\Socket\ComplePort">
-      <UniqueIdentifier>{f87d7b3d-ced0-47d8-967b-39b194eec223}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="source\Sync\Overlapped">
-      <UniqueIdentifier>{9c48f555-4ec0-4290-bf33-6bc060096b8d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="source\Socket\SockJob">
-      <UniqueIdentifier>{7faa03a1-3c89-4ff7-96ce-220a223fc690}</UniqueIdentifier>
     </Filter>
     <Filter Include="source\Message">
       <UniqueIdentifier>{351469e2-65e3-420a-8ccc-421956706d22}</UniqueIdentifier>
@@ -68,6 +50,24 @@
     </Filter>
     <Filter Include="source\Resource\Memory">
       <UniqueIdentifier>{79764562-3479-45c7-bb3d-7648bf674267}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\Job\Thread">
+      <UniqueIdentifier>{85fc7525-a870-4eea-a8d1-f5069007cc45}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\Resource\Socket">
+      <UniqueIdentifier>{2f6217aa-ad8b-435f-8855-350eb1ef794a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\Resource\Socket\ComplePort">
+      <UniqueIdentifier>{f87d7b3d-ced0-47d8-967b-39b194eec223}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\Resource\Socket\SockJob">
+      <UniqueIdentifier>{7faa03a1-3c89-4ff7-96ce-220a223fc690}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\Resource\Sync">
+      <UniqueIdentifier>{c84c31bd-1293-4694-a822-0aafc3b5e27c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\Resource\Sync\Overlapped">
+      <UniqueIdentifier>{9c48f555-4ec0-4290-bf33-6bc060096b8d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -86,7 +86,7 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="src\ThreadManager.h">
-      <Filter>source\Thread</Filter>
+      <Filter>source\Job\Thread</Filter>
     </ClInclude>
     <ClInclude Include="src\CallBack.h">
       <Filter>source\CallBack</Filter>
@@ -113,28 +113,28 @@
       <Filter>source\Resource\Memory</Filter>
     </ClInclude>
     <ClInclude Include="src\SocketBase.h">
-      <Filter>source\Socket</Filter>
+      <Filter>source\Resource\Socket</Filter>
     </ClInclude>
     <ClInclude Include="src\SyncObject.h">
-      <Filter>source\Sync</Filter>
+      <Filter>source\Resource\Sync</Filter>
     </ClInclude>
     <ClInclude Include="src\Thread.h">
-      <Filter>source\Thread</Filter>
+      <Filter>source\Job\Thread</Filter>
     </ClInclude>
     <ClInclude Include="src\JobStation.h">
       <Filter>source\Job</Filter>
     </ClInclude>
     <ClInclude Include="src\SocketPool.h">
-      <Filter>source\Socket</Filter>
+      <Filter>source\Resource\Socket</Filter>
     </ClInclude>
     <ClInclude Include="src\PostCenter.h">
-      <Filter>source\Socket</Filter>
+      <Filter>source\Resource\Socket</Filter>
     </ClInclude>
     <ClInclude Include="src\SyncStation.h">
-      <Filter>source\Sync</Filter>
+      <Filter>source\Resource\Sync</Filter>
     </ClInclude>
     <ClInclude Include="src\Sock.h">
-      <Filter>source\Socket</Filter>
+      <Filter>source\Resource\Socket</Filter>
     </ClInclude>
     <ClInclude Include="src\Util.h">
       <Filter>Header\Define</Filter>
@@ -155,7 +155,7 @@
       <Filter>source\DB\Query</Filter>
     </ClInclude>
     <ClInclude Include="src\CompletionPort.h">
-      <Filter>source\Socket\ComplePort</Filter>
+      <Filter>source\Resource\Socket\ComplePort</Filter>
     </ClInclude>
     <ClInclude Include="src\DateTime.h">
       <Filter>source\Util</Filter>
@@ -164,12 +164,9 @@
       <Filter>source\Util</Filter>
     </ClInclude>
     <ClInclude Include="src\Overlapped.h">
-      <Filter>source\Sync\Overlapped</Filter>
+      <Filter>source\Resource\Sync\Overlapped</Filter>
     </ClInclude>
     <ClInclude Include="src\MemoryChunk.h">
-      <Filter>source\Resource\Memory</Filter>
-    </ClInclude>
-    <ClInclude Include="src\MemoryManager.h">
       <Filter>source\Resource\Memory</Filter>
     </ClInclude>
     <ClInclude Include="src\MessageQueue.h">
@@ -184,28 +181,34 @@
     <ClInclude Include="src\MemoryAllocator.h">
       <Filter>source\Resource\Memory</Filter>
     </ClInclude>
+    <ClInclude Include="src\LockObject.h">
+      <Filter>source\Resource\Sync</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Task.h">
+      <Filter>source\Job</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\SyncStation.cpp">
-      <Filter>source\Sync</Filter>
+      <Filter>source\Resource\Sync</Filter>
     </ClCompile>
     <ClCompile Include="src\JobStation.cpp">
       <Filter>source\Job</Filter>
     </ClCompile>
     <ClCompile Include="src\SocketPool.cpp">
-      <Filter>source\Socket</Filter>
+      <Filter>source\Resource\Socket</Filter>
     </ClCompile>
     <ClCompile Include="src\Thread.cpp">
-      <Filter>source\Thread</Filter>
+      <Filter>source\Job\Thread</Filter>
     </ClCompile>
     <ClCompile Include="src\PostCenter.cpp">
-      <Filter>source\Socket</Filter>
+      <Filter>source\Resource\Socket</Filter>
     </ClCompile>
     <ClCompile Include="src\ThreadManager.cpp">
-      <Filter>source\Thread</Filter>
+      <Filter>source\Job\Thread</Filter>
     </ClCompile>
     <ClCompile Include="src\SyncObject.cpp">
-      <Filter>source\Sync</Filter>
+      <Filter>source\Resource\Sync</Filter>
     </ClCompile>
     <ClCompile Include="src\ODBC.cpp">
       <Filter>source\DB\Odbc</Filter>
@@ -220,11 +223,19 @@
       <Filter>source\DB\Query</Filter>
     </ClCompile>
     <ClCompile Include="src\CompletionPort.cpp">
-      <Filter>source\Socket\ComplePort</Filter>
+      <Filter>source\Resource\Socket\ComplePort</Filter>
     </ClCompile>
     <ClCompile Include="src\DateTime.cpp">
       <Filter>source\Util</Filter>
     </ClCompile>
-    <ClCompile Include="src\MessageQueue.cpp" />
+    <ClCompile Include="src\MessageQueue.cpp">
+      <Filter>source\Message</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LockObject.cpp">
+      <Filter>source\Resource\Sync</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Task.cpp">
+      <Filter>source\Job</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

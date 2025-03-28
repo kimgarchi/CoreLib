@@ -31,7 +31,7 @@ PostID PostCenter::RecordCompletionPort(SOCK_TYPE type, USHORT port, int wait_qu
 
 	auto ret = completion_ports_.try_emplace(post_id, sock, port, wait_que_size, thread_count);
 	if (ret.second == false)
-		return INVALID_ALLOC_ID;
+		return 0;
 
 	auto& compe_itor = ret.first;
 

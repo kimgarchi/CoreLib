@@ -39,6 +39,8 @@ public:
 	template<typename T>
 	T* alloc(const std::size_t size)
 	{
+		const std::size_t block_size = sizeof(T);
+
 		std::shared_ptr<MemoryChunk> mem_chunk = FindAllocableChunk<T>(size);
 		if (mem_chunk == nullptr)
 		{
@@ -61,6 +63,16 @@ public:
 		}
 		
 		return mem_chunk->free<T>(ptr, size);
+	}
+
+	std::vector<MemoryChunkInfo> get_memory_chunk_infos() const
+	{
+		std::vector<MemoryChunkInfo> memory_chunk_infos;
+		memory_chunk_infos.reserve(mem_chunks_.size());
+		for (auto mem_chunk : mem_chunks_)
+			memory_chunk_infos.emplace_back(mem_chunk->get_memory_chunk_info());
+
+		return memory_chunk_infos;
 	}
 
 private:

@@ -5,11 +5,19 @@
 
 #define MEGA_BYTE_TO_BYTE 1048576
 
+struct MemoryChunkInfo
+{
+	const std::size_t block_size;
+	const std::size_t block_count;
+
+	const std::list<std::pair<std::size_t, std::size_t>> unbind_relay_poses;
+};
+
 class MemoryChunk final
 {
 public:
 	MemoryChunk(const std::size_t block_size, const size_t block_count)
-		: block_size_(block_size), block_count_(block_count), 
+		: block_size_(block_size), block_count_(block_count),
 		m_alloc_begin_ptr_(nullptr), m_alloc_end_ptr_(nullptr), m_alloc_bitset_(block_count)
 	{
 		const std::size_t alloc_size = block_size * block_count;
@@ -76,14 +84,22 @@ public:
 		std::size_t begin_pos = getPtrPos(ptr);
 		std::size_t end_pos = begin_pos + (size - 1);
 
+		if (hasPtr(getPtr(begin_pos)) == false || hasPtr(getPtr(end_pos)) == false)
+		{
+			return false;
+		}
+
 		if (begin_pos < 0 || end_pos >= block_count_)
 			return false;
 
 		m_alloc_bitset_.setBit(begin_pos, end_pos, false);
 		
-		for (auto pos = begin_pos; pos <= end_pos; ++pos)
-			static_cast<T*>(getPtr(pos))->~T();
-
+// 		for (auto pos = begin_pos; pos <= end_pos; ++pos)
+// 		{
+// 			PVOID free_ptr = getPtr(pos);
+// 			static_cast<T*>(free_ptr)->~T();
+// 		}
+		
 		return true;
 	}
 
@@ -95,6 +111,30 @@ public:
 	bool hasPtr(PVOID ptr)
 	{
 		return m_alloc_begin_ptr_ <= ptr && m_alloc_end_ptr_ >= ptr;
+	}
+
+	MemoryChunkInfo get_memory_chunk_info() const
+	{
+		std::list<std::pair<std::size_t, std::size_t>> unbind_relay_poses;
+		std::pair<std::size_t, std::size_t> unbind_relay_pos(0, -1);
+
+		for (std::size_t pos = 0; pos < block_count_; ++pos)
+		{
+			const bool pos_bit = m_alloc_bitset_.getBit(pos);
+			if (pos_bit == false)
+			{
+				unbind_relay_pos.first = pos;
+				continue;
+			}
+			
+			if (unbind_relay_pos.second != -1)
+			{
+				unbind_relay_poses.emplace_back(unbind_relay_pos);
+				unbind_relay_pos.second = -1;
+			}
+		}
+		
+		return MemoryChunkInfo{ block_size_, block_count_, unbind_relay_poses };
 	}
 
 private:
