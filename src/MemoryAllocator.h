@@ -1,10 +1,7 @@
 #pragma once
 #include "stdafx.h"
 #include "MemoryPool.h"
-
-#pragma once
-#include "stdafx.h"
-#include "MemoryAllocator.h"
+#include "LockObject.h"
 
 #ifndef MEMORY_MANAGER_H_INCLUDED
 #define MEMORY_MANAGER_H_INCLUDED
@@ -12,10 +9,10 @@
 template<typename T>
 class MemoryAllocator;
 
-class MemoryManager final
+class MemoryManager
 {
 private:
-	using MemoryAllocators = std::unordered_map<std::type_index, std::shared_ptr<VOID>>;
+	using MemoryPools = std::unordered_map<std::type_index, std::shared_ptr<VOID>>;
 
 public:
 	MemoryManager()
@@ -32,69 +29,50 @@ public:
 		}
 	}
 
+	MemoryManager(const MemoryManager&) = delete;
+	void operator=(const MemoryManager&) = delete;
+
 	~MemoryManager()
 	{
-		memory_allocators_.clear();
+		memory_pools_.clear();
 	}
 
 	template<typename T>
-	T* allocate(std::size_t size)
+	std::shared_ptr<MemoryPool<T>> getMemoryPool()
 	{
-		std::shared_ptr<MemoryAllocator> memory_allocator = getMemoryAllocator<T>();
-		if (memory_allocator == nullptr)
-			return nullptr;
+		SingleLock sl(sync_mutex_);
 
-		return static_cast<T*>(memory_allocator->allocate(size));
-	}
-
-	template<typename T>
-	void deallocate(PVOID ptr, std::size_t size)
-	{
-		std::shared_ptr<MemoryAllocator> memory_allocator = getMemoryAllocator<T>();
-		if (memory_allocator == nullptr)
-		{
-			/// error
-			assert(false);
-			return;
-		}
-
-		memory_allocator->deallocate(ptr, size);
-	}
-
-	template<typename T>
-	std::shared_ptr<MemoryAllocator<T>> getMemoryAllocator()
-	{
 		const std::type_index type_index(typeid(T));
-		auto itor = memory_allocators_.find(type_index);
-		if (itor == memory_allocators_.end())
+		auto itor = memory_pools_.find(type_index);
+		if (itor == memory_pools_.end())
 		{
-			return createMemoryAllocator<T>();
+			return createMemoryPool<T>();
 		}
 
-		return std::static_pointer_cast<MemoryAllocator<T>>(itor->second);
+		return std::static_pointer_cast<MemoryPool<T>>(itor->second);
 	}
 
 private:
 	template<typename T>
-	std::shared_ptr<MemoryAllocator<T>> createMemoryAllocator()
+	std::shared_ptr<MemoryPool<T>> createMemoryPool()
 	{
 		const std::type_index type_idx(typeid(T));
-		std::shared_ptr<MemoryAllocator<T>> add_allocator = std::make_shared<MemoryAllocator<T>>();
+		std::shared_ptr<MemoryPool<T>> add_memory_pool = std::make_shared<MemoryPool<T>>();
 
-		auto ret = memory_allocators_.emplace(type_idx, add_allocator);
+		auto ret = memory_pools_.emplace(type_idx, add_memory_pool);
 		if (ret.second == false)
 			return nullptr;
 
-		return add_allocator;
+		return add_memory_pool;
 	}
 
-	MemoryAllocators memory_allocators_;
+	SyncMutex sync_mutex_;
+	MemoryPools memory_pools_;
 };
 
-thread_local MemoryManager tg_memory_manager;
-
-MemoryManager& get_thread_local_manager()
+[[nodiscard("get memory manager ref var abandon")]] inline MemoryManager& get_thread_local_manager()
 {
+	thread_local MemoryManager tg_memory_manager;
 	return tg_memory_manager;
 }
 
@@ -102,278 +80,110 @@ template<typename T>
 using AllocTraits = std::allocator_traits<MemoryAllocator<T>>;
 
 template<typename T>
-using AllocPtr = typename AllocTraits<T>::template rebind_alloc<T>;
+using RebindAlloc = typename AllocTraits<T>::template rebind_alloc<T>;
 
 template<typename T>
-using AllocPtrTraits = std::allocator_traits<AllocPtr<T>>;
+using RebindAllocTraits = std::allocator_traits<RebindAlloc<T>>;
 
 template<typename T>
 struct deleter {
-	AllocPtr<T> alloc_ptr;
+	RebindAlloc<T> alloc_ptr;
 	void operator()(T* ptr) {
-		AllocPtrTraits<T>::destroy(alloc_ptr, ptr);
-		AllocPtrTraits<T>::deallocate(alloc_ptr, ptr, 1);
+		RebindAllocTraits<T>::destroy(alloc_ptr, ptr);
+		RebindAllocTraits<T>::deallocate(alloc_ptr, ptr, 1);
 	}
 };
 
 template<typename T, typename... Args>
-//std::unique_ptr<T, typename deleter<T>> allocate_unique(Args&&... args)
-std::unique_ptr<T> allocate_unique(Args&&... args)
+std::unique_ptr<T, typename deleter<T>> allocate_unique(Args&&... args)
 {
-	std::shared_ptr<MemoryAllocator<T>> memory_allocator = get_thread_local_manager().getMemoryAllocator<T>();
-	if (memory_allocator == nullptr)
-		return nullptr;
+	MemoryAllocator<T> memory_allocator(get_thread_local_manager());
 
-	AllocPtr<T> alloc_ptr(*memory_allocator);
-	T* ptr = AllocPtrTraits<T>::allocate(alloc_ptr, 1);
+	RebindAlloc<T> rebind_alloc(memory_allocator);
+	T* alloc_ptr = RebindAllocTraits<T>::allocate(rebind_alloc, 1);
 	try
 	{
-		AllocPtrTraits<T>::construct(alloc_ptr, ptr, std::forward<Args>(args)...);
+		RebindAllocTraits<T>::construct(rebind_alloc, alloc_ptr, std::forward<Args>(args)...);
 	}
 	catch (...)
 	{
-		AllocPtrTraits<T>::deallocate(alloc_ptr, ptr, 1);
+		RebindAllocTraits<T>::deallocate(rebind_alloc, alloc_ptr, 1);
 		return nullptr;
 	}
 
-	//return std::unique_ptr<T, deleter<T>>(ptr, deleter<T>{ alloc_ptr });
-	return std::unique_ptr<T>(ptr);
+	return std::unique_ptr<T, deleter<T>>(alloc_ptr, deleter<T>{ rebind_alloc });
 }
 
 template<typename T, typename... Args>
 std::shared_ptr<T> allocate_shared(Args&&... args)
 {
-	std::shared_ptr<MemoryAllocator<T>> memory_allocator = get_thread_local_manager().getMemoryAllocator<T>();
-	if (memory_allocator == nullptr)
-		return nullptr;
+	MemoryAllocator<T> memory_allocator(get_thread_local_manager());
 
-	AllocPtr<T> alloc_ptr(*memory_allocator);
-	T* ptr = AllocPtrTraits<T>::allocate(alloc_ptr, 1);
+	RebindAlloc<T> rebind_alloc(memory_allocator);
+	T* alloc_ptr = RebindAllocTraits<T>::allocate(rebind_alloc, 1);
 	try
 	{
-		AllocPtrTraits<T>::construct(alloc_ptr, ptr, std::forward<Args>(args)...);
+		RebindAllocTraits<T>::construct(rebind_alloc, alloc_ptr, std::forward<Args>(args)...);
 	}
 	catch (...)
 	{
-		AllocPtrTraits<T>::deallocate(alloc_ptr, ptr, 1);
+		RebindAllocTraits<T>::deallocate(rebind_alloc, alloc_ptr, 1);
 		return nullptr;
 	}
 
-	return std::shared_ptr<T>(ptr, [alloc_ptr](T* ptr) mutable {
-		AllocPtrTraits<T>::destroy(alloc_ptr, ptr);
-		AllocPtrTraits<T>::deallocate(alloc_ptr, ptr, 1);
+	return std::shared_ptr<T>(alloc_ptr, [rebind_alloc](T* alloc_ptr) mutable {
+		RebindAllocTraits<T>::destroy(rebind_alloc, alloc_ptr);
+		RebindAllocTraits<T>::deallocate(rebind_alloc, alloc_ptr, 1);
 		});
 }
 
 template<typename T>
 std::vector<T, MemoryAllocator<T>> allocate_vector()
 {
-	std::shared_ptr<MemoryAllocator<T>> memory_allocator = get_thread_local_manager().getMemoryAllocator<T>();
-	if (memory_allocator == nullptr)
-	{
-#ifdef _DEBUG
-		assert(false);
-#else
-		/// error log
-		thread_local MemoryAllocator<T> t_vector_memory_allocator;
-		return std::move(std::vector<T, MemoryAllocator<T>>(t_vector_memory_allocator));
-#endif
-	}
-
-	return std::move(std::vector<T, MemoryAllocator<T>>(*memory_allocator));
+	return std::move(std::vector<T, MemoryAllocator<T>>(get_thread_local_manager()));
 }
 
 template<typename T>
 inline std::list<T, MemoryAllocator<T>> allocate_list()
 {
-	std::shared_ptr<MemoryAllocator<T>> memory_allocator = get_thread_local_manager().getMemoryAllocator<T>();
-	if (memory_allocator == nullptr)
-	{
-#ifdef _DEBUG
-		assert(false);
-#else
-		/// error log
-		thread_local MemoryAllocator<T> t_list_memory_allocator;
-		return std::move(std::list<T, MemoryAllocator<T>>(t_list_memory_allocator));
-#endif
-	}
-
-	return std::move(std::list<T, MemoryAllocator<T>>(*memory_allocator));
+	return std::move(std::list<T, MemoryAllocator<T>>(get_thread_local_manager()));
 }
 
 template<typename T>
 inline std::queue<T, MemoryAllocator<T>> allocate_queue()
 {
-	std::shared_ptr<MemoryAllocator<T>> memory_allocator = get_thread_local_manager().getMemoryAllocator<T>();
-	if (memory_allocator == nullptr)
-	{
-#ifdef _DEBUG
-		assert(false);
-#else
-		/// error log
-		thread_local MemoryAllocator<T> t_queue_memory_allocator;
-		return std::move(std::queue<T, MemoryAllocator<T>>(t_queue_memory_allocator));
-#endif
-	}
-
-	return std::move(std::queue<T, MemoryAllocator<T>>(*memory_allocator));
+	return std::move(std::queue<T, MemoryAllocator<T>>(get_thread_local_manager()));
 }
 
 template<typename T>
 inline std::deque<T, MemoryAllocator<T>> allocate_deque()
 {
-	std::shared_ptr<MemoryAllocator<T>> memory_allocator = get_thread_local_manager().getMemoryAllocator<T>();
-	if (memory_allocator == nullptr)
-	{
-#ifdef _DEBUG
-		assert(false);
-#else
-		/// error log
-		thread_local MemoryAllocator<T> t_deque_memory_allocator;
-		return std::move(std::deque<T, MemoryAllocator<T>>(t_deque_memory_allocator));
-#endif
-	}
-
-	return std::move(std::deque<T, MemoryAllocator<T>>(*memory_allocator));
+	return std::move(std::deque<T, MemoryAllocator<T>>(get_thread_local_manager()));
 }
 
 template<typename T>
 inline std::set<T, MemoryAllocator<T>> allocate_set()
 {
-	std::shared_ptr<MemoryAllocator<T>> memory_allocator = get_thread_local_manager().getMemoryAllocator<T>();
-	if (memory_allocator == nullptr)
-	{
-#ifdef _DEBUG
-		assert(false);
-#else
-		/// error log
-		thread_local MemoryAllocator<T> t_set_memory_allocator;
-		return std::move(std::set<T, MemoryAllocator<T>>(t_set_memory_allocator));
-#endif
-	}
-
-	return std::move(std::set<T, MemoryAllocator<T>>(*memory_allocator));
+	return std::move(std::set<T, MemoryAllocator<T>>(get_thread_local_manager()));
 }
 
 template<typename T>
 inline std::unordered_set<T, MemoryAllocator<T>> allocate_unordered_set()
 {
-	std::shared_ptr<MemoryAllocator<T>> memory_allocator = get_thread_local_manager().getMemoryAllocator<T>();
-	if (memory_allocator == nullptr)
-	{
-#ifdef _DEBUG
-		assert(false);
-#else
-		/// error log
-		thread_local MemoryAllocator<T> t_unordered_set_memory_allocator;
-		return std::move(std::unordered_set<T, MemoryAllocator<T>>(t_unordered_set_memory_allocator));
-#endif
-	}
-
-	return std::move(std::unordered_set<T, MemoryAllocator<T>>(*memory_allocator));
+	return std::move(std::unordered_set<T, MemoryAllocator<T>>(get_thread_local_manager()));
 }
 
 template<typename Key, typename Value>
 inline std::map<Key, Value, MemoryAllocator<std::pair<Key, Value>>> allocate_map()
 {
-	std::shared_ptr<MemoryAllocator<std::pair<Key, Value>>> memory_allocator = get_thread_local_manager().getMemoryAllocator<std::pair<Key, Value>>();
-	if (memory_allocator == nullptr)
-	{
-#ifdef _DEBUG
-		assert(false);
-#else
-		/// error log
-		thread_local MemoryAllocator<std::pair<Key, Value>> t_map_memory_allocator;
-		return std::move(std::map<Key, Value, MemoryAllocator<std::pair<Key, Value>>>(t_map_memory_allocator));
-#endif
-	}
-
-	return std::move(std::map<Key, Value, MemoryAllocator<std::pair<Key, Value>>>(*memory_allocator));
+	return std::move(std::map<Key, Value, MemoryAllocator<std::pair<Key, Value>>>(get_thread_local_manager()));
 }
 
 template<typename Key, typename Value>
 inline std::unordered_map<Key, Value, MemoryAllocator<std::pair<Key, Value>>> allocate_unordered_map()
 {
-	std::shared_ptr<MemoryAllocator<std::pair<Key, Value>>> memory_allocator = get_thread_local_manager().getMemoryAllocator<std::pair<Key, Value>>();
-	if (memory_allocator == nullptr)
-	{
-#ifdef _DEBUG
-		assert(false);
-#else
-		/// error log
-		thread_local MemoryAllocator<std::pair<Key, Value>> t_unordered_map_memory_allocator;
-		return std::move(std::unordered_map<Key, Value, MemoryAllocator<std::pair<Key, Value>>>(t_unordered_map_memory_allocator));
-#endif
-	}
-
-	return std::move(std::unordered_map<Key, Value, MemoryAllocator<std::pair<Key, Value>>>(*memory_allocator));
+	return std::move(std::unordered_map<Key, Value, MemoryAllocator<std::pair<Key, Value>>>(get_thread_local_manager()));
 }
-#endif
-
-
-#ifdef _DEBUG
-#pragma comment(lib, "dbghelp.lib")
-
-const static size_t _default_stack_depth_ = 32;
-using CallStack = std::vector<PVOID>;
-
-struct CallStackTrace
-{
-	CallStackTrace(const std::string type_name = "", const std::size_t alloc_size = 0, const std::vector<PVOID>& callstack = std::vector<PVOID>())
-		: type_name_(type_name), alloc_size_(alloc_size), callstack_(callstack)
-	{}
-
-	const std::string type_name_;
-	const std::size_t alloc_size_;	
-	const CallStack callstack_;
-};
-
-class CallStackTraceManager
-{
-public:
-	CallStackTraceManager() = default;
-	~CallStackTraceManager() = default;
-
-	template<typename T>
-	void Add(const PVOID ptr, const CallStack& callstack)
-	{
-		assert(callstack_traces_.try_emplace(ptr, typeid(T).name(), sizeof(T), callstack).second);
-	}
-
-	void Remove(const PVOID ptr)
-	{
-		auto itor = callstack_traces_.find(ptr);
-		if (itor == callstack_traces_.end())
-		{
-			assert(false);
-			return;
-		}
-
-		callstack_traces_.erase(ptr);
-	}
-
-	CallStackTrace getCallStack(PVOID ptr)
-	{
-		auto itor = callstack_traces_.find(ptr);
-		if (itor == callstack_traces_.end())
-		{
-			assert(false);
-			return CallStackTrace();
-		}
-
-		return itor->second;
-	}
-
-private:	
-	std::map<const PVOID, const CallStackTrace> callstack_traces_;
-};
-#endif
-
-struct MemoryPoolInfo
-{
-	const std::string type_name;
-	const std::vector<MemoryChunkInfo> memory_chunk_infos;
-};
 
 template<typename T>
 class MemoryAllocator
@@ -394,69 +204,29 @@ public:
 		using other = MemoryAllocator<U>;
 	};
 
-	MemoryAllocator() noexcept
-		: type_name_(typeid(T).name()), mem_pool_(std::make_shared<MemoryPool>())
-#ifdef _DEBUG
-		, callstack_trace_manager_(std::make_shared<CallStackTraceManager>())
-#endif
+	MemoryAllocator(MemoryManager& memory_manager) noexcept
+		: ref_memory_manager_(memory_manager)
 	{
-		assert(mem_pool_ != nullptr);
-#ifdef _DEBUG
-		assert(callstack_trace_manager_ != nullptr);
-#endif
 	}
-	
 	MemoryAllocator<T>(const MemoryAllocator<T>& other) noexcept
-		: type_name_(other.type_name_), mem_pool_(other.mem_pool_)
-#ifdef _DEBUG
-		, callstack_trace_manager_(other.callstack_trace_manager_)
-#endif
+		: ref_memory_manager_(other.ref_memory_manager_)
 	{
-		assert(mem_pool_ != nullptr);
-#ifdef _DEBUG
-		assert(callstack_trace_manager_ != nullptr);
-#endif
 	}
 	
-	template<typename U> 
+	template<typename U>
 	friend class MemoryAllocator;
 
 	template<typename U>
 	MemoryAllocator(const MemoryAllocator<U>& other) noexcept
-		: type_name_(typeid(T).name()), mem_pool_(nullptr)
-#ifdef _DEBUG
-		, callstack_trace_manager_(nullptr)
-#endif
+		: ref_memory_manager_(other.ref_memory_manager_)
 	{
-		std::shared_ptr<MemoryAllocator<T>> memory_allocator = get_thread_local_manager().getMemoryAllocator<T>();
-		if (memory_allocator == nullptr)
-		{
-			#ifdef _DEBUG
-		assert(false);
-#else
-		/// error log
-		thread_local MemoryAllocator<std::pair<Key, Value>> t_unordered_map_memory_allocator;
-		return std::move(std::unordered_map<Key, Value, MemoryAllocator<std::pair<Key, Value>>>(t_unordered_map_memory_allocator));
-#endif
-		}
-		
-		mem_pool_ = memory_allocator->mem_pool_;
-		assert(mem_pool_ != nullptr);
-#ifdef _DEBUG
-		callstack_trace_manager_ = memory_allocator->callstack_trace_manager_;
-		assert(callstack_trace_manager_ != nullptr);
-#endif
 	}
 
 	MemoryAllocator<T>& operator=(const MemoryAllocator<T>& other) noexcept
-	{
+	{	
 		if (this != &other)
 		{
-			type_name_ = other.type_name_;
-			mem_pool_ = other.mem_pool_;
-#ifdef _DEBUG
-			callstack_trace_manager_ = other.callstack_trace_manager_;
-#endif
+			ref_memory_manager_ = other.ref_memory_manager_;
 		}
 
 		return *this;
@@ -464,41 +234,23 @@ public:
 
 	pointer allocate(const size_t size)
 	{
-		T* alloc_ptr = mem_pool_->alloc<T>(size);
+		std::shared_ptr<MemoryPool<T>> memory_pool = ref_memory_manager_.getMemoryPool<T>();
+		if (memory_pool == nullptr)
+			return nullptr;
 
-#ifdef _DEBUG
-		DWORD hash;
-		CallStack callstack(_default_stack_depth_);
-		CaptureStackBackTrace(0, static_cast<DWORD>(_default_stack_depth_), callstack.data(), &hash);
-
-		callstack_trace_manager_->Add<T>(alloc_ptr, callstack);
-#endif
-
-		return alloc_ptr;
-	}
-
-	template<typename U>
-	pointer allocate(const size_t size)
-	{
-		T* alloc_ptr = mem_pool_->alloc<U>(size);
-
-#ifdef _DEBUG
-		DWORD hash;
-		CallStack callstack(_default_stack_depth_);
-		CaptureStackBackTrace(0, static_cast<DWORD>(_default_stack_depth_), callstack.data(), &hash);
-
-		callstack_trace_manager_->Add<U>(alloc_ptr, callstack);
-#endif
-
-		return alloc_ptr;
+		return memory_pool->alloc(size);
 	}
 
 	void deallocate(pointer const ptr, const size_t size) noexcept 
 	{
-#ifdef _DEBUG
-		callstack_trace_manager_->Remove(ptr);
-#endif
-		mem_pool_->free<T>(ptr, size);
+		std::shared_ptr<MemoryPool<T>> memory_pool = ref_memory_manager_.getMemoryPool<T>();
+		if (memory_pool == nullptr)
+		{
+			assert(false);
+			return;
+		}
+
+		memory_pool->free(ptr, size);
 	}
 
 	template<typename T, typename... Args>
@@ -529,15 +281,8 @@ public:
 		return !operator==(other);
 	}
 
-	MemoryPoolInfo get_memory_pool_info() const
-	{
-		return MemoryPoolInfo{ type_name_, mem_pool_->get_memory_chunk_infos() };
-	}
-
 private:
-#ifdef _DEBUG
-	std::shared_ptr<CallStackTraceManager> callstack_trace_manager_;
-#endif
-	const std::string type_name_;
-	std::shared_ptr<MemoryPool> mem_pool_;
+	MemoryManager& ref_memory_manager_;
 };
+
+#endif

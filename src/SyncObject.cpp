@@ -76,10 +76,10 @@ ULONG SyncMutex::lock_count()
 	if (try_lock(1))
 	{
 		unlock(1);
-		return 1;
+		return 0;
 	}
 
-	return 0;
+	return 1;
 }
 
 ULONG SyncMutex::max_lock_count() const
@@ -136,10 +136,11 @@ ULONG SyncSemaphore::max_lock_count() const
 	return max_lock_cnt_;
 }
 
-SyncEvent::SyncEvent(BOOL is_menual_reset, BOOL init_state, const std::wstring name)
-	: SyncObject(::CreateEvent(nullptr, is_menual_reset, init_state, name.empty() ? nullptr : name.c_str())),
-	is_menual_reset_(is_menual_reset), init_state_(init_state)
-{}
+SyncEvent::SyncEvent(BOOL is_menual_reset, BOOL init_state, const std::shared_ptr<SECURITY_ATTRIBUTES> security_attributes, std::wstring name)
+	: SyncObject(::CreateEvent(security_attributes == nullptr ? nullptr : security_attributes.get(), is_menual_reset, init_state, name.empty() ? nullptr : name.c_str())),
+	security_attributes_(security_attributes), is_menual_reset_(is_menual_reset), init_state_(init_state)
+{
+}
 
 SyncEvent::~SyncEvent()
 {

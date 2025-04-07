@@ -3,9 +3,6 @@
 class JobBase;
 class Thread;
 
-template <typename T>
-class MemoryManager;
-
 class TaskBase abstract
 {
 public:

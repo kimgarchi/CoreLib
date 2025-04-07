@@ -1,44 +1,43 @@
+#pragma once
 #include "stdafx.h"
 #include "Thread.h"
 #include "Job.h"
 #include "LockObject.h"
 #include "MemoryAllocator.h"
 
-Thread::Thread(std::shared_ptr<SyncEvent> sync_event)
-    : job_ptr_(nullptr), run_validate_(true), sync_event_(sync_event), sync_mutex_(allocate_shared<SyncMutex>())
+#include <chrono>
+
+Thread::Thread(const std::atomic_bool& run_validate, std::shared_ptr<std::mutex> thread_mutex, std::shared_ptr<std::condition_variable_any> cond_var, GetJobFunc get_job_func, RemainJobCheckFunc remain_job_check_func)
+    : run_validate_(run_validate), job_ptr_(nullptr), job_mutex_(allocate_shared<SyncMutex>()), thread_mutex_(thread_mutex), cond_var_(cond_var), get_job_func_(get_job_func), remain_job_check_func_(remain_job_check_func)
 {
-    assert(sync_event_ != nullptr);
-    assert(sync_mutex_ != nullptr);
+    assert(job_mutex_ != nullptr);
+    assert(thread_mutex != nullptr);
 
     std::packaged_task<bool()> task = std::packaged_task<bool()>(
         [&]()
     {
-        try
+        do
         {
-            do 
             {
-                const DWORD ret = sync_event_->wait_signaled();
-                if (ret == WAIT_OBJECT_0)
-                {
-                    SingleLock lock(*sync_mutex_);
-					if (job_ptr_ == nullptr)
+                std::unique_lock lock(*thread_mutex_);
+				cond_var_->wait(lock,
+					[&]()
 					{
-						assert(false);
-						continue;
-					}
+						return remain_job_check_func_() || run_validate_ == false;
+					});
+            }
 
-                    job_ptr_->Execute();
-                    job_ptr_ = nullptr;
-                }
+			job_ptr_ = get_job_func_(job_mutex_);
+            if (job_ptr_ != nullptr)
+            {
+#ifdef _DEBUG
+                get_job_count_ += 1;
+#endif
+                job_ptr_->Execute();
+            }
 
-            } while (run_validate_);
-        }
-        catch (...)
-        {
-            assert(false);
-            return false;
-        }
-        
+        } while (run_validate_ || remain_job_check_func_());
+
         return true;
     });
 
@@ -48,45 +47,39 @@ Thread::Thread(std::shared_ptr<SyncEvent> sync_event)
 
 Thread::~Thread()
 {
-    assert(Stop(INFINITE));
+    assert(Stop());
 }
 
-bool Thread::AttachJob(std::shared_ptr<JobBase> job_ptr)
+HANDLE Thread::handle()
 {
-    SingleLock lock(*sync_mutex_);
-
-    if (job_ptr_ != nullptr)
-    {
-        assert(false);
-        return false;
-    }
-
-    job_ptr_ = job_ptr;
-
-    sync_event_->raise_signaled();
-
-    return true;
+    return thread_.native_handle();
 }
 
 bool Thread::Stop(DWORD timeout)
 {
-    SingleLock lock(*sync_mutex_);
-
-    if (thread_.joinable())
+    if (thread_.joinable() == false)
         return true;
 
-    if (future_.valid() == false)
-        return true;
+    if (run_validate_ != false)
+        return false;
 
-    auto ret = future_.wait_for(std::chrono::seconds(timeout));
-    switch (ret)
+    auto ret_status = future_.wait_for(std::chrono::seconds(timeout));
+    switch (ret_status)
     {
     case std::future_status::deferred:
     case std::future_status::timeout:
     {
-        assert(false);
+        if (job_ptr_ != nullptr)
+        {
+            /// warn log
+            job_ptr_->JobTerminate();
+        }
+        
         return false;
-    }   
+    }
+    case std::future_status::ready:
+        /// ...
+        break;
     }
 
     if (future_.get() == false)

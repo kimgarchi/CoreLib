@@ -85,7 +85,7 @@
     <ClInclude Include="src\stdafx.h">
       <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="src\ThreadManager.h">
+    <ClInclude Include="src\ThreadPool.h">
       <Filter>source\Job\Thread</Filter>
     </ClInclude>
     <ClInclude Include="src\CallBack.h">
@@ -129,9 +129,6 @@
     </ClInclude>
     <ClInclude Include="src\PostCenter.h">
       <Filter>source\Resource\Socket</Filter>
-    </ClInclude>
-    <ClInclude Include="src\SyncStation.h">
-      <Filter>source\Resource\Sync</Filter>
     </ClInclude>
     <ClInclude Include="src\Sock.h">
       <Filter>source\Resource\Socket</Filter>
@@ -187,11 +184,11 @@
     <ClInclude Include="src\Task.h">
       <Filter>source\Job</Filter>
     </ClInclude>
+    <ClInclude Include="src\ThreadManager.h">
+      <Filter>source\Job\Thread</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\SyncStation.cpp">
-      <Filter>source\Resource\Sync</Filter>
-    </ClCompile>
     <ClCompile Include="src\JobStation.cpp">
       <Filter>source\Job</Filter>
     </ClCompile>
@@ -204,7 +201,7 @@
     <ClCompile Include="src\PostCenter.cpp">
       <Filter>source\Resource\Socket</Filter>
     </ClCompile>
-    <ClCompile Include="src\ThreadManager.cpp">
+    <ClCompile Include="src\ThreadPool.cpp">
       <Filter>source\Job\Thread</Filter>
     </ClCompile>
     <ClCompile Include="src\SyncObject.cpp">
@@ -236,6 +233,9 @@
     </ClCompile>
     <ClCompile Include="src\Task.cpp">
       <Filter>source\Job</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ThreadManager.cpp">
+      <Filter>source\Job\Thread</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

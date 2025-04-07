@@ -25,7 +25,7 @@ private:
 	using BindPorts = std::map<PostID, USHORT>;
 	
 public:
-	using AttachJobs = std::map<LONG, std::shared_ptr<JobBase>>;
+	//using AttachJobs = std::map<LONG, std::shared_ptr<JobBase>>;
 
 	PostCenter();
 	~PostCenter();
@@ -38,7 +38,7 @@ private:
 	CompletionPorts completion_ports_;
 	BindAllSocks bind_all_socks_;
 
-	AttachJobs attach_jobs_;
+	//AttachJobs attach_jobs_;
 
 	std::atomic<PostID> alloc_post_id_;
 };

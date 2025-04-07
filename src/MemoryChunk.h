@@ -5,22 +5,14 @@
 
 #define MEGA_BYTE_TO_BYTE 1048576
 
-struct MemoryChunkInfo
-{
-	const std::size_t block_size;
-	const std::size_t block_count;
-
-	const std::list<std::pair<std::size_t, std::size_t>> unbind_relay_poses;
-};
-
+template<typename T>
 class MemoryChunk final
 {
 public:
-	MemoryChunk(const std::size_t block_size, const size_t block_count)
-		: block_size_(block_size), block_count_(block_count),
-		m_alloc_begin_ptr_(nullptr), m_alloc_end_ptr_(nullptr), m_alloc_bitset_(block_count)
+	MemoryChunk(const size_t alloc_count)
+		: alloc_count_(alloc_count), m_alloc_begin_ptr_(nullptr), m_alloc_end_ptr_(nullptr), m_alloc_bitset_(alloc_count)
 	{
-		const std::size_t alloc_size = block_size * block_count;
+		const std::size_t alloc_size = alloc_count_ * sizeof(T);
 
 		m_alloc_begin_ptr_ = alloc_size >= MEGA_BYTE_TO_BYTE ?
 			HeapAlloc(GetProcessHeap(), HEAP_GENERATE_EXCEPTIONS, alloc_size) : std::malloc(alloc_size);
@@ -36,7 +28,7 @@ public:
 
 	~MemoryChunk()
 	{
-		for (std::size_t pos = 0; pos < block_count_; ++pos)
+		for (std::size_t pos = 0; pos < alloc_count_; ++pos)
 		{
 			if (m_alloc_bitset_.getBit(pos))
 			{
@@ -44,7 +36,7 @@ public:
 			}
 		}
 
-		if (block_count_ >= MEGA_BYTE_TO_BYTE)
+		if (alloc_count_ >= MEGA_BYTE_TO_BYTE)
 			HeapFree(GetProcessHeap(), NULL, m_alloc_begin_ptr_);
 		else
 			std::free(m_alloc_begin_ptr_);
@@ -68,7 +60,6 @@ public:
 		return alloc_ptr;
 	}
 
-	template<typename T>
 	bool free(PVOID ptr, const std::size_t size)
 	{
 		if (ptr == nullptr)
@@ -89,7 +80,7 @@ public:
 			return false;
 		}
 
-		if (begin_pos < 0 || end_pos >= block_count_)
+		if (begin_pos < 0 || end_pos >= alloc_count_)
 			return false;
 
 		m_alloc_bitset_.setBit(begin_pos, end_pos, false);
@@ -113,43 +104,18 @@ public:
 		return m_alloc_begin_ptr_ <= ptr && m_alloc_end_ptr_ >= ptr;
 	}
 
-	MemoryChunkInfo get_memory_chunk_info() const
-	{
-		std::list<std::pair<std::size_t, std::size_t>> unbind_relay_poses;
-		std::pair<std::size_t, std::size_t> unbind_relay_pos(0, -1);
-
-		for (std::size_t pos = 0; pos < block_count_; ++pos)
-		{
-			const bool pos_bit = m_alloc_bitset_.getBit(pos);
-			if (pos_bit == false)
-			{
-				unbind_relay_pos.first = pos;
-				continue;
-			}
-			
-			if (unbind_relay_pos.second != -1)
-			{
-				unbind_relay_poses.emplace_back(unbind_relay_pos);
-				unbind_relay_pos.second = -1;
-			}
-		}
-		
-		return MemoryChunkInfo{ block_size_, block_count_, unbind_relay_poses };
-	}
-
 private:
 	std::size_t getPtrPos(PVOID ptr) const
 	{
-		return (static_cast<BYTE*>(ptr) - static_cast<BYTE*>(m_alloc_begin_ptr_)) / block_size_;
+		return (static_cast<BYTE*>(ptr) - static_cast<BYTE*>(m_alloc_begin_ptr_)) / sizeof(T);
 	}
 
 	PVOID getPtr(std::size_t pos) const
 	{
-		return static_cast<BYTE*>(m_alloc_begin_ptr_) + (pos * block_size_);
+		return static_cast<BYTE*>(m_alloc_begin_ptr_) + (pos * sizeof(T));
 	}
 
-	const std::size_t block_size_;
-	const std::size_t block_count_;
+	const std::size_t alloc_count_;
 
 	PVOID m_alloc_begin_ptr_;
 	PVOID m_alloc_end_ptr_;

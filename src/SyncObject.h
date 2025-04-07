@@ -60,13 +60,17 @@ private:
 class SyncEvent : public SyncObject
 {
 public:
-	SyncEvent(BOOL is_menual_reset = false, BOOL init_state = false, const std::wstring name = L"");
+	SyncEvent(BOOL is_menual_reset = false, BOOL init_state = false, const std::shared_ptr<SECURITY_ATTRIBUTES> security_attributes = nullptr, std::wstring name = L"");
 	virtual ~SyncEvent();
 	
 	DWORD wait_signaled(DWORD timeout = INFINITE);
 	DWORD raise_signaled();
 
+	inline BOOL is_menual_reset() const { return is_menual_reset_; }
+	inline BOOL init_state() const { return init_state_; }
+	
 private:
+	const std::shared_ptr<SECURITY_ATTRIBUTES> security_attributes_;
 	const BOOL is_menual_reset_;
 	const BOOL init_state_;
 };

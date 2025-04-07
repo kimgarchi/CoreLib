@@ -190,9 +190,9 @@
     <ClInclude Include="src\Task.h" />
     <ClInclude Include="src\Thread.h" />
     <ClInclude Include="src\ThreadManager.h" />
+    <ClInclude Include="src\ThreadPool.h" />
     <ClInclude Include="src\Util.h" />
     <ClInclude Include="src\Worker.h" />
-    <ClInclude Include="src\SyncStation.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\CompletionPort.cpp" />
@@ -207,10 +207,10 @@
     <ClCompile Include="src\Query.cpp" />
     <ClCompile Include="src\SocketPool.cpp" />
     <ClCompile Include="src\SyncObject.cpp" />
-    <ClCompile Include="src\SyncStation.cpp" />
     <ClCompile Include="src\Task.cpp" />
     <ClCompile Include="src\Thread.cpp" />
     <ClCompile Include="src\ThreadManager.cpp" />
+    <ClCompile Include="src\ThreadPool.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

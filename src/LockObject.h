@@ -20,8 +20,8 @@ public:
 	SingleLock(SyncMutex& sync_mutex, bool immediate_lock = true, DWORD timeout = INFINITE);
 	virtual ~SingleLock();
 
-	DWORD lock(DWORD timeout);
-	DWORD spin_lock(DWORD timeout);
+	DWORD lock(DWORD timeout = INFINITE);
+	DWORD spin_lock(DWORD timeout = INFINITE);
 	DWORD unlock();
 
 private:
@@ -34,10 +34,10 @@ public:
 	MultiLock(SyncSemaphore& sync_semaphore, bool immediate_lock = true, ULONG lock_cnt = 1, DWORD timeout = INFINITE);
 	virtual ~MultiLock();
 
-	DWORD lock(ULONG lock_cnt, DWORD timeout);
-	DWORD spin_lock(ULONG lock_cnt, DWORD timeout);
-	DWORD all_lock(DWORD timeout);	
-	DWORD spin_all_lock(DWORD timeout);
+	DWORD lock(ULONG lock_cnt = 1, DWORD timeout = INFINITE);
+	DWORD spin_lock(ULONG lock_cnt = 1, DWORD timeout = INFINITE);
+	DWORD all_lock(DWORD timeout = INFINITE);
+	DWORD spin_all_lock(DWORD timeout = INFINITE);
 	DWORD unlock(ULONG unlock_cnt);
 
 private:
