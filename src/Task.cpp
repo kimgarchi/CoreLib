@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Task.h"
 //#include "MemoryManager.h"
-
+/*
 Task::Task(std::size_t thread_count, std::shared_ptr<JobBase> job_ptr)
 	: job_ptr_(job_ptr), is_runable_(true)
 {
@@ -58,3 +58,4 @@ bool Task::Deattach(std::size_t count, DWORD timeout)
 
 	return true;
 }
+*/

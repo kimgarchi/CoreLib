@@ -21,8 +21,10 @@ bool ThreadPool::PushJob(std::shared_ptr<JobBase> job_ptr)
     if (run_validate_ == false)
         return false;
 
-    SingleLock lock(*job_mutex_);
-    job_queue_.push_back(job_ptr);
+    {
+		SingleLock lock(*job_mutex_);
+		job_queue_.push_back(job_ptr);
+    }
     
     cond_var_->notify_one();
 
@@ -31,33 +33,36 @@ bool ThreadPool::PushJob(std::shared_ptr<JobBase> job_ptr)
 
 std::shared_ptr<JobBase> ThreadPool::GetNextJob(std::shared_ptr<SyncMutex> thread_job_mutex)
 {
-    SingleLock lock(*job_mutex_);
+    std::shared_ptr<JobBase> job_ptr = nullptr;
 
-    if (job_queue_.empty())
     {
-        return nullptr;
+		SingleLock lock(*job_mutex_);
+		if (job_queue_.empty())
+		{
+			return nullptr;
+		}
+
+		job_ptr = job_queue_.front();
+		job_queue_.pop_front();
     }
-
-    std::shared_ptr<JobBase> job_ptr = job_queue_.front();  
-    job_queue_.pop_front();
-
+    
     if (job_ptr == nullptr)
     {
         assert(job_ptr != nullptr);
         return nullptr;
     }
     
-    assert(thread_job_mutex != nullptr);
-
-    job_ptr->AttachJobMutex(thread_job_mutex);
-
+    if (thread_job_mutex != nullptr)
+    {
+        job_ptr->AttachJobMutex(thread_job_mutex);
+    }
+    
     return job_ptr;
 }
 
 bool ThreadPool::RemainJobCheck()
 {
-    SingleLock lock(*job_mutex_);
-    
+    SingleLock lock(*job_mutex_);    
     return job_queue_.empty() ? false : true;
 }
 

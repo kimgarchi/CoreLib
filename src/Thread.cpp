@@ -78,7 +78,7 @@ bool Thread::Stop(DWORD timeout)
         return false;
     }
     case std::future_status::ready:
-        /// ...
+        /// ... 
         break;
     }
 

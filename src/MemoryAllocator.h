@@ -30,7 +30,9 @@ public:
 	}
 
 	MemoryManager(const MemoryManager&) = delete;
+	MemoryManager(const MemoryManager&&) = delete;
 	void operator=(const MemoryManager&) = delete;
+	void operator=(const MemoryManager&&) = delete;
 
 	~MemoryManager()
 	{
@@ -75,6 +77,8 @@ private:
 	thread_local MemoryManager tg_memory_manager;
 	return tg_memory_manager;
 }
+
+///////////////////////////////////////////////
 
 template<typename T>
 using AllocTraits = std::allocator_traits<MemoryAllocator<T>>;
@@ -137,53 +141,85 @@ std::shared_ptr<T> allocate_shared(Args&&... args)
 		});
 }
 
+///////////////////////////////////////////////
+
 template<typename T>
-std::vector<T, MemoryAllocator<T>> allocate_vector()
+using m_vector = std::vector<T, MemoryAllocator<T>>;
+
+template<typename T>
+m_vector<T> allocate_vector()
 {
-	return std::move(std::vector<T, MemoryAllocator<T>>(get_thread_local_manager()));
+	return m_vector<T>(get_thread_local_manager());
 }
 
 template<typename T>
-inline std::list<T, MemoryAllocator<T>> allocate_list()
+using m_list = std::list<T, MemoryAllocator<T>>;
+
+template<typename T>
+inline m_list<T> allocate_list()
 {
-	return std::move(std::list<T, MemoryAllocator<T>>(get_thread_local_manager()));
+	return m_list<T>(get_thread_local_manager());
 }
 
 template<typename T>
-inline std::queue<T, MemoryAllocator<T>> allocate_queue()
+using m_queue = std::queue<T, MemoryAllocator<T>>;
+
+template<typename T>
+inline m_queue<T> allocate_queue()
 {
-	return std::move(std::queue<T, MemoryAllocator<T>>(get_thread_local_manager()));
+	return m_queue<T>(get_thread_local_manager());
 }
 
 template<typename T>
-inline std::deque<T, MemoryAllocator<T>> allocate_deque()
+using m_deque = std::deque<T, MemoryAllocator<T>>;
+
+template<typename T>
+inline m_deque<T> allocate_deque()
 {
-	return std::move(std::deque<T, MemoryAllocator<T>>(get_thread_local_manager()));
+	return m_deque<T>(get_thread_local_manager());
+}
+
+///////////////////////////////////////////////
+
+template<typename T, typename Compare = std::less<T>>
+using m_set = std::set<T, Compare, MemoryAllocator<T>>;
+
+template<typename T, typename Compare = std::less<T>>
+inline m_set<T, Compare> allocate_set()
+{
+	return m_set<T, Compare>(get_thread_local_manager());
 }
 
 template<typename T>
-inline std::set<T, MemoryAllocator<T>> allocate_set()
-{
-	return std::move(std::set<T, MemoryAllocator<T>>(get_thread_local_manager()));
-}
+using m_unordered_set = std::unordered_set<T, std::hash<T>, std::equal_to<T>, MemoryAllocator<T>>;
 
 template<typename T>
-inline std::unordered_set<T, MemoryAllocator<T>> allocate_unordered_set()
+inline m_unordered_set<T> allocate_unordered_set()
 {
-	return std::move(std::unordered_set<T, MemoryAllocator<T>>(get_thread_local_manager()));
+	return m_unordered_set<T>(get_thread_local_manager());
+}
+
+template<typename Key, typename Value, typename Compare = std::less<Key>>
+using m_map = std::map<
+	Key, Value, Compare, MemoryAllocator<std::pair<const Key, Value>>>;
+
+template<typename Key, typename Value, typename Compare = std::less<Key>>
+inline m_map<Key, Value, Compare> allocate_map()
+{
+	return m_map<Key, Value, Compare>(get_thread_local_manager());
 }
 
 template<typename Key, typename Value>
-inline std::map<Key, Value, MemoryAllocator<std::pair<Key, Value>>> allocate_map()
-{
-	return std::move(std::map<Key, Value, MemoryAllocator<std::pair<Key, Value>>>(get_thread_local_manager()));
-}
+using m_unordered_map = std::unordered_map<
+	Key, Value, std::hash<Key>, std::equal_to<Key>, MemoryAllocator<std::pair<const Key, Value>>>;
 
 template<typename Key, typename Value>
-inline std::unordered_map<Key, Value, MemoryAllocator<std::pair<Key, Value>>> allocate_unordered_map()
+inline m_unordered_map<Key, Value> allocate_unordered_map()
 {
-	return std::move(std::unordered_map<Key, Value, MemoryAllocator<std::pair<Key, Value>>>(get_thread_local_manager()));
+	return m_unordered_map<Key, Value>(get_thread_local_manager());
 }
+
+///////////////////////////////////////////////
 
 template<typename T>
 class MemoryAllocator

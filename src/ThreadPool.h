@@ -3,11 +3,15 @@
 #include "Thread.h"
 #include "Job.h"
 
+#include "MemoryAllocator.h"
+
 class ThreadPool
 {
 public:
 	ThreadPool();
 	~ThreadPool();
+
+
 
 	bool Init(const std::size_t alloc_thread_count);
 	void Clear(bool is_jobs_terminate = false, DWORD timeout = INFINITE);
