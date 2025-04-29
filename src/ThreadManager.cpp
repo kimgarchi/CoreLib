@@ -4,7 +4,7 @@
 #include "ThreadPool.h"
 
 ThreadManager::ThreadManager()
-	: thread_pools_(allocate_map<std::size_t, std::shared_ptr<ThreadPool>>())
+	//: thread_pools_(allocate_map<std::size_t, std::shared_ptr<ThreadPool>>())
 {
 }
 
@@ -23,5 +23,6 @@ bool ThreadManager::AttachPool(const std::size_t key, const std::size_t count)
 		return false;
 	}
 
-	return thread_pools_.emplace(std::pair(key, thread_pool)).second;
+	//return thread_pools_.emplace(std::pair(key, thread_pool)).second;
+	return true;
 }

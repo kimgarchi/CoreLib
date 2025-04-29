@@ -9,6 +9,8 @@ template<typename T>
 class MemoryChunk final
 {
 public:
+	struct MemoryChunkInfo : BitSet::BitSetInfo {};
+
 	MemoryChunk(const size_t alloc_count)
 		: alloc_count_(alloc_count), m_alloc_begin_ptr_(nullptr), m_alloc_end_ptr_(nullptr), m_alloc_bitset_(alloc_count)
 	{
@@ -103,6 +105,8 @@ public:
 	{
 		return m_alloc_begin_ptr_ <= ptr && m_alloc_end_ptr_ >= ptr;
 	}
+
+	inline MemoryChunkInfo getMemoryChunkInfo() const { return { m_alloc_bitset_.getBitSetInfo() }; }
 
 private:
 	std::size_t getPtrPos(PVOID ptr) const

@@ -2,6 +2,12 @@
 #include "stdafx.h"
 
 template<typename _Ty>
+class Singleton;
+
+template<typename _Ty>
+using is_singleton = typename std::enable_if_t<std::is_base_of_v<Singleton<_Ty>, _Ty>, _Ty>*;
+
+template<typename _Ty>
 class Singleton abstract
 {
 public:
@@ -11,6 +17,3 @@ public:
 		return instance;
 	}
 };
-
-template<typename _Ty>
-using is_singleton = typename std::enable_if_t<std::is_base_of_v<Singleton<_Ty>, _Ty>, _Ty>*;

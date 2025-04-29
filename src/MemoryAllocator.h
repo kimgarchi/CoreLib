@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "MemoryPool.h"
 #include "LockObject.h"
+#include "singleton.h"
 
 #ifndef MEMORY_MANAGER_H_INCLUDED
 #define MEMORY_MANAGER_H_INCLUDED
@@ -12,21 +13,25 @@ class MemoryAllocator;
 class MemoryManager
 {
 private:
-	using MemoryPools = std::unordered_map<std::type_index, std::shared_ptr<VOID>>;
-
+	using MemoryPools = std::unordered_map<std::type_index, std::shared_ptr<VOID>>;	
 public:
 	MemoryManager()
 	{
-		ULONG HeapInformationValue = 2;
+		static std::once_flag global_once_flag;
 
-		if (HeapSetInformation(GetProcessHeap(),
-			HeapCompatibilityInformation,
-			&HeapInformationValue,
-			sizeof(HeapInformationValue)) == false)
-		{
-			assert(false);
-			throw std::invalid_argument("heap set information failed");
-		}
+		std::call_once(global_once_flag, 
+			[]() {
+				ULONG HeapInformationValue = 2;
+
+				if (HeapSetInformation(GetProcessHeap(),
+					HeapCompatibilityInformation,
+					&HeapInformationValue,
+					sizeof(HeapInformationValue)) == false)
+				{
+					assert(false);
+					throw std::invalid_argument("heap set information failed");
+				}			
+			});		
 	}
 
 	MemoryManager(const MemoryManager&) = delete;
@@ -34,10 +39,7 @@ public:
 	void operator=(const MemoryManager&) = delete;
 	void operator=(const MemoryManager&&) = delete;
 
-	~MemoryManager()
-	{
-		memory_pools_.clear();
-	}
+	~MemoryManager() = default;
 
 	template<typename T>
 	std::shared_ptr<MemoryPool<T>> getMemoryPool()
@@ -53,6 +55,8 @@ public:
 
 		return std::static_pointer_cast<MemoryPool<T>>(itor->second);
 	}
+
+	inline auto getMemoryPoolCount() const { return memory_pools_.size(); }
 
 private:
 	template<typename T>
@@ -72,13 +76,48 @@ private:
 	MemoryPools memory_pools_;
 };
 
-[[nodiscard("get memory manager ref var abandon")]] inline MemoryManager& get_thread_local_manager()
+class MemoryManagerMonitoring final : public Singleton<MemoryManagerMonitoring>
 {
+public:
+	MemoryManagerMonitoring() = default;
+
+	bool AttachMemoryManager(const MemoryManager* mem_manager)
+	{
+		assert(mem_manager != nullptr);
+
+		SingleLock sl(sync_mutex_);
+		std::thread::id thread_id = std::this_thread::get_id();
+		auto ret = memory_managers_.try_emplace(thread_id, mem_manager);
+
+		assert(ret.second != false);
+
+		return ret.second;
+	}
+
+	auto GetMonitoringInfo()
+	{
+		SingleLock sl(sync_mutex_);
+
+		return nullptr;
+	}
+
+private:
+	SyncMutex sync_mutex_;
+	std::map<std::thread::id, const MemoryManager*> memory_managers_;
+};
+
+[[nodiscard("get memory manager ref var abandon")]] MemoryManager& get_thread_local_manager()
+{
+#pragma warning (disable : 4006)
 	thread_local MemoryManager tg_memory_manager;
+
+	if (tg_memory_manager.getMemoryPoolCount() == 0)
+	{
+		assert(MemoryManagerMonitoring::GetInstance().AttachMemoryManager(&tg_memory_manager));
+	}
+	
 	return tg_memory_manager;
 }
-
-///////////////////////////////////////////////
 
 template<typename T>
 using AllocTraits = std::allocator_traits<MemoryAllocator<T>>;
@@ -141,8 +180,6 @@ std::shared_ptr<T> allocate_shared(Args&&... args)
 		});
 }
 
-///////////////////////////////////////////////
-
 template<typename T>
 using m_vector = std::vector<T, MemoryAllocator<T>>;
 
@@ -178,8 +215,6 @@ inline m_deque<T> allocate_deque()
 {
 	return m_deque<T>(get_thread_local_manager());
 }
-
-///////////////////////////////////////////////
 
 template<typename T, typename Compare = std::less<T>>
 using m_set = std::set<T, Compare, MemoryAllocator<T>>;
@@ -218,8 +253,6 @@ inline m_unordered_map<Key, Value> allocate_unordered_map()
 {
 	return m_unordered_map<Key, Value>(get_thread_local_manager());
 }
-
-///////////////////////////////////////////////
 
 template<typename T>
 class MemoryAllocator
@@ -320,5 +353,4 @@ public:
 private:
 	MemoryManager& ref_memory_manager_;
 };
-
 #endif

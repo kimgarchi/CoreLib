@@ -82,6 +82,12 @@ class MemoryPool final
 public:
 	using MemChunks = std::list<std::shared_ptr<MemoryChunk<T>>>;
 
+	struct MemoryPoolInfo
+	{
+		std::vector<MemoryChunk::MemoryChunkInfo> memory_chunk_infos;
+
+	};
+
 	MemoryPool() = default;
 	MemoryPool(const MemoryPool&) = delete;
 	void operator=(const MemoryPool&) = delete;
