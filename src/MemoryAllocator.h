@@ -1,11 +1,16 @@
 #pragma once
 #include "stdafx.h"
+
+#include <vector>
+#include <list>
+#include <queue>
+#include <map>
+#include <set>
+#include <unordered_set>
+#include <unordered_map>
+
 #include "MemoryPool.h"
 #include "LockObject.h"
-#include "singleton.h"
-
-#ifndef MEMORY_MANAGER_H_INCLUDED
-#define MEMORY_MANAGER_H_INCLUDED
 
 template<typename T>
 class MemoryAllocator;
@@ -76,7 +81,7 @@ private:
 	MemoryPools memory_pools_;
 };
 
-class MemoryManagerMonitoring final : public Singleton<MemoryManagerMonitoring>
+class MemoryManagerMonitoring final
 {
 public:
 	MemoryManagerMonitoring() = default;
@@ -106,16 +111,11 @@ private:
 	std::map<std::thread::id, const MemoryManager*> memory_managers_;
 };
 
-[[nodiscard("get memory manager ref var abandon")]] MemoryManager& get_thread_local_manager()
-{
-#pragma warning (disable : 4006)
-	thread_local MemoryManager tg_memory_manager;
+//static MemoryManagerMonitoring g_memory_manager_monitoring;
 
-	if (tg_memory_manager.getMemoryPoolCount() == 0)
-	{
-		assert(MemoryManagerMonitoring::GetInstance().AttachMemoryManager(&tg_memory_manager));
-	}
-	
+[[nodiscard("get memory manager ref abandon")]] static MemoryManager& get_thread_local_manager()
+{
+	thread_local MemoryManager tg_memory_manager;
 	return tg_memory_manager;
 }
 
@@ -180,11 +180,11 @@ std::shared_ptr<T> allocate_shared(Args&&... args)
 		});
 }
 
-template<typename T>
-using m_vector = std::vector<T, MemoryAllocator<T>>;
+template<typename T, class Alloc = MemoryAllocator<T>>
+using m_vector = std::vector<T, Alloc>;
 
 template<typename T>
-m_vector<T> allocate_vector()
+m_vector<T> allocate_vector() 
 {
 	return m_vector<T>(get_thread_local_manager());
 }
@@ -353,4 +353,3 @@ public:
 private:
 	MemoryManager& ref_memory_manager_;
 };
-#endif

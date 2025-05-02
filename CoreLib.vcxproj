@@ -164,8 +164,6 @@
     <ClInclude Include="src\DateTime.h" />
     <ClInclude Include="src\DBTable.h" />
     <ClInclude Include="src\Define.h" />
-    <ClInclude Include="src\Job.h" />
-    <ClInclude Include="src\JobStation.h" />
     <ClInclude Include="src\LockObject.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\Logger.h" />
@@ -174,6 +172,7 @@
     <ClInclude Include="src\Message.h" />
     <ClInclude Include="src\MessageQueue.h" />
     <ClInclude Include="src\MemoryPool.h" />
+    <ClInclude Include="src\NonCopyableBase.h" />
     <ClInclude Include="src\ODBC.h" />
     <ClInclude Include="src\Overlapped.h" />
     <ClInclude Include="src\PostCenter.h" />
@@ -187,27 +186,24 @@
     <ClInclude Include="src\Storage.h" />
     <ClInclude Include="src\SyncObject.h" />
     <ClInclude Include="src\targetver.h" />
-    <ClInclude Include="src\Task.h" />
     <ClInclude Include="src\Thread.h" />
     <ClInclude Include="src\ThreadManager.h" />
     <ClInclude Include="src\ThreadPool.h" />
     <ClInclude Include="src\Util.h" />
-    <ClInclude Include="src\Worker.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\CompletionPort.cpp" />
     <ClCompile Include="src\DateTime.cpp" />
     <ClCompile Include="src\DBTable.cpp" />
-    <ClCompile Include="src\JobStation.cpp" />
     <ClCompile Include="src\LockObject.cpp" />
     <ClCompile Include="src\MessageQueue.cpp" />
     <ClCompile Include="src\ODBC.cpp" />
     <ClCompile Include="src\PostCenter.cpp" />
     <ClCompile Include="src\DBColumn.cpp" />
     <ClCompile Include="src\Query.cpp" />
+    <ClCompile Include="src\SocketBase.cpp" />
     <ClCompile Include="src\SocketPool.cpp" />
     <ClCompile Include="src\SyncObject.cpp" />
-    <ClCompile Include="src\Task.cpp" />
     <ClCompile Include="src\Thread.cpp" />
     <ClCompile Include="src\ThreadManager.cpp" />
     <ClCompile Include="src\ThreadPool.cpp" />

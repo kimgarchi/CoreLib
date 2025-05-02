@@ -112,7 +112,7 @@ void CompletionPort::ExtendSocketPool(size_t count)
 
 	for (size_t idx = 0; idx < count; ++idx)
 	{
-		std::shared_ptr<IocpSock> sock_ptr = std::make_shared<IocpSock>();//allocate_shared<IocpSock>();
+		std::shared_ptr<IocpSock> sock_ptr = nullptr;//allocate_shared<IocpSock>();
 		if (sock_ptr == nullptr)
 			assert(false);
 

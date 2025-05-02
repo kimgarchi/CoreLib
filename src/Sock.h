@@ -1,13 +1,12 @@
 #pragma once
-
 #include "SocketBase.h"
 
 using PORT = USHORT;
 class IocpSock : public SocketBase, public WSAOVERLAPPED
 {
 public:
-	IocpSock(DWORD buf_size = DEFAULT_BUF_SIZE)
-		: SocketBase(buf_size)
+	IocpSock(SOCK_TYPE sock_type, DWORD buf_size = DEFAULT_BUF_SIZE)
+		: SocketBase(sock_type, buf_size)
 	{
 		Init();
 
@@ -15,18 +14,7 @@ public:
 		wsa_buf_.buf = &buffer_.at(0);
 	}
 
-	IocpSock(SOCKET sock, SOCKADDR_IN sock_addr, DWORD buf_size = DEFAULT_BUF_SIZE)
-		: SocketBase(sock, sock_addr, buf_size)
-	{
-		Init();
-
-		wsa_buf_.len = static_cast<ULONG>(buffer_.size());		
-		wsa_buf_.buf = &buffer_.at(0);
-	}
-
-	virtual ~IocpSock()
-	{
-	}
+	virtual ~IocpSock() = default;
 
 	void Init(size_t reset_size = 0)
 	{

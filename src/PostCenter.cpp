@@ -1,17 +1,17 @@
 #include "stdafx.h"
 #include "PostCenter.h"
-#include "JobStation.h"
 #include "CompletionPort.h"
 
 PostCenter::PostCenter()
 {
-	WSADATA wsaData;
-	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
-		throw std::runtime_error("WSAStartup");
-}
+	static std::once_flag global_once_flag;
 
-PostCenter::~PostCenter()
-{
+	std::call_once(global_once_flag,
+		[]() {			
+			WSADATA wsaData;
+			if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+				throw std::runtime_error("WSAStartup");
+		});
 }
 
 PostID PostCenter::RecordCompletionPort(SOCK_TYPE type, USHORT port, int wait_que_size, DWORD thread_count)
