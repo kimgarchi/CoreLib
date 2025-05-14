@@ -1,17 +1,25 @@
 #pragma once
 #include "SocketBase.h"
 
-using PORT = USHORT;
+class WsaSock : public SocketBase
+{
+public:
+	WsaSock(SOCKET sock, const SOCK_TYPE sock_type, const DWORD buf_size);
+	virtual ~WsaSock() = default;
+
+	inline WSABUF& wsa_buf() { return wsa_buf_; }
+private:
+	WSABUF wsa_buf_;
+};
+
+
 class IocpSock : public SocketBase, public WSAOVERLAPPED
 {
 public:
-	IocpSock(SOCK_TYPE sock_type, DWORD buf_size = DEFAULT_BUF_SIZE)
-		: SocketBase(sock_type, buf_size)
+	IocpSock(SOCKET sock, SOCK_TYPE sock_type, DWORD buf_size = DEFAULT_BUF_SIZE)
+		: SocketBase(sock, sock_type, buf_size)
 	{
 		Init();
-
-		wsa_buf_.len = static_cast<ULONG>(buffer_.size());
-		wsa_buf_.buf = &buffer_.at(0);
 	}
 
 	virtual ~IocpSock() = default;
@@ -29,9 +37,4 @@ public:
 		else
 			std::fill(buffer_.begin(), buffer_.begin() + reset_size, 0x00);
 	}
-
-	WSABUF& wsa_buf() { return wsa_buf_; }
-	
-private:
-	WSABUF wsa_buf_;
 };

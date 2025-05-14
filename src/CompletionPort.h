@@ -17,7 +17,7 @@ public:
 	inline const SOCKET sock() { return sock_; }
 	inline const HANDLE comp_port() { return comp_port_; }
 
-	bool AttachSock(const std::shared_ptr<IocpSock>& sock_ptr);
+	bool AttachSock(const SOCKET clnt_sock);
 	void DeattachSock(SOCKET sock);
 
 	bool AttachKey(BYTE type, PVOID key);

@@ -28,15 +28,13 @@ CompletionPort::~CompletionPort()
 	assert(CloseHandle(comp_port_));
 }
 
-bool CompletionPort::AttachSock(const std::shared_ptr<IocpSock>& sock_ptr)
+bool CompletionPort::AttachSock(const SOCKET clnt_sock)
 {
-	if (sock_ptr == nullptr)
+	if (AttachKey(ATTACH_TYPE_ACCEPT, (PVOID)(clnt_sock)) == false)
 		return false;
 
-	if (AttachKey(ATTACH_TYPE_ACCEPT, (PVOID)(sock_ptr->sock())) == false)
-		return false;
-
-	return bind_socks_.emplace(sock_ptr->sock(), sock_ptr).second;
+	return false;
+	//return bind_socks_.emplace(clnt_sock, sock_ptr).second;
 }
 
 void CompletionPort::DeattachSock(SOCKET sock)
@@ -48,11 +46,11 @@ void CompletionPort::DeattachSock(SOCKET sock)
 	//bind_socks_.erase(sock);
 	pfn_disconnectex_(iocp_sock->sock(), NULL, TF_REUSE_SOCKET, 0);
 
-	if (pfn_acceptex_(sock_, iocp_sock->sock(),
-		iocp_sock->wsa_buf().buf, 0,
-		sizeof(SOCKADDR_IN) + ACCEPT_RECV_SIZE, sizeof(SOCKADDR_IN) + ACCEPT_RECV_SIZE,
-		NULL, &*iocp_sock) == false)
-		return;
+// 	if (pfn_acceptex_(sock_, iocp_sock->sock(),
+// 		iocp_sock->wsa_buf().buf, 0,
+// 		sizeof(SOCKADDR_IN) + ACCEPT_RECV_SIZE, sizeof(SOCKADDR_IN) + ACCEPT_RECV_SIZE,
+// 		NULL, &*iocp_sock) == 0)
+// 		return;
 }
 
 bool CompletionPort::AttachKey(BYTE type, PVOID key)
@@ -110,30 +108,30 @@ void CompletionPort::ExtendSocketPool(size_t count)
 	if (pfn_acceptex_ == NULL)
 		return;
 
-	for (size_t idx = 0; idx < count; ++idx)
-	{
-		std::shared_ptr<IocpSock> sock_ptr = nullptr;//allocate_shared<IocpSock>();
-		if (sock_ptr == nullptr)
-			assert(false);
-
-		if (pfn_acceptex_(sock_, sock_ptr->sock(),
-			sock_ptr->wsa_buf().buf, 0,
-			sizeof(SOCKADDR_IN) + ACCEPT_RECV_SIZE, sizeof(SOCKADDR_IN) + ACCEPT_RECV_SIZE,
-			NULL, &*sock_ptr) == false)
-		{
-			DWORD error_code = WSAGetLastError();
-			switch (error_code)
-			{
-			case WSA_IO_PENDING:
-				break;
-			default:
-				std::cout << error_code << std::endl;
-				assert(false);
-				break;
-			}
-		}
-
-		if (AttachSock(sock_ptr) == false)
-			assert(false);
-	}
+// 	for (size_t idx = 0; idx < count; ++idx)
+// 	{
+// 		std::shared_ptr<IocpSock> sock_ptr = allocate_shared<IocpSock>();
+// 		if (sock_ptr == nullptr)
+// 			assert(false);
+// 
+// 		if (pfn_acceptex_(sock_, sock_ptr->sock(),
+// 			sock_ptr->wsa_buf().buf, 0,
+// 			sizeof(SOCKADDR_IN) + ACCEPT_RECV_SIZE, sizeof(SOCKADDR_IN) + ACCEPT_RECV_SIZE,
+// 			NULL, &*sock_ptr) == false)
+// 		{
+// 			DWORD error_code = WSAGetLastError();
+// 			switch (error_code)
+// 			{
+// 			case WSA_IO_PENDING:
+// 				break;
+// 			default:
+// 				std::cout << error_code << std::endl;
+// 				assert(false);
+// 				break;
+// 			}
+// 		}
+// 
+// 		if (AttachSock(sock_ptr) == false)
+// 			assert(false);
+// 	}
 }

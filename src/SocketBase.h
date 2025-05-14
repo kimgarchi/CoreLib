@@ -21,7 +21,7 @@ enum class SOCK_TYPE
 class SocketBase abstract : public NonCopyableBase
 {
 public:
-	SocketBase(const SOCK_TYPE sock_type, const DWORD buf_size = DEFAULT_BUF_SIZE);
+	SocketBase(SOCKET sock, const SOCK_TYPE sock_type, const DWORD buf_size);
 	virtual ~SocketBase();
 
 	SOCKET sock() const;

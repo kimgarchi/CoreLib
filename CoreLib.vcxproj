@@ -201,6 +201,7 @@
     <ClCompile Include="src\PostCenter.cpp" />
     <ClCompile Include="src\DBColumn.cpp" />
     <ClCompile Include="src\Query.cpp" />
+    <ClCompile Include="src\Sock.cpp" />
     <ClCompile Include="src\SocketBase.cpp" />
     <ClCompile Include="src\SocketPool.cpp" />
     <ClCompile Include="src\SyncObject.cpp" />
