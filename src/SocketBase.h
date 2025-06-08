@@ -10,28 +10,18 @@
 #include <WinSock2.h>
 #include <mswsock.h>
 
-#define DEFAULT_BUF_SIZE 512
-
-enum class SOCK_TYPE
-{
-	TCP,
-	UDP,
-};
 
 class SocketBase abstract : public NonCopyableBase
 {
 public:
-	SocketBase(SOCKET sock, const SOCK_TYPE sock_type, const DWORD buf_size);
+	SocketBase() = default;
 	virtual ~SocketBase();
+	
+	bool InitSocket(const BYTE SOCK_TYPE);
+	bool setSockOption(int level, int option, BYTE value);
+	bool InitSocketAddr(const std::string& addr, const WORD port);
 
-	SOCKET sock() const;
-	const char* buffer();
-	const size_t buffer_size() const;
-
-protected:	
-	m_vector<char> buffer_;
-
-private:
-	SOCKET sock_;
+protected:
+	SOCKET sock_{ INVALID_SOCKET };
 	SOCKADDR_IN sock_addr_;
 };

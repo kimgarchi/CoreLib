@@ -1,31 +1,57 @@
 #include "stdafx.h"
 #include "SocketBase.h"
 
-SocketBase::SocketBase(const SOCKET sock, const SOCK_TYPE sock_type, const DWORD buf_size)
-	: sock_{ sock }, buffer_{ allocate_vector<char>() }
-{
-	assert(sock_ != INVALID_SOCKET);
-	memset(&sock_addr_, 0x00, sizeof(SOCKADDR_IN));
-	buffer_.resize(buf_size, 0x00);
-}
-
 SocketBase::~SocketBase()
 {
 	if (sock_ != INVALID_SOCKET)
 		closesocket(sock_);
 }
 
-SOCKET SocketBase::sock() const
+bool SocketBase::InitSocket(const BYTE SOCK_TYPE)
 {
-	return sock_;
+	switch (SOCK_TYPE)
+	{
+	case SOCK_STREAM:
+	case SOCK_DGRAM:
+		sock_ = WSASocket(AF_INET, SOCK_TYPE, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+		break;
+	}
+
+	if (sock_ == INVALID_SOCKET)
+		return false;
+
+	return false;
 }
 
-const char* SocketBase::buffer()
+bool SocketBase::setSockOption(int level, int option, BYTE value)
 {
-	return &buffer_.at(0);
+	if (sock_ == INVALID_SOCKET)
+		return false;
+	//ioctlsocket
+	/*
+	* https://learn.microsoft.com/ko-kr/windows/win32/api/winsock2/nf-winsock2-setsockopt
+	*/
+
+	/*
+	* level
+	* SOL_SOCKET
+	* IPPROTO_TCP
+	*/
+
+	setsockopt(sock_, level, option, (char*) & value, sizeof(value));
+
+	return true;
 }
 
-const size_t SocketBase::buffer_size() const
+bool SocketBase::InitSocketAddr(const std::string& addr, const WORD port)
 {
-	return buffer_.size();
+	if (addr.empty())
+		return false;
+
+	sock_addr_.sin_family = AF_INET;
+	sock_addr_.sin_port = htons(port);
+	sock_addr_.sin_addr.S_un.S_addr = inet_addr(addr.c_str());
+	sock_addr_.sin_addr.s_addr = htonl(INADDR_ANY);
+	
+	return true;
 }

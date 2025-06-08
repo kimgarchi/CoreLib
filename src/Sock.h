@@ -1,17 +1,25 @@
 #pragma once
 #include "SocketBase.h"
 
-class WsaSock : public SocketBase
+class ClientSocket : public SocketBase
 {
 public:
-	WsaSock(SOCKET sock, const SOCK_TYPE sock_type, const DWORD buf_size);
-	virtual ~WsaSock() = default;
+	ClientSocket() = default;
+	virtual ~ClientSocket() = default;
 
-	inline WSABUF& wsa_buf() { return wsa_buf_; }
+	bool connect();
+	virtual DWORD recv();
+	virtual DWORD send();
+
 private:
 	WSABUF wsa_buf_;
 };
 
+class ServerSocket : public SocketBase
+{
+public:
+	ServerSocket(SOCKET sock, SOCKADDR_IN sock_addr)
+}
 
 class IocpSock : public SocketBase, public WSAOVERLAPPED
 {

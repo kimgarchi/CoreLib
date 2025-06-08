@@ -109,7 +109,7 @@
       <ConformanceMode>true</ConformanceMode>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <AdditionalOptions>/Ylsymbol %(AdditionalOptions)</AdditionalOptions>
-      <LanguageStandard>stdcpp23</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -164,20 +164,24 @@
     <ClInclude Include="src\DateTime.h" />
     <ClInclude Include="src\DBTable.h" />
     <ClInclude Include="src\Define.h" />
+    <ClInclude Include="src\IniFile.h" />
     <ClInclude Include="src\LockObject.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\Logger.h" />
     <ClInclude Include="src\MemoryAllocator.h" />
     <ClInclude Include="src\MemoryChunk.h" />
+    <ClInclude Include="src\MemoryLeakDector.h" />
     <ClInclude Include="src\Message.h" />
     <ClInclude Include="src\MessageQueue.h" />
     <ClInclude Include="src\MemoryPool.h" />
+    <ClInclude Include="src\MiniDump.h" />
     <ClInclude Include="src\NonCopyableBase.h" />
     <ClInclude Include="src\ODBC.h" />
     <ClInclude Include="src\Overlapped.h" />
     <ClInclude Include="src\PostCenter.h" />
     <ClInclude Include="src\DBColumn.h" />
     <ClInclude Include="src\Query.h" />
+    <ClInclude Include="src\Registry.h" />
     <ClInclude Include="src\singleton.h" />
     <ClInclude Include="src\Sock.h" />
     <ClInclude Include="src\SocketBase.h" />
@@ -201,6 +205,7 @@
     <ClCompile Include="src\PostCenter.cpp" />
     <ClCompile Include="src\DBColumn.cpp" />
     <ClCompile Include="src\Query.cpp" />
+    <ClCompile Include="src\Registry.cpp" />
     <ClCompile Include="src\Sock.cpp" />
     <ClCompile Include="src\SocketBase.cpp" />
     <ClCompile Include="src\SocketPool.cpp" />

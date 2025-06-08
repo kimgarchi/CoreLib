@@ -48,12 +48,6 @@
     <Filter Include="source\Resource\Memory">
       <UniqueIdentifier>{79764562-3479-45c7-bb3d-7648bf674267}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\Resource\Socket">
-      <UniqueIdentifier>{2f6217aa-ad8b-435f-8855-350eb1ef794a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="source\Resource\Socket\ComplePort">
-      <UniqueIdentifier>{f87d7b3d-ced0-47d8-967b-39b194eec223}</UniqueIdentifier>
-    </Filter>
     <Filter Include="source\Resource\Sync">
       <UniqueIdentifier>{c84c31bd-1293-4694-a822-0aafc3b5e27c}</UniqueIdentifier>
     </Filter>
@@ -62,6 +56,18 @@
     </Filter>
     <Filter Include="source\Resource\Thread">
       <UniqueIdentifier>{85fc7525-a870-4eea-a8d1-f5069007cc45}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\Network">
+      <UniqueIdentifier>{8ccc6cbc-d703-47b5-9d5e-a74693596f3d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\Network\Socket">
+      <UniqueIdentifier>{2f6217aa-ad8b-435f-8855-350eb1ef794a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\Network\Socket\ComplePort">
+      <UniqueIdentifier>{f87d7b3d-ced0-47d8-967b-39b194eec223}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\Resource\System">
+      <UniqueIdentifier>{7c1486cb-5b5a-452d-a702-241ef754db26}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -107,7 +113,7 @@
       <Filter>source\Resource\Memory</Filter>
     </ClInclude>
     <ClInclude Include="src\SocketBase.h">
-      <Filter>source\Resource\Socket</Filter>
+      <Filter>source\Network\Socket</Filter>
     </ClInclude>
     <ClInclude Include="src\SyncObject.h">
       <Filter>source\Resource\Sync</Filter>
@@ -116,13 +122,13 @@
       <Filter>source\Resource\Thread</Filter>
     </ClInclude>
     <ClInclude Include="src\SocketPool.h">
-      <Filter>source\Resource\Socket</Filter>
+      <Filter>source\Network\Socket</Filter>
     </ClInclude>
     <ClInclude Include="src\PostCenter.h">
-      <Filter>source\Resource\Socket</Filter>
+      <Filter>source\Network\Socket</Filter>
     </ClInclude>
     <ClInclude Include="src\Sock.h">
-      <Filter>source\Resource\Socket</Filter>
+      <Filter>source\Network\Socket</Filter>
     </ClInclude>
     <ClInclude Include="src\Util.h">
       <Filter>Header\Define</Filter>
@@ -140,7 +146,7 @@
       <Filter>source\DB\Query</Filter>
     </ClInclude>
     <ClInclude Include="src\CompletionPort.h">
-      <Filter>source\Resource\Socket\ComplePort</Filter>
+      <Filter>source\Network\Socket\ComplePort</Filter>
     </ClInclude>
     <ClInclude Include="src\DateTime.h">
       <Filter>source\Util</Filter>
@@ -172,16 +178,28 @@
     <ClInclude Include="src\NonCopyableBase.h">
       <Filter>Header\Define</Filter>
     </ClInclude>
+    <ClInclude Include="src\MemoryLeakDector.h">
+      <Filter>source\Resource\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Registry.h">
+      <Filter>source\Resource\System</Filter>
+    </ClInclude>
+    <ClInclude Include="src\IniFile.h">
+      <Filter>source\Resource\System</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MiniDump.h">
+      <Filter>source\Resource\System</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\SocketPool.cpp">
-      <Filter>source\Resource\Socket</Filter>
+      <Filter>source\Network\Socket</Filter>
     </ClCompile>
     <ClCompile Include="src\Thread.cpp">
       <Filter>source\Resource\Thread</Filter>
     </ClCompile>
     <ClCompile Include="src\PostCenter.cpp">
-      <Filter>source\Resource\Socket</Filter>
+      <Filter>source\Network\Socket</Filter>
     </ClCompile>
     <ClCompile Include="src\ThreadPool.cpp">
       <Filter>source\Resource\Thread</Filter>
@@ -202,7 +220,7 @@
       <Filter>source\DB\Query</Filter>
     </ClCompile>
     <ClCompile Include="src\CompletionPort.cpp">
-      <Filter>source\Resource\Socket\ComplePort</Filter>
+      <Filter>source\Network\Socket\ComplePort</Filter>
     </ClCompile>
     <ClCompile Include="src\DateTime.cpp">
       <Filter>source\Util</Filter>
@@ -216,7 +234,14 @@
     <ClCompile Include="src\ThreadManager.cpp">
       <Filter>source\Resource\Thread</Filter>
     </ClCompile>
-    <ClCompile Include="src\SocketBase.cpp" />
-    <ClCompile Include="src\Sock.cpp" />
+    <ClCompile Include="src\Registry.cpp">
+      <Filter>source\Resource\System</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Sock.cpp">
+      <Filter>source\Network\Socket</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SocketBase.cpp">
+      <Filter>source\Network\Socket</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
