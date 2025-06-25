@@ -8,6 +8,7 @@
 
 #define ACCEPT_RECV_SIZE 16
 
+/*
 class CompletionPort
 {
 public:
@@ -39,3 +40,4 @@ private:
 	LPFN_ACCEPTEX pfn_acceptex_;
 	LPFN_DISCONNECTEX pfn_disconnectex_;
 };
+*/

@@ -1,7 +1,7 @@
 #pragma once
 #include "stdafx.h"
 #include "CompletionPort.h"
-
+/*
 CompletionPort::CompletionPort(SOCKET sock, USHORT port, int wait_que_size, DWORD thread_count)
 	: sock_(sock), comp_port_(INVALID_HANDLE_VALUE), pfn_acceptex_(NULL), pfn_disconnectex_(NULL)
 {
@@ -135,3 +135,4 @@ void CompletionPort::ExtendSocketPool(size_t count)
 // 			assert(false);
 // 	}
 }
+*/

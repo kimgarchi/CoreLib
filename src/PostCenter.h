@@ -6,6 +6,7 @@
 
 #define INVALID_POST_ID 0
 
+/*
 class CompletionPort;
 
 using BindAllSocks = std::set<SOCKET>;
@@ -30,3 +31,4 @@ private:
 
 	std::atomic<PostID> alloc_post_id_;
 };
+*/

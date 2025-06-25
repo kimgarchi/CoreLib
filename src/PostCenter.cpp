@@ -1,7 +1,7 @@
 ﻿#include "stdafx.h"
 #include "PostCenter.h"
 #include "CompletionPort.h"
-
+/*
 PostCenter::PostCenter()
 {
 	static std::once_flag global_once_flag;
@@ -67,3 +67,4 @@ bool PostCenter::BindSocket(PostID post_id, SOCKET sock)
 
 	return true;
 }
+*/
